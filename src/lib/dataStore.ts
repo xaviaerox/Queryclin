@@ -2,21 +2,21 @@ export interface ClinicalRecord {
   [key: string]: string;
 }
 
-export interface EpisodeVersion {
+export interface RegistroToma {
   ordenToma: number;
   data: ClinicalRecord;
 }
 
-export interface Episode {
+export interface Toma {
   idToma: string;
-  versions: EpisodeVersion[];
-  // Helper to get the latest version
-  latest: EpisodeVersion;
+  registros: RegistroToma[];
+  // Helper to get the latest record
+  latest: RegistroToma;
 }
 
 export interface Patient {
   nhc: string;
-  episodes: Record<string, Episode>;
+  tomas: Record<string, Toma>;
   // Demographics from the latest record
   demographics: ClinicalRecord;
 }
@@ -45,34 +45,34 @@ export function groupData(records: ClinicalRecord[]): HCEData {
     if (!patients[nhc]) {
       patients[nhc] = {
         nhc,
-        episodes: {},
+        tomas: {},
         demographics: record
       };
     }
 
-    if (!patients[nhc].episodes[idToma]) {
-      patients[nhc].episodes[idToma] = {
+    if (!patients[nhc].tomas[idToma]) {
+      patients[nhc].tomas[idToma] = {
         idToma,
-        versions: [],
+        registros: [],
         latest: { ordenToma: -1, data: {} }
       };
     }
 
-    const episode = patients[nhc].episodes[idToma];
-    const version = { ordenToma, data: record };
-    episode.versions.push(version);
+    const toma = patients[nhc].tomas[idToma];
+    const registro = { ordenToma, data: record };
+    toma.registros.push(registro);
 
-    if (ordenToma > episode.latest.ordenToma) {
-      episode.latest = version;
+    if (ordenToma > toma.latest.ordenToma) {
+      toma.latest = registro;
       // Update demographics to the latest available
       patients[nhc].demographics = record;
     }
   }
 
-  // Sort versions descending
+  // Sort registros descending
   for (const nhc in patients) {
-    for (const idToma in patients[nhc].episodes) {
-      patients[nhc].episodes[idToma].versions.sort((a, b) => b.ordenToma - a.ordenToma);
+    for (const idToma in patients[nhc].tomas) {
+      patients[nhc].tomas[idToma].registros.sort((a, b) => b.ordenToma - a.ordenToma);
     }
   }
 
@@ -90,7 +90,18 @@ export const storage = {
   loadData: (): HCEData | null => {
     try {
       const data = localStorage.getItem('hce_data');
-      return data ? JSON.stringify(data) ? JSON.parse(data) : null : null;
+      if (!data) return null;
+      
+      const parsed = JSON.parse(data);
+      // Validar compatibilidad de la base de datos local contra el refactor
+      const firstPatient = Object.values(parsed.patients)[0] as any;
+      if (firstPatient && firstPatient.episodes && !firstPatient.tomas) {
+        console.warn("Detectado esquema de datos antiguo (Episodios). Purgando caché para forzar esquema de Tomas.");
+        storage.clearData();
+        return null;
+      }
+      
+      return parsed;
     } catch (e) {
       console.error("Error loading from localStorage", e);
       return null;

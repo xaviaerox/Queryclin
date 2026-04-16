@@ -1,12 +1,12 @@
-import { HCEData, Patient, EpisodeVersion } from './dataStore';
+import { HCEData, Patient, RegistroToma } from './dataStore';
 
 export interface SearchResult {
   nhc: string;
-  idToma: string;
-  ordenToma: number;
-  score: number;
-  snippet?: string;
-  record: EpisodeVersion;
+  patient: Patient;
+  totalScore: number;
+  matchingTomasCount: number;
+  bestMatchUrl: { idToma: string; ordenToma: number };
+  matchedRegistros: { idToma: string; ordenToma: number; score: number; record: RegistroToma }[];
 }
 
 export class SearchEngine {
@@ -21,11 +21,11 @@ export class SearchEngine {
 
     for (const nhc in data.patients) {
       const patient = data.patients[nhc];
-      for (const idToma in patient.episodes) {
-        const episode = patient.episodes[idToma];
-        for (const version of episode.versions) {
+      for (const idToma in patient.tomas) {
+        const toma = patient.tomas[idToma];
+        for (const registro of toma.registros) {
           this.documentCount++;
-          const tokens = this.tokenizeRecord(version.data);
+          const tokens = this.tokenizeRecord(registro.data);
           
           const termCounts: Record<string, number> = {};
           for (const token of tokens) {
@@ -39,7 +39,7 @@ export class SearchEngine {
             this.index[term].push({
               nhc,
               idToma,
-              ordenToma: version.ordenToma,
+              ordenToma: registro.ordenToma,
               count: termCounts[term]
             });
           }
@@ -90,9 +90,13 @@ export class SearchEngine {
   search(query: string, filters?: { dateRange?: [string, string], service?: string }): SearchResult[] {
     if (!this.data) return [];
     
-    // Simple boolean parsing: split by space, check for AND, OR, NOT
-    // For simplicity in this local engine, we'll treat terms without operators as AND
-    // and handle -term as NOT.
+    // Escudo de seguridad (Backward Compatibility) para evitar fallos si el usuario no refrescó tras el refactor
+    const firstPatient = Object.values(this.data.patients)[0] as any;
+    if (firstPatient && firstPatient.episodes && !firstPatient.tomas) {
+      console.warn("Memoria RAM desactualizada. Por favor recarga la página o vuelve a subir el CSV.");
+      return [];
+    }
+    
     const rawTerms = query.split(/\s+/).filter(t => t.length > 0);
     const must: string[] = [];
     const mustNot: string[] = [];
@@ -102,7 +106,6 @@ export class SearchEngine {
       let term = rawTerms[i];
       if (term.toUpperCase() === 'AND') continue;
       if (term.toUpperCase() === 'OR') {
-        // Next term is should
         if (i + 1 < rawTerms.length) {
           should.push(...this.tokenize(rawTerms[i+1]));
           i++;
@@ -118,15 +121,19 @@ export class SearchEngine {
     }
 
     if (must.length === 0 && should.length === 0) {
-      // Return all if no query but maybe filters
       return this.getAllRecords(filters);
     }
 
-    const scores: Record<string, SearchResult> = {};
+    // Mapping NHC -> Detailed Matches
+    const patientMatches: Record<string, {
+      nhc: string,
+      patient: Patient,
+      totalScore: number,
+      registros: Record<string, { idToma: string, ordenToma: number, score: number, record: RegistroToma }>
+    }> = {};
 
     const processTerms = (terms: string[], isMust: boolean, isShould: boolean) => {
       for (const term of terms) {
-        // Find matching terms in index (partial match)
         const matchingIndexTerms = Object.keys(this.index).filter(t => t.includes(term));
         
         for (const indexTerm of matchingIndexTerms) {
@@ -134,27 +141,33 @@ export class SearchEngine {
           const idf = Math.log(this.documentCount / (docs.length || 1));
           
           for (const doc of docs) {
-            const docId = `${doc.nhc}_${doc.idToma}_${doc.ordenToma}`;
-            
-            // Exact match gets higher weight
             const tf = doc.count;
             const weight = indexTerm === term ? 2.0 : 1.0;
             const score = tf * idf * weight;
 
-            if (!scores[docId]) {
-              const patient = this.data!.patients[doc.nhc];
-              const episode = patient.episodes[doc.idToma];
-              const version = episode.versions.find(v => v.ordenToma === doc.ordenToma)!;
-              
-              scores[docId] = {
+            if (!patientMatches[doc.nhc]) {
+              patientMatches[doc.nhc] = {
                 nhc: doc.nhc,
+                patient: this.data!.patients[doc.nhc],
+                totalScore: 0,
+                registros: {}
+              };
+            }
+            
+            patientMatches[doc.nhc].totalScore += score;
+            
+            const regId = `${doc.idToma}_${doc.ordenToma}`;
+            if (!patientMatches[doc.nhc].registros[regId]) {
+              const toma = this.data!.patients[doc.nhc].tomas[doc.idToma];
+              const registro = toma.registros.find((r: any) => r.ordenToma === doc.ordenToma)!;
+              patientMatches[doc.nhc].registros[regId] = {
                 idToma: doc.idToma,
                 ordenToma: doc.ordenToma,
                 score: 0,
-                record: version
+                record: registro
               };
             }
-            scores[docId].score += score;
+            patientMatches[doc.nhc].registros[regId].score += score;
           }
         }
       }
@@ -163,29 +176,48 @@ export class SearchEngine {
     processTerms(must, true, false);
     processTerms(should, false, true);
 
-    // Apply NOT
     for (const term of mustNot) {
       const matchingIndexTerms = Object.keys(this.index).filter(t => t.includes(term));
       for (const indexTerm of matchingIndexTerms) {
         const docs = this.index[indexTerm];
         for (const doc of docs) {
-          const docId = `${doc.nhc}_${doc.idToma}_${doc.ordenToma}`;
-          if (scores[docId]) {
-            delete scores[docId];
+          if (patientMatches[doc.nhc]) {
+            delete patientMatches[doc.nhc];
           }
         }
       }
     }
 
-    // Filter results
-    let results = Object.values(scores);
+    let results: SearchResult[] = [];
     
-    // If we had MUST terms, ensure documents contain ALL must terms (simplified check)
-    if (must.length > 0) {
-       results = results.filter(res => {
-         const tokens = this.tokenizeRecord(res.record.data);
-         return must.every(m => tokens.some(t => t.includes(m)));
-       });
+    for (const nhc in patientMatches) {
+      const pm = patientMatches[nhc];
+      
+      const flatRegistros = Object.values(pm.registros).sort((a, b) => b.score - a.score);
+      
+      if (flatRegistros.length === 0) continue;
+      
+      if (must.length > 0) {
+        // Enforce MUST at the patient level globally (if patient has all MUST terms across ALL matching records combined)
+        // OR enforce it strictly per matched record. Given clinical context, users want patients who have ALL terms.
+        const allPatientTokens = new Set<string>();
+        flatRegistros.forEach(r => {
+           this.tokenizeRecord(r.record.data).forEach(t => allPatientTokens.add(t));
+        });
+        const hasAllMust = must.every(m => Array.from(allPatientTokens).some(t => t.includes(m)));
+        if (!hasAllMust) continue;
+      }
+
+      const uniqueTomasCount = new Set(flatRegistros.map(r => r.idToma)).size;
+
+      results.push({
+        nhc: pm.nhc,
+        patient: pm.patient,
+        totalScore: pm.totalScore,
+        matchingTomasCount: uniqueTomasCount,
+        bestMatchUrl: { idToma: flatRegistros[0].idToma, ordenToma: flatRegistros[0].ordenToma },
+        matchedRegistros: flatRegistros
+      });
     }
 
     return this.applyFiltersAndSort(results, filters);
@@ -195,20 +227,35 @@ export class SearchEngine {
     const results: SearchResult[] = [];
     if (!this.data) return results;
 
+    const firstPatient = Object.values(this.data.patients)[0] as any;
+    if (firstPatient && firstPatient.episodes && !firstPatient.tomas) return results;
+
     for (const nhc in this.data.patients) {
       const patient = this.data.patients[nhc];
-      for (const idToma in patient.episodes) {
-        const episode = patient.episodes[idToma];
-        for (const version of episode.versions) {
-          results.push({
-            nhc,
-            idToma,
-            ordenToma: version.ordenToma,
-            score: 1,
-            record: version
-          });
-        }
+      const allRegistros: { idToma: string; ordenToma: number; score: number; record: RegistroToma }[] = [];
+      const uniqueTomasCount = Object.keys(patient.tomas).length;
+      
+      // Let's just grab the latest of each toma for display by default in getAllRecords
+      for (const idToma in patient.tomas) {
+        const toma = patient.tomas[idToma];
+        allRegistros.push({
+          idToma,
+          ordenToma: toma.latest.ordenToma,
+          score: 1,
+          record: toma.latest
+        });
       }
+
+      if (allRegistros.length === 0) continue;
+
+      results.push({
+        nhc,
+        patient,
+        totalScore: 1, // baseline
+        matchingTomasCount: uniqueTomasCount,
+        bestMatchUrl: { idToma: allRegistros[0].idToma, ordenToma: allRegistros[0].ordenToma },
+        matchedRegistros: allRegistros
+      });
     }
     return this.applyFiltersAndSort(results, filters);
   }
@@ -220,35 +267,35 @@ export class SearchEngine {
       if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
         const start = new Date(filters.dateRange[0]).getTime();
         const end = new Date(filters.dateRange[1]).getTime();
-        filtered = filtered.filter(r => {
-          const dateKey = Object.keys(r.record.data).find(k => k.toUpperCase().includes('FECHA_TOMA'));
-          if (!dateKey || !r.record.data[dateKey]) return false;
-          // Try to parse date. Assuming YYYY-MM-DD or DD/MM/YYYY
-          let dateStr = r.record.data[dateKey];
-          if (dateStr.includes('/')) {
-            const parts = dateStr.split('/');
-            if (parts.length === 3) dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
-          }
-          const time = new Date(dateStr).getTime();
-          return time >= start && time <= end;
+        filtered = filtered.filter(res => {
+          // Check if ANY matched registro is within date
+          return res.matchedRegistros.some(r => {
+             const dateKey = Object.keys(r.record.data).find(k => k.toUpperCase().includes('FECHA_TOMA'));
+             if (!dateKey || !r.record.data[dateKey]) return false;
+             let dateStr = r.record.data[dateKey];
+             if (dateStr.includes('/')) {
+               const parts = dateStr.split('/');
+               if (parts.length === 3) dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+             }
+             const time = new Date(dateStr).getTime();
+             return time >= start && time <= end;
+          });
         });
       }
 
       if (filters.service) {
         const srv = filters.service.toLowerCase();
-        filtered = filtered.filter(r => {
-          const srvKey = Object.keys(r.record.data).find(k => k.toUpperCase().includes('SERVICIO') || k.toUpperCase().includes('PROCESO'));
-          if (!srvKey || !r.record.data[srvKey]) return false;
-          return r.record.data[srvKey].toLowerCase().includes(srv);
+        filtered = filtered.filter(res => {
+           return res.matchedRegistros.some(r => {
+              const srvKey = Object.keys(r.record.data).find(k => k.toUpperCase().includes('SERVICIO') || k.toUpperCase().includes('PROCESO'));
+              if (!srvKey || !r.record.data[srvKey]) return false;
+              return r.record.data[srvKey].toLowerCase().includes(srv);
+           });
         });
       }
     }
 
-    // Sort by score DESC, then ordenToma DESC
-    return filtered.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return b.ordenToma - a.ordenToma;
-    });
+    return filtered.sort((a, b) => b.totalScore - a.totalScore);
   }
 }
 

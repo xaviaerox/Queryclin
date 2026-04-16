@@ -1,103 +1,155 @@
-import React, { useState } from 'react';
-import { Search, Upload, Database, ShieldCheck, Zap, Activity } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope } from 'lucide-react';
 
 interface HomeProps {
   hasData: boolean;
   onUpload: (file: File) => void;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string }) => void;
 }
 
 export default function Home({ hasData, onUpload, onSearch }: HomeProps) {
   const [query, setQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+  const [service, setService] = useState('');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) onSearch(query);
+    onSearch(query, {
+      dateRange: dateStart || dateEnd ? [dateStart, dateEnd] : undefined,
+      service: service || undefined
+    });
   };
 
-  return (
-    <div className="max-w-5xl mx-auto w-full py-16 flex flex-col gap-20">
-      {/* Hero Section */}
-      <div className="text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-[12px] font-black uppercase tracking-[0.2em] animate-pulse">
-          <Activity size={14} /> Medical Data Intelligence
+  if (!hasData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center py-20">
+        <div className="bg-white/70 backdrop-blur-md p-12 rounded-2xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] border border-white/40 max-w-md w-full">
+          <div className="w-16 h-16 bg-[#eff6ff] text-[#2563eb] rounded-full flex items-center justify-center mx-auto mb-6">
+            <Upload size={32} />
+          </div>
+          <h2 className="text-2xl font-semibold mb-2 text-[#1e293b]">Inicializar Memoria Local</h2>
+          <p className="text-[#64748b] text-sm mb-8 leading-relaxed">
+            Importe la matriz de datos estructurada (.csv) para cargar la base en la memoria temporal.
+          </p>
+          <input
+            type="file"
+            accept=".csv"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                 onUpload(file);
+                 if (fileInputRef.current) fileInputRef.current.value = '';
+              }
+            }}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+          >
+            Importar Base de Datos
+          </button>
+          
+          <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-[#f1f5f9]">
+            <div className="space-y-2">
+              <ShieldCheck className="mx-auto text-[#64748b]" size={20} />
+              <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Aislamiento<br/>Local-First</p>
+            </div>
+            <div className="space-y-2">
+              <Database className="mx-auto text-[#64748b]" size={20} />
+              <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Motor en<br/>RAM</p>
+            </div>
+            <div className="space-y-2">
+              <Zap className="mx-auto text-[#64748b]" size={20} />
+              <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Booleano<br/>Avanzado</p>
+            </div>
+          </div>
         </div>
-        <h1 className="text-6xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1]">
-          Análisis de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">Historias Clínicas</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto mt-20 w-full relative z-20">
+      <div className="text-center mb-10">
+        <h1 className="text-4xl font-semibold tracking-tight mb-4 text-[#1e293b]">
+          Explorador de Historias Clínicas
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-          Navegación avanzada y búsqueda booleana instantánea sobre datos estructurados. 
-          Privacidad total con procesamiento local.
+        <p className="text-[#64748b]">
+          El analizador es compatible con sintaxis Booleana estricta (AND, OR, NOT).
         </p>
       </div>
 
-      {!hasData ? (
-        <div className="glass premium-shadow p-16 rounded-[3rem] text-center max-w-3xl mx-auto w-full group hover:scale-[1.01]">
-          <div className="w-24 h-24 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner rotate-3 transition-transform group-hover:rotate-0">
-            <Upload size={40} />
-          </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Comienza el Análisis</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-10 text-lg font-medium">Suelta tu archivo CSV aquí o haz clic para importar la base de datos.</p>
-          
-          <label className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-[1.5rem] font-black transition-all cursor-pointer shadow-2xl shadow-blue-600/30 active:scale-95 inline-block text-[15px] uppercase tracking-wider">
-            Importar Base de Datos
-            <input 
-              type="file" 
-              accept=".csv" 
-              className="hidden" 
-              onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])} 
-            />
-          </label>
-          
-          <div className="grid grid-cols-3 gap-10 mt-16 pt-10 border-t border-slate-200/50 dark:border-slate-800/50">
-            <div className="space-y-3">
-              <ShieldCheck className="mx-auto text-emerald-500" size={28} />
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Hiper Privado</p>
-            </div>
-            <div className="space-y-3">
-              <Database className="mx-auto text-blue-500" size={28} />
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Motor Local</p>
-            </div>
-            <div className="space-y-3">
-              <Zap className="mx-auto text-amber-500" size={28} />
-              <p className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Carga Vital</p>
-            </div>
+      <form onSubmit={handleSubmit} className="relative max-w-[600px] mx-auto">
+        <div className="relative flex items-center">
+          <Search className="absolute left-4 text-[#64748b]" size={20} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por identificadores, diagnóstico o clínica..."
+            className="w-full pl-11 pr-32 py-3 text-sm bg-white border border-[#e2e8f0] rounded-full shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] focus:outline-none focus:ring-2 focus:ring-[#2563eb] focus:border-transparent transition-shadow"
+          />
+          <div className="absolute right-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-1.5 rounded-full transition-colors ${showFilters ? 'bg-[#eff6ff] text-[#2563eb]' : 'text-[#64748b] hover:bg-gray-50'}`}
+              title="Filtros"
+            >
+              <Filter size={18} />
+            </button>
+            <button
+              type="submit"
+              className="bg-[#2563eb] hover:bg-blue-700 text-white px-5 py-1.5 rounded-full text-sm font-medium transition-colors"
+            >
+              Consultar
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="max-w-3xl mx-auto w-full space-y-8">
-          <form onSubmit={handleSubmit} className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-[2.5rem] blur opacity-20 group-focus-within:opacity-40 transition duration-500"></div>
-            <div className="relative">
+
+        {showFilters && (
+          <div className="absolute top-full left-0 right-0 mt-4 bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] z-20 grid grid-cols-2 gap-6">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1e293b] mb-2">
+                <Calendar size={16} /> Rango de Fechas
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={dateStart}
+                  onChange={(e) => setDateStart(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm text-[#1e293b]"
+                />
+                <span className="text-[#64748b]">-</span>
+                <input
+                  type="date"
+                  value={dateEnd}
+                  onChange={(e) => setDateEnd(e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm text-[#1e293b]"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1e293b] mb-2">
+                <Stethoscope size={16} /> Especialidad / Servicio
+              </label>
               <input
                 type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Ej: diabetes AND hipertension NOT asma"
-                className="w-full glass p-7 pl-16 rounded-[2.5rem] text-[20px] text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 font-bold"
+                value={service}
+                onChange={(e) => setService(e.target.value)}
+                placeholder="Ej: ALG, URGENCIAS..."
+                className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563eb] text-sm text-[#1e293b]"
               />
-              <Search className="absolute left-7 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={28} />
-              <button 
-                type="submit"
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-4 px-8 rounded-[1.5rem] font-black text-[13px] uppercase transition-all shadow-xl shadow-blue-600/20 active:scale-95 hover:bg-blue-700"
-              >
-                Buscar
-              </button>
             </div>
-          </form>
-
-          <div className="flex justify-center items-center gap-10">
-            <div className="flex items-center gap-3 text-[13px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
-              Dataset Activo
-            </div>
-            <div className="w-[1px] h-4 bg-slate-200 dark:border-slate-800"></div>
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 font-medium">
-              Usa <code className="bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded-md text-blue-600 dark:text-blue-400 font-black">AND</code> para combinar términos.
-            </p>
           </div>
-        </div>
-      )}
+        )}
+      </form>
     </div>
   );
 }
