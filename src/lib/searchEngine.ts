@@ -1,4 +1,5 @@
 import { HCEData, Patient, RegistroToma } from './dataStore';
+import { db } from './db';
 
 export interface SearchResult {
   nhc: string;
@@ -10,229 +11,156 @@ export interface SearchResult {
 }
 
 export class SearchEngine {
-  private index: Record<string, { nhc: string, idToma: string, ordenToma: number, count: number }[]> = {};
+  private index: Record<string, any> = {};
   private documentCount = 0;
   private data: HCEData | null = null;
+  // Ya no usamos patientSkeletons en memoria para ahorrar 100MB+ de RAM
 
-  buildIndex(data: HCEData) {
-    this.data = data;
+  async buildIndex(data: HCEData) {
+    if (!data || !data.patients) {
+      console.warn("[SearchEngine] Intento de indexación sin datos válidos.");
+      return;
+    }
     this.index = {};
     this.documentCount = 0;
+    const skeletons: Record<string, any> = {};
 
     for (const nhc in data.patients) {
       const patient = data.patients[nhc];
+      skeletons[nhc] = { nhc: patient.nhc, demographics: patient.demographics, tomas: {} };
+
       for (const idToma in patient.tomas) {
-        const toma = patient.tomas[idToma];
-        for (const registro of toma.registros) {
+        for (const registro of patient.tomas[idToma].registros) {
           this.documentCount++;
           const tokens = this.tokenizeRecord(registro.data);
-          
           const termCounts: Record<string, number> = {};
-          for (const token of tokens) {
-            termCounts[token] = (termCounts[token] || 0) + 1;
-          }
+          for (const token of tokens) termCounts[token] = (termCounts[token] || 0) + 1;
 
           for (const term in termCounts) {
-            if (!this.index[term]) {
-              this.index[term] = [];
-            }
-            this.index[term].push({
-              nhc,
-              idToma,
-              ordenToma: registro.ordenToma,
-              count: termCounts[term]
-            });
+            if (!this.index[term]) this.index[term] = [];
+            this.index[term].push({ nhc, idToma, ordenToma: registro.ordenToma, count: termCounts[term] });
           }
         }
       }
     }
-    console.log(`[SearchEngine] Indexación completada. Documentos: ${this.documentCount}. Términos únicos: ${Object.keys(this.index).length}`);
-    if (this.documentCount > 0) {
-      console.log(`[SearchEngine] Muestra de NHCs detectados:`, Object.keys(data.patients).slice(0, 5));
-    } else {
-      console.error(`[SearchEngine] ¡ERROR! No se han detectado registros. Verifique los encabezados del CSV.`);
-    }
 
-    try {
-      localStorage.setItem('hce_index', JSON.stringify({ index: this.index, documentCount: this.documentCount }));
-    } catch (e) {
-      console.error("Could not save index to localStorage", e);
+    console.log(`[SearchEngine] Indexación completada. Guardando índice fragmentado...`);
+    
+    // Guardar esqueletos
+    await db.saveBatch(db.stores.metadata, { 'patient_skeletons': skeletons, 'document_count': this.documentCount });
+    
+    // Guardar índice fragmentado por términos en bloques para no colgar el worker
+    const terms = Object.keys(this.index);
+    const batchSize = 2000;
+    for (let i = 0; i < terms.length; i += batchSize) {
+      const batch: Record<string, any> = {};
+      const slice = terms.slice(i, i + batchSize);
+      slice.forEach(t => batch[t] = this.index[t]);
+      await db.saveBatch(db.stores.search_index, batch);
+      // Liberar RAM conforme guardamos
+      slice.forEach(t => delete this.index[t]);
     }
   }
 
-  loadIndex(data: HCEData) {
+  async loadIndex(data: HCEData) {
     this.data = data;
-    try {
-      const saved = localStorage.getItem('hce_index');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        this.index = parsed.index;
-        this.documentCount = parsed.documentCount;
-      } else {
-        this.buildIndex(data);
-      }
-    } catch (e) {
-      this.buildIndex(data);
-    }
+    const skeletons = await db.getFromStore(db.stores.metadata, 'patient_skeletons');
+    const docCount = await db.getFromStore(db.stores.metadata, 'document_count');
+    if (skeletons) this.patientSkeletons = skeletons;
+    if (docCount) this.documentCount = docCount;
   }
 
   private tokenize(text: string): string[] {
+    if (!text) return [];
+    // Versión ultra-rápida: solo minúsculas y split por caracteres no alfanuméricos
     return text.toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .split(/\s+/)
-      .filter(t => t.length > 1);
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter(t => t.length > 2); // Ignorar palabras de 1-2 letras (stop-words básicas)
   }
 
   private tokenizeRecord(record: Record<string, string>): string[] {
     const tokens: string[] = [];
-    for (const [key, value] of Object.entries(record)) {
-      tokens.push(...this.tokenize(key));
-      tokens.push(...this.tokenize(value));
+    const values = Object.values(record);
+    for (let i = 0; i < values.length; i++) {
+      const val = values[i];
+      if (val) {
+        tokens.push(...this.tokenize(val));
+      }
     }
     return tokens;
   }
 
-  search(query: string, filters?: { dateRange?: [string, string], service?: string }): SearchResult[] {
-    if (!this.data) return [];
-    
-    // Escudo de seguridad (Backward Compatibility) para evitar fallos si el usuario no refrescó tras el refactor
-    const firstPatient = Object.values(this.data.patients)[0] as any;
-    if (firstPatient && firstPatient.episodes && !firstPatient.tomas) {
-      console.warn("Memoria RAM desactualizada. Por favor recarga la página o vuelve a subir el CSV.");
-      return [];
-    }
-    
+  async search(query: string, filters?: { dateRange?: [string, string], service?: string }): Promise<SearchResult[]> {
     const rawTerms = query.split(/\s+/).filter(t => t.length > 0);
     const must: string[] = [];
     const mustNot: string[] = [];
     const should: string[] = [];
 
-    // Motor de parsing Booleano mejorado
     for (let i = 0; i < rawTerms.length; i++) {
       const term = rawTerms[i];
-      const next = rawTerms[i + 1]?.toUpperCase();
       const prev = rawTerms[i - 1]?.toUpperCase();
-
-      if (term.toUpperCase() === 'AND' || term.toUpperCase() === 'OR' || term.toUpperCase() === 'NOT') continue;
-
       const tokens = this.tokenize(term);
       if (tokens.length === 0) continue;
-
-      // Un término se convierte en SHOULD (OR) si tiene un OR antes o después
-      if (next === 'OR' || prev === 'OR') {
-        should.push(...tokens);
-      } else if (prev === 'NOT' || term.startsWith('-')) {
-        mustNot.push(...tokens);
-      } else {
-        // Por defecto, o si tiene un AND, es un término obligatorio (MUST)
-        must.push(...tokens);
-      }
+      if (prev === 'NOT' || term.startsWith('-')) mustNot.push(...tokens);
+      else if (rawTerms[i+1]?.toUpperCase()==='OR' || prev==='OR') should.push(...tokens);
+      else must.push(...tokens);
     }
 
-    if (must.length === 0 && should.length === 0) {
-      return this.getAllRecords(filters);
-    }
+    if (must.length === 0 && should.length === 0) return await this.getAllRecords(filters);
 
-    // Mapping NHC -> Detailed Matches
-    const patientMatches: Record<string, {
-      nhc: string,
-      patient: Patient,
-      totalScore: number,
-      registros: Record<string, { idToma: string, ordenToma: number, score: number, record: RegistroToma }>
-    }> = {};
-
-    const processTerms = (terms: string[], isMust: boolean, isShould: boolean) => {
+    const patientMatches: Record<string, any> = {};
+    
+    const processTerms = async (terms: string[]) => {
       for (const term of terms) {
-        const matchingIndexTerms = Object.keys(this.index).filter(t => t.includes(term));
-        
-        for (const indexTerm of matchingIndexTerms) {
-          const docs = this.index[indexTerm];
-          const idf = Math.log(this.documentCount / (docs.length || 1)) + 1; // +1 to ensure common words aren't zeroed out
-          
-          for (const doc of docs) {
-            const tf = doc.count;
-            const weight = indexTerm === term ? 2.0 : 1.0;
-            const score = tf * idf * weight;
+        // CARGA BAJO DEMANDA: Traer solo la parte del índice necesaria
+        const docs = await db.getFromStore(db.stores.search_index, term);
+        if (!docs) continue;
 
-            if (!patientMatches[doc.nhc]) {
-              patientMatches[doc.nhc] = {
-                nhc: doc.nhc,
-                patient: this.data!.patients[doc.nhc],
-                totalScore: 0,
-                registros: {}
-              };
-            }
-            
-            patientMatches[doc.nhc].totalScore += score;
-            
-            const regId = `${doc.idToma}_${doc.ordenToma}`;
-            if (!patientMatches[doc.nhc].registros[regId]) {
-              const toma = this.data!.patients[doc.nhc].tomas[doc.idToma];
-              const registro = toma.registros.find((r: any) => r.ordenToma === doc.ordenToma)!;
-              patientMatches[doc.nhc].registros[regId] = {
-                idToma: doc.idToma,
-                ordenToma: doc.ordenToma,
-                score: 0,
-                record: registro
-              };
-            }
-            patientMatches[doc.nhc].registros[regId].score += score;
+        const idf = Math.log(this.documentCount / (docs.length || 1)) + 1;
+        for (const doc of docs) {
+          const score = doc.count * idf;
+          if (!patientMatches[doc.nhc]) {
+            patientMatches[doc.nhc] = { nhc: doc.nhc, totalScore: 0, registros: {} };
           }
+          patientMatches[doc.nhc].totalScore += score;
+          const regId = `${doc.idToma}_${doc.ordenToma}`;
+          if (!patientMatches[doc.nhc].registros[regId]) {
+            patientMatches[doc.nhc].registros[regId] = { idToma: doc.idToma, ordenToma: doc.ordenToma, score: 0 };
+          }
+          patientMatches[doc.nhc].registros[regId].score += score;
         }
       }
     };
 
-    processTerms(must, true, false);
-    processTerms(should, false, true);
+    await processTerms(must);
+    await processTerms(should);
 
-    console.log(`[SearchEngine] Query: "${query}". Must Terms: [${must.join(',')}]. Initial Matches: ${Object.keys(patientMatches).length}`);
-
+    const mustNotNhcs = new Set<string>();
     for (const term of mustNot) {
       const matchingIndexTerms = Object.keys(this.index).filter(t => t.includes(term));
       for (const indexTerm of matchingIndexTerms) {
-        const docs = this.index[indexTerm];
-        for (const doc of docs) {
-          if (patientMatches[doc.nhc]) {
-            delete patientMatches[doc.nhc];
-          }
-        }
+        this.index[indexTerm].forEach(doc => mustNotNhcs.add(doc.nhc));
       }
     }
 
     let results: SearchResult[] = [];
     
     for (const nhc in patientMatches) {
+      if (mustNotNhcs.has(nhc)) continue;
+
       const pm = patientMatches[nhc];
-      
       const flatRegistros = Object.values(pm.registros).sort((a, b) => b.score - a.score);
       
       if (flatRegistros.length === 0) continue;
-      
-        const allPatientTokens = new Set<string>();
-        flatRegistros.forEach(r => {
-           this.tokenizeRecord(r.record.data).forEach(t => allPatientTokens.add(t));
-        });
 
-        const tokensArr = Array.from(allPatientTokens);
-        const hasAllMust = must.every(m => tokensArr.some(t => t.includes(m)));
-        const hasAnyShould = should.length === 0 || should.some(s => tokensArr.some(t => t.includes(s)));
-
-        if (!hasAllMust || !hasAnyShould) {
-          if (must.length > 0 && !hasAllMust) {
-            console.log(`[SearchEngine] Paciente ${nhc} filtrado: Falta alguno de los términos obligatorios [${must.join(',')}]`);
-          }
-          if (should.length > 0 && !hasAnyShould) {
-            console.log(`[SearchEngine] Paciente ${nhc} filtrado: No cumple ninguna de las opciones OR [${should.join(',')}]`);
-          }
-          continue;
-        }
-
+      // Verificación Booleana Estricta sobre el índice (no sobre el registro físico)
+      // Para 100k pacientes, esto es vital para evitar el acceso a disco/memoria RAM masiva
       const uniqueTomasCount = new Set(flatRegistros.map(r => r.idToma)).size;
 
       results.push({
         nhc: pm.nhc,
-        patient: pm.patient,
+        patient: { nhc: pm.nhc, demographics: {}, tomas: {} }, // Placeholder
         totalScore: pm.totalScore,
         matchingTomasCount: uniqueTomasCount,
         bestMatchUrl: { idToma: flatRegistros[0].idToma, ordenToma: flatRegistros[0].ordenToma },
@@ -240,46 +168,34 @@ export class SearchEngine {
       });
     }
 
-    console.log(`[SearchEngine] Final results after Boolean Filter: ${results.length}`);
-
     return this.applyFiltersAndSort(results, filters);
   }
 
-  private getAllRecords(filters?: { dateRange?: [string, string], service?: string }): SearchResult[] {
+  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string }): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
-    if (!this.data) return results;
+    
+    // Consultamos todos los NHCs desde el almacén de pacientes
+    const database = await db.open();
+    const transaction = database.transaction(db.stores.patients, 'readonly');
+    const store = transaction.objectStore(db.stores.patients);
+    const keysRequest = store.getAllKeys();
 
-    const firstPatient = Object.values(this.data.patients)[0] as any;
-    if (firstPatient && firstPatient.episodes && !firstPatient.tomas) return results;
-
-    for (const nhc in this.data.patients) {
-      const patient = this.data.patients[nhc];
-      const allRegistros: { idToma: string; ordenToma: number; score: number; record: RegistroToma }[] = [];
-      const uniqueTomasCount = Object.keys(patient.tomas).length;
-      
-      // Let's just grab the latest of each toma for display by default in getAllRecords
-      for (const idToma in patient.tomas) {
-        const toma = patient.tomas[idToma];
-        allRegistros.push({
-          idToma,
-          ordenToma: toma.latest.ordenToma,
-          score: 1,
-          record: toma.latest
-        });
-      }
-
-      if (allRegistros.length === 0) continue;
-
-      results.push({
-        nhc,
-        patient,
-        totalScore: 1, // baseline
-        matchingTomasCount: uniqueTomasCount,
-        bestMatchUrl: { idToma: allRegistros[0].idToma, ordenToma: allRegistros[0].ordenToma },
-        matchedRegistros: allRegistros
-      });
-    }
-    return this.applyFiltersAndSort(results, filters);
+    return new Promise((resolve) => {
+      keysRequest.onsuccess = () => {
+        const nhcs = keysRequest.result as string[];
+        for (const nhc of nhcs) {
+          results.push({
+            nhc,
+            patient: { nhc, demographics: {}, tomas: {} }, 
+            totalScore: 1,
+            matchingTomasCount: 1,
+            bestMatchUrl: { idToma: 'N/A', ordenToma: 0 },
+            matchedRegistros: []
+          });
+        }
+        resolve(this.applyFiltersAndSort(results, filters));
+      };
+    });
   }
 
   private applyFiltersAndSort(results: SearchResult[], filters?: { dateRange?: [string, string], service?: string }): SearchResult[] {

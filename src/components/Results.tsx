@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SearchResult } from '../lib/searchEngine';
 import { ArrowLeft, FileText, Download, Activity, User } from 'lucide-react';
 
@@ -8,7 +9,78 @@ interface ResultsProps {
   onBack: () => void;
 }
 
+import { db } from '../lib/db';
+import { Patient } from '../lib/dataStore';
+
+function ResultCard({ res, onSelect }: { res: SearchResult, onSelect: (r: SearchResult) => void }) {
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchDemographics = async () => {
+      const p = await db.getFromStore(db.stores.patients, res.nhc);
+      if (active && p) {
+        setPatient(p);
+        setLoading(false);
+      }
+    };
+    fetchDemographics();
+    return () => { active = false; };
+  }, [res.nhc]);
+
+  const demographics = patient?.demographics || {};
+  const nameKey = Object.keys(demographics).find(k => k.toUpperCase().includes('NOMBRE')) || '';
+  const name = nameKey ? demographics[nameKey] : `Paciente ${res.nhc}`;
+
+  return (
+    <div 
+      onClick={() => onSelect(res)}
+      className="bg-[var(--surface-clinical)] p-6 rounded-2xl shadow-lg border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] transition-all cursor-pointer flex items-center gap-6 group relative overflow-hidden"
+    >
+      <div className="w-14 h-14 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+        <User size={28} />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center justify-between mb-2">
+          {loading ? (
+            <div className="h-6 w-48 bg-[var(--border-clinical)] animate-pulse rounded-md"></div>
+          ) : (
+            <h3 className="text-[18px] font-black text-[var(--text-primary)] flex items-center gap-2 group-hover:text-[var(--accent-clinical)] transition-colors">
+              {name}
+            </h3>
+          )}
+          <span className="text-[11px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] px-3 py-1.5 rounded-full uppercase tracking-widest">
+            Score: {res.totalScore.toFixed(1)}
+          </span>
+        </div>
+        
+        <div className="flex gap-3 flex-wrap mt-3 items-center text-[12px] text-[var(--text-secondary)]">
+          <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">NHC: {res.nhc}</span>
+          <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">
+            <Activity size={14} className="text-[var(--accent-clinical)]" /> 
+            {res.matchingTomasCount} Tomas
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function Results({ results, query, onSelect, onBack }: ResultsProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+  
+  const totalPages = Math.ceil(results.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const visibleResults = results.slice(startIndex, startIndex + itemsPerPage);
+
+  // Resetear a la página 1 cuando cambie la búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [results]);
+
   const handleExportCSV = () => {
     if (results.length === 0) return;
 
@@ -81,44 +153,38 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {results.map((res, idx) => {
-          const record = res.patient.demographics;
-          const nameKey = Object.keys(record).find(k => k.toUpperCase().includes('NOMBRE')) || '';
-          const name = nameKey ? record[nameKey] : `Sin nombre registrado`;
+        {visibleResults.map((res, idx) => (
+          <ResultCard key={`res_${res.nhc}_${idx}`} res={res} onSelect={onSelect} />
+        ))}
 
-          return (
-            <div 
-              key={`result_${res.nhc}_${idx}`}
-              onClick={() => onSelect(res)}
-              className="bg-[var(--surface-clinical)] p-6 rounded-2xl shadow-lg border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] transition-all cursor-pointer flex items-center gap-6 group relative overflow-hidden"
+        {/* Controles de Paginación */}
+        {results.length > itemsPerPage && (
+          <div className="flex items-center justify-center gap-4 mt-8 mb-12">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => {
+                setCurrentPage(prev => prev - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-6 py-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl font-bold text-[var(--text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--accent-clinical)] transition-all"
             >
-              <div className="w-14 h-14 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                <User size={28} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-[18px] font-black text-[var(--text-primary)] flex items-center gap-2 group-hover:text-[var(--accent-clinical)] transition-colors">
-                    {name}
-                  </h3>
-                  <span className="text-[11px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] px-3 py-1.5 rounded-full uppercase tracking-widest">
-                    Score: {res.totalScore.toFixed(1)}
-                  </span>
-                </div>
-                
-                <div className="flex gap-3 flex-wrap mt-3 items-center text-[12px] text-[var(--text-secondary)]">
-                  <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">NHC: {res.nhc}</span>
-                  <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">
-                    <Activity size={14} className="text-[var(--accent-clinical)]" /> 
-                    {res.matchingTomasCount} Tomas
-                  </span>
-                  <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold">
-                    {res.matchedRegistros.length} Registros
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              Anterior
+            </button>
+            <span className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">
+              Página {currentPage} de {totalPages}
+            </span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => {
+                setCurrentPage(prev => prev + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-6 py-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl font-bold text-[var(--text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--accent-clinical)] transition-all"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
 
         {results.length === 0 && (
           <div className="text-center py-24 bg-[var(--surface-clinical)] rounded-2xl border border-dashed border-[var(--border-clinical)] shadow-sm">

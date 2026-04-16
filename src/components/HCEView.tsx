@@ -11,8 +11,10 @@ interface HCEViewProps {
   onIndexChange: (index: number) => void;
   onBack: () => void;
   query: string;
-  data: HCEData;
 }
+
+import { db } from '../lib/db';
+import { Patient } from '../lib/dataStore';
 
 const TABS: FieldCategory[] = [
   'Demografía',
@@ -24,29 +26,58 @@ const TABS: FieldCategory[] = [
   'OTROS'
 ];
 
-export default function HCEView({ results, currentIndex, onIndexChange, onBack, query, data }: HCEViewProps) {
+export default function HCEView({ results, currentIndex, onIndexChange, onBack, query }: HCEViewProps) {
   const currentResult = results[currentIndex];
-  const patient = currentResult.patient;
+  // El paciente real se cargará asíncronamente desde DB
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [selectedTomaId, setSelectedTomaId] = useState(currentResult.bestMatchUrl.idToma);
   const [selectedOrdenToma, setSelectedOrdenToma] = useState(currentResult.bestMatchUrl.ordenToma);
   const [activeTab, setActiveTab] = useState<FieldCategory>('Anamnesis y Exploración');
 
   useEffect(() => {
-    setSelectedTomaId(currentResult.bestMatchUrl.idToma);
-    setSelectedOrdenToma(currentResult.bestMatchUrl.ordenToma);
+    const loadPatient = async () => {
+      setLoading(true);
+      setPatient(null); // Resetear datos para evitar que se mezclen con el anterior
+      const fullPatient = await db.getFromStore(db.stores.patients, currentResult.nhc);
+      if (fullPatient) {
+        setPatient(fullPatient);
+        setLoading(false);
+      }
+    };
+    loadPatient();
+  }, [currentResult.nhc]);
 
-    // Auto-detectar la pestaña que contiene el primer match
-    const currentToma = patient.tomas[currentResult.bestMatchUrl.idToma];
-    const currentReg = currentToma?.registros.find(r => r.ordenToma === currentResult.bestMatchUrl.ordenToma);
+  useEffect(() => {
+    if (!patient) return;
     
-    if (currentReg && query) {
-      const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1 && !['AND', 'OR', 'NOT'].includes(t.toUpperCase()));
-      for (const [key, value] of Object.entries(currentReg.data)) {
-        if (tokens.some(token => value.toLowerCase().includes(token))) {
-          const category = classifyField(key);
-          setActiveTab(category);
-          break;
+    // Si el ID de toma es N/A (procedente de lista completa), elegimos la última toma disponible
+    let tomaId = currentResult.bestMatchUrl.idToma;
+    let ordenToma = currentResult.bestMatchUrl.ordenToma;
+
+    if (tomaId === 'N/A') {
+      const allTomaIds = Object.keys(patient.tomas);
+      tomaId = allTomaIds[allTomaIds.length - 1]; // Última toma
+      ordenToma = patient.tomas[tomaId].latest.ordenToma;
+    }
+
+    setSelectedTomaId(tomaId);
+    setSelectedOrdenToma(ordenToma);
+
+    // Auto-detectar la pestaña que contiene el primer match (solo si hay consulta)
+    if (query) {
+      const currentToma = patient.tomas[tomaId];
+      const currentReg = currentToma?.registros.find(r => r.ordenToma === ordenToma);
+      
+      if (currentReg) {
+        const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1 && !['AND', 'OR', 'NOT'].includes(t.toUpperCase()));
+        for (const [key, value] of Object.entries(currentReg.data)) {
+          if (tokens.some(token => value.toLowerCase().includes(token))) {
+            const category = classifyField(key);
+            setActiveTab(category);
+            break;
+          }
         }
       }
     }
@@ -63,7 +94,7 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
     return () => clearTimeout(timer);
   }, [activeTab, selectedOrdenToma]);
 
-  const toma = patient.tomas[selectedTomaId];
+  const toma = patient?.tomas[selectedTomaId];
   const registro = toma?.registros.find(r => r.ordenToma === selectedOrdenToma) || toma?.latest;
 
   const categorizedFields = useMemo(() => {
@@ -78,6 +109,13 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
     }
     return result;
   }, [registro]);
+
+  if (loading || !patient) return (
+    <div className="flex flex-col items-center justify-center h-full gap-4 py-20">
+      <div className="w-10 h-10 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-[var(--text-secondary)] font-bold">Recuperando historial clínico del NHC {currentResult.nhc}...</p>
+    </div>
+  );
 
   if (!toma || !registro) return <div className="p-20 text-center bg-white/70 rounded-2xl border border-white/40">Error cargando información clínica.</div>;
 

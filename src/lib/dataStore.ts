@@ -80,36 +80,30 @@ export function groupData(records: ClinicalRecord[]): HCEData {
   return { patients };
 }
 
+import { db } from './db';
+
 export const storage = {
-  saveData: (data: HCEData) => {
+  saveData: async (data: HCEData) => {
     try {
-      localStorage.setItem('hce_data', JSON.stringify(data));
+      // Guardar el monolito entero solo si es pequeño, para grandes volúmenes se usa el worker directamente en los otros almacenes
+      await db.saveBatch(db.stores.metadata, { 'hce_data': data });
     } catch (e) {
-      console.error("Error saving to localStorage", e);
+      console.error("Error saving to IndexedDB", e);
     }
   },
-  loadData: (): HCEData | null => {
+  loadData: async (): Promise<HCEData | null> => {
     try {
-      const data = localStorage.getItem('hce_data');
+      const data = await db.getFromStore(db.stores.metadata, 'hce_data');
       if (!data) return null;
       
-      const parsed = JSON.parse(data);
-      // Validar compatibilidad de la base de datos local contra el refactor
-      const firstPatient = Object.values(parsed.patients)[0] as any;
-      if (firstPatient && firstPatient.episodes && !firstPatient.tomas) {
-        console.warn("Detectado esquema de datos antiguo (Episodios). Purgando caché para forzar esquema de Tomas.");
-        storage.clearData();
-        return null;
-      }
-      
-      return parsed;
+      return data;
     } catch (e) {
-      console.error("Error loading from localStorage", e);
+      console.error("Error loading from IndexedDB", e);
       return null;
     }
   },
-  clearData: () => {
-    localStorage.removeItem('hce_data');
-    localStorage.removeItem('hce_index');
+  clearData: async () => {
+    await db.clear();
+    localStorage.removeItem('hce_index'); // El índice ligero aún puede estar en localStorage o limpiarse también
   }
 };
