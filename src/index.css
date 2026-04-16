@@ -9,3 +9,12 @@
     scrollbar-width: none;
   }
 }
+
+.highlight-match {
+  background-color: #fef08a; /* yellow-200 */
+  color: #1e293b;
+  padding: 0 2px;
+  border-radius: 4px;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(254, 240, 138, 0.4);
+}

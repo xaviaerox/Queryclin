@@ -35,7 +35,33 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
   useEffect(() => {
     setSelectedTomaId(currentResult.bestMatchUrl.idToma);
     setSelectedOrdenToma(currentResult.bestMatchUrl.ordenToma);
-  }, [currentResult.nhc, currentResult.bestMatchUrl.idToma, currentResult.bestMatchUrl.ordenToma]);
+
+    // Auto-detectar la pestaña que contiene el primer match
+    const currentToma = patient.tomas[currentResult.bestMatchUrl.idToma];
+    const currentReg = currentToma?.registros.find(r => r.ordenToma === currentResult.bestMatchUrl.ordenToma);
+    
+    if (currentReg && query) {
+      const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1 && !['AND', 'OR', 'NOT'].includes(t.toUpperCase()));
+      for (const [key, value] of Object.entries(currentReg.data)) {
+        if (tokens.some(token => value.toLowerCase().includes(token))) {
+          const category = classifyField(key);
+          setActiveTab(category);
+          break;
+        }
+      }
+    }
+  }, [currentResult.nhc, currentResult.bestMatchUrl.idToma, currentResult.bestMatchUrl.ordenToma, query, patient]);
+
+  // Efecto para scroll automático al primer resaltado
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const firstMatch = document.querySelector('.highlight-match');
+      if (firstMatch) {
+        firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 300); // Pequeño delay para asegurar que el DOM y la pestaña han cargado
+    return () => clearTimeout(timer);
+  }, [activeTab, selectedOrdenToma]);
 
   const toma = patient.tomas[selectedTomaId];
   const registro = toma?.registros.find(r => r.ordenToma === selectedOrdenToma) || toma?.latest;
