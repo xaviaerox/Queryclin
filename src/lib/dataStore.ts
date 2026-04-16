@@ -30,15 +30,16 @@ export function groupData(records: ClinicalRecord[]): HCEData {
 
   for (const record of records) {
     // Find keys for grouping, handling possible variations in case/spacing
-    const nhcKey = Object.keys(record).find(k => k.toUpperCase().includes('N.H.C')) || 'N.H.C';
-    const idTomaKey = Object.keys(record).find(k => k.toUpperCase().includes('ID_TOMA')) || 'ID_Toma';
-    const ordenTomaKey = Object.keys(record).find(k => k.toUpperCase().includes('ORDEN_TOMA')) || 'Orden_Toma';
+    // Normalización de claves para que coincidan con el METAPROMPT (NHC_ID, ID_TOMA, ORDEN_TOMA)
+    const nhcKey = Object.keys(record).find(k => k.toUpperCase().replace(/\W/g, '').includes('NHC')) || 'NHC_ID';
+    const idTomaKey = Object.keys(record).find(k => k.toUpperCase().includes('ID_TOMA')) || 'ID_TOMA';
+    const ordenTomaKey = Object.keys(record).find(k => k.toUpperCase().includes('ORDEN_TOMA')) || 'ORDEN_TOMA';
 
     const nhc = record[nhcKey];
-    const idToma = record[idTomaKey];
+    const idToma = record[idTomaKey] || 'TOMA_UNICA';
     const ordenTomaStr = record[ordenTomaKey];
     
-    if (!nhc) continue; // Skip invalid records
+    if (!nhc) continue; // Si no hay NHC, no podemos indexar el registro
 
     const ordenToma = parseInt(ordenTomaStr, 10) || 0;
 

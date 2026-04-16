@@ -46,7 +46,13 @@ export class SearchEngine {
         }
       }
     }
-    
+    console.log(`[SearchEngine] Indexación completada. Documentos: ${this.documentCount}. Términos únicos: ${Object.keys(this.index).length}`);
+    if (this.documentCount > 0) {
+      console.log(`[SearchEngine] Muestra de NHCs detectados:`, Object.keys(data.patients).slice(0, 5));
+    } else {
+      console.error(`[SearchEngine] ¡ERROR! No se han detectado registros. Verifique los encabezados del CSV.`);
+    }
+
     try {
       localStorage.setItem('hce_index', JSON.stringify({ index: this.index, documentCount: this.documentCount }));
     } catch (e) {
@@ -102,22 +108,26 @@ export class SearchEngine {
     const mustNot: string[] = [];
     const should: string[] = [];
 
+    // Motor de parsing Booleano mejorado
     for (let i = 0; i < rawTerms.length; i++) {
-      let term = rawTerms[i];
-      if (term.toUpperCase() === 'AND') continue;
-      if (term.toUpperCase() === 'OR') {
-        if (i + 1 < rawTerms.length) {
-          should.push(...this.tokenize(rawTerms[i+1]));
-          i++;
-        }
-        continue;
+      const term = rawTerms[i];
+      const next = rawTerms[i + 1]?.toUpperCase();
+      const prev = rawTerms[i - 1]?.toUpperCase();
+
+      if (term.toUpperCase() === 'AND' || term.toUpperCase() === 'OR' || term.toUpperCase() === 'NOT') continue;
+
+      const tokens = this.tokenize(term);
+      if (tokens.length === 0) continue;
+
+      // Un término se convierte en SHOULD (OR) si tiene un OR antes o después
+      if (next === 'OR' || prev === 'OR') {
+        should.push(...tokens);
+      } else if (prev === 'NOT' || term.startsWith('-')) {
+        mustNot.push(...tokens);
+      } else {
+        // Por defecto, o si tiene un AND, es un término obligatorio (MUST)
+        must.push(...tokens);
       }
-      if (term.toUpperCase() === 'NOT' || term.startsWith('-')) {
-        const t = term.startsWith('-') ? term.substring(1) : rawTerms[++i];
-        if (t) mustNot.push(...this.tokenize(t));
-        continue;
-      }
-      must.push(...this.tokenize(term));
     }
 
     if (must.length === 0 && should.length === 0) {
@@ -138,7 +148,7 @@ export class SearchEngine {
         
         for (const indexTerm of matchingIndexTerms) {
           const docs = this.index[indexTerm];
-          const idf = Math.log(this.documentCount / (docs.length || 1));
+          const idf = Math.log(this.documentCount / (docs.length || 1)) + 1; // +1 to ensure common words aren't zeroed out
           
           for (const doc of docs) {
             const tf = doc.count;
@@ -176,6 +186,8 @@ export class SearchEngine {
     processTerms(must, true, false);
     processTerms(should, false, true);
 
+    console.log(`[SearchEngine] Query: "${query}". Must Terms: [${must.join(',')}]. Initial Matches: ${Object.keys(patientMatches).length}`);
+
     for (const term of mustNot) {
       const matchingIndexTerms = Object.keys(this.index).filter(t => t.includes(term));
       for (const indexTerm of matchingIndexTerms) {
@@ -197,16 +209,24 @@ export class SearchEngine {
       
       if (flatRegistros.length === 0) continue;
       
-      if (must.length > 0) {
-        // Enforce MUST at the patient level globally (if patient has all MUST terms across ALL matching records combined)
-        // OR enforce it strictly per matched record. Given clinical context, users want patients who have ALL terms.
         const allPatientTokens = new Set<string>();
         flatRegistros.forEach(r => {
            this.tokenizeRecord(r.record.data).forEach(t => allPatientTokens.add(t));
         });
-        const hasAllMust = must.every(m => Array.from(allPatientTokens).some(t => t.includes(m)));
-        if (!hasAllMust) continue;
-      }
+
+        const tokensArr = Array.from(allPatientTokens);
+        const hasAllMust = must.every(m => tokensArr.some(t => t.includes(m)));
+        const hasAnyShould = should.length === 0 || should.some(s => tokensArr.some(t => t.includes(s)));
+
+        if (!hasAllMust || !hasAnyShould) {
+          if (must.length > 0 && !hasAllMust) {
+            console.log(`[SearchEngine] Paciente ${nhc} filtrado: Falta alguno de los términos obligatorios [${must.join(',')}]`);
+          }
+          if (should.length > 0 && !hasAnyShould) {
+            console.log(`[SearchEngine] Paciente ${nhc} filtrado: No cumple ninguna de las opciones OR [${should.join(',')}]`);
+          }
+          continue;
+        }
 
       const uniqueTomasCount = new Set(flatRegistros.map(r => r.idToma)).size;
 
@@ -219,6 +239,8 @@ export class SearchEngine {
         matchedRegistros: flatRegistros
       });
     }
+
+    console.log(`[SearchEngine] Final results after Boolean Filter: ${results.length}`);
 
     return this.applyFiltersAndSort(results, filters);
   }
