@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+# Local data and scratch
+csv_100k.csv
+scratch/
