@@ -13,3 +13,6 @@ Cada vez que finalices una característica importante o un hito del Roadmap, act
 
 ## 4. Identidad del Proyecto
 El nombre del proyecto es **Queryclin**. Nunca uses nombres antiguos (HCE Core/Intelligence).
+
+## 5. Mantenimiento del Diario de Aprendizaje
+Al finalizar las tareas de una sesión, DEBES actualizar `DIARIO_APRENDIZAJE.md`. El formato debe ser cronológico e incluir obligatoriamente el bloque **"Resumen para el Centro (Copiar y Pegar)"** con un título y un párrafo profesional descriptivo de los logros del día.

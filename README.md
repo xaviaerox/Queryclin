@@ -51,10 +51,15 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva, el st
 - Migración a arquitectura asíncrona para soportar 100.000 pacientes sin errores de memoria (Versión 2.0).
 - Implementación de paginación virtual y carga diferida de registros.
 
-### Fase 5: Optimización de Ingesta y Versionado (V2.1 - Actual ✅)
+### Fase 5: Optimización de Ingesta y Versionado (✅)
 - Adaptación del motor de ingesta para soportar separadores de pipeline (`|`) habituales en sistemas de exportación heredados.
 - Implementación de un sistema de etiquetado de versiones visual en la interfaz.
-- Organización del espacio de trabajo local (`local_workspace`) para pruebas controladas.
+
+### Fase 6: Ultra-Escalabilidad y Precisión Clínica (V2.2 - Actual ✅)
+- **Fragmentación de Metadatos**: División del padrón de pacientes (skeletons) en fragmentos para superar los límites de IndexedDB en escalas de 100k registros.
+- **Búsqueda Booleana Persistente**: Corrección del operador `NOT` para consultas directas a base de datos, eliminando la dependencia de la memoria volátil.
+- **Precisión Clínica**: Tokenización de corto espectro para capturar abreviaturas médicas esenciales (`O2`, `pH`, `Na`, `K`).
+- **Filtros Instantáneos**: Pre-indexación de `Servicio` y `Fecha` para segmentación de resultados en milisegundos.
 
 ---
 

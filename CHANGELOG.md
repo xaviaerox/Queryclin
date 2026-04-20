@@ -2,6 +2,21 @@
 
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
+## [2026-04-20]
+### Versión 2.2 (Ultra-Escalabilidad y Precisión Clínica)
+- **Fragmentación de Metadatos (Big Data):**
+  - **Archivos Modificados:** `src/lib/searchEngine.ts`, `src/lib/dataStore.ts`.
+  - **Detalle:** Se ha eliminado el almacenamiento monolítico de metadatos (`hce_data`) para evitar el límite de 133MB de IndexedDB. Ahora el padrón de pacientes (`skeletons`) se fragmenta en bloques gestionables, permitiendo escalar hasta 100,000 registros sin degradación de rendimiento.
+- **Corrección Operador NOT Persistente:**
+  - **Archivo Modificado:** `src/lib/searchEngine.ts`.
+  - **Detalle:** El operador Booleano `NOT` / `-` ahora consulta directamente la base de datos persistente en IndexedDB en lugar de la memoria volátil, asegurando su funcionamiento en todas las sesiones.
+- **Optimización de Tokenización Clínica:**
+  - **Archivo Modificado:** `src/lib/searchEngine.ts`.
+  - **Detalle:** Reducción del umbral de tokenización para capturar términos de 1 y 2 letras, vital para la detección de constantes y analíticas (`pH`, `O2`, `Na`, `K`, `TA`).
+- **Indexación de Filtros Rápidos:**
+  - **Archivo Modificado:** `src/lib/searchEngine.ts`.
+  - **Motivo:** Acelerar el filtrado por `Servicio` y `Fecha` en grandes volúmenes de resultados. Estos atributos ahora se pre-indexan en los `skeletons` de los pacientes.
+
 ## [2026-04-17]
 ### Versión 2.1 (Optimización de Ingesta y UI)
 - **Implementación de Versionado Visual:**

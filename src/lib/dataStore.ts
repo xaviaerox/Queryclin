@@ -83,27 +83,16 @@ export function groupData(records: ClinicalRecord[]): HCEData {
 import { db } from './db';
 
 export const storage = {
-  saveData: async (data: HCEData) => {
-    try {
-      // Guardar el monolito entero solo si es pequeño, para grandes volúmenes se usa el worker directamente en los otros almacenes
-      await db.saveBatch(db.stores.metadata, { 'hce_data': data });
-    } catch (e) {
-      console.error("Error saving to IndexedDB", e);
-    }
+  saveData: async (_data: HCEData) => {
+    // Ya no guardamos el monolito hce_data para permitir escalado a 100k.
+    // La persistencia ahora la gestiona el worker directamente en los stores fragmentados.
   },
   loadData: async (): Promise<HCEData | null> => {
-    try {
-      const data = await db.getFromStore(db.stores.metadata, 'hce_data');
-      if (!data) return null;
-      
-      return data;
-    } catch (e) {
-      console.error("Error loading from IndexedDB", e);
-      return null;
-    }
+    // Retornamos un objeto vacío para mantener compatibilidad con el estado de la UI,
+    // pero los datos reales se cargan bajo demanda desde db.stores.patients.
+    return { patients: {} };
   },
   clearData: async () => {
     await db.clear();
-    localStorage.removeItem('hce_index'); // El índice ligero aún puede estar en localStorage o limpiarse también
   }
 };
