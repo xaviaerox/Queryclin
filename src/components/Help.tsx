@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Search, Shield, Zap, FileText, User, Hospital } from 'lucide-react';
+import { ArrowLeft, Search, Shield, Zap, FileText, User, Hospital, Users } from 'lucide-react';
 
 interface HelpProps {
   onBack: () => void;
