@@ -3,6 +3,15 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
 ## [2026-04-20]
+### Versión 2.3 (Arquitectura de Calidad y Testing)
+- **Implementación de Suite de Pruebas (Test-Driven Reliability):**
+  - **Tecnologías**: Vitest (Unit/Integration) y Playwright (E2E).
+  - **Archivos Nuevos**: `src/lib/__tests__/searchEngine.test.ts`, `src/lib/__tests__/csvParser.test.ts`, `tests/smoke.spec.ts`.
+  - **Motivo**: Garantizar que el motor de búsqueda y el parser de CSV funcionen con precisión matemática y no sufran regresiones tras futuros cambios.
+- **Corrección de Bug Crítico en Parser CSV:**
+  - **Archivo Modificado**: `src/lib/csvParser.ts`.
+  - **Detalle**: Corregido fallo en la preservación de comillas que causaba truncamiento de datos cuando un campo contenía el delimitador de tubería (`|`) dentro de un texto encomillado. Detectado gracias a la nueva suite de pruebas.
+
 ### Versión 2.2 (Ultra-Escalabilidad y Precisión Clínica)
 - **Fragmentación de Metadatos (Big Data):**
   - **Archivos Modificados:** `src/lib/searchEngine.ts`, `src/lib/dataStore.ts`.

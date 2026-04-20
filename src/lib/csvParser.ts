@@ -8,8 +8,8 @@ export function parseCSV(csvText: string): Record<string, string>[] {
     const nextChar = csvText[i + 1];
 
     if (char === '"') {
+      currentLine += '"';
       if (insideQuotes && nextChar === '"') {
-        currentLine += '"';
         i++; // Skip escaped quote
       } else {
         insideQuotes = !insideQuotes;
