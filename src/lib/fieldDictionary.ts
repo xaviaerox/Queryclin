@@ -1,30 +1,30 @@
-export type FieldCategory =
-  | 'Demografía'
-  | 'Antecedentes'
-  | 'Anamnesis y Exploración'
-  | 'Diagnóstico y Tratamiento'
-  | 'Resultados'
-  | 'Hospitalización'
+export type FieldCategory = 
+  | 'Demografía' 
+  | 'Antecedentes' 
+  | 'Anamnesis y Exploración' 
+  | 'Diagnóstico y Tratamiento' 
+  | 'Resultados' 
+  | 'Hospitalización' 
   | 'OTROS';
 
 const categoryKeywords: Record<FieldCategory, string[]> = {
   'Demografía': [
-    'n.h.c', 'cipa', 'fecha de nacimiento', 'edad', 'sexo', 'ciudad', 'código postal', 'postal', 'demog'
+    'n.h.c', 'cipa', 'fecha de nacimiento', 'nacimiento', 'edad', 'sexo', 'ciudad', 'código postal', 'postal', 'demog', 'domicilio', 'estado civil', 'nombre', 'paciente'
   ],
   'Antecedentes': [
-    'antecedente', 'alergia', 'habito', 'familiar', 'personal', 'vacuna'
+    'antecedente', 'alergia', 'habito', 'hábito', 'familiar', 'personal', 'quirurgico', 'quirúrgico', 'vacuna'
   ],
   'Anamnesis y Exploración': [
-    'anamnesis', 'exploracion', 'exploración', 'motivo', 'enfermedad actual', 'sintoma', 'talla', 'peso', 'ta', 'fc', 'temperatura', 'constante'
+    'anamnesis', 'exploracion', 'exploración', 'motivo', 'enfermedad actual', 'enfermedad', 'sintoma', 'síntoma', 'talla', 'peso', 'ta', 'fc', 'temperatura', 'constante', 'imc', 'perímetro', 'edemas', 'anam', 'anamn', 'expl'
   ],
   'Diagnóstico y Tratamiento': [
-    'diagnostico', 'diagnóstico', 'tratamiento', 'medicacion', 'prescripcion', 'plan', 'proceso'
+    'diagnostico', 'diagnóstico', 'tratamiento', 'medicacion', 'medicación', 'prescripcion', 'prescripción', 'plan', 'proceso', 'receta', 'recomendación', 'juicio', 'diagn', 'diag'
   ],
   'Resultados': [
-    'resultado', 'laboratorio', 'analitica', 'imagen', 'prueba', 'cultivo', 'biopsia'
+    'analitica', 'analítica', 'laboratorio', 'prueba', 'imagen', 'rx', 'tac', 'rmn', 'ecografia', 'ecografía', 'biopsia', 'cultivo', 'resultado'
   ],
   'Hospitalización': [
-    'ingreso', 'alta', 'cama', 'planta', 'habitacion', 'estancia', 'evolucion', 'epicrisis'
+    'ingreso', 'alta', 'traslado', 'unm', 'uci', 'urgencia', 'servicio'
   ],
   'OTROS': []
 };
@@ -32,10 +32,7 @@ const categoryKeywords: Record<FieldCategory, string[]> = {
 export function classifyField(fieldName: string): FieldCategory {
   const lowerName = fieldName.toLowerCase();
   
-  // Special exact matches based on prompt
-  if (lowerName.includes('ec_proceso')) return 'Diagnóstico y Tratamiento';
-  if (lowerName.includes('talla')) return 'Anamnesis y Exploración';
-  
+  // Detección por palabras clave
   for (const [category, keywords] of Object.entries(categoryKeywords)) {
     if (category === 'OTROS') continue;
     for (const keyword of keywords) {

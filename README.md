@@ -23,16 +23,16 @@ La visión original se basó en transformar la experiencia de auditoría clínic
 
 ---
 
-## 3. Arquitectura Tecnológica Actual
-Tras las últimas refactorizaciones para asegurar la escalabilidad masiva, el stack se compone de:
+Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y estabilidad ante la auditoría, el stack se compone de:
 
 - **React 19 + TypeScript:** Esquema de datos estricto para garantizar la integridad clínica.
-- **IndexedDB (Persistencia):** Sustituye a localStorage para superar el límite de 5MB, permitiendo almacenar cientos de megabytes de datos clínicos de forma segura.
-- **Web Workers:** Delegación del procesamiento intensivo (parsing e indexación) a hilos paralelos para mantener la interfaz a 60 FPS.
-- **Librerías de Motor Interno:**
-  - *`csvParser.ts`*: Escáner de caracteres asíncrono optimizado para separadores de tipo pipeline (`|`).
-  - *`db.ts`*: Capa de abstracción para la base de datos fragmentada en IndexedDB.
-  - *`searchEngine.ts`*: Buscador asíncrono basado en puntuación de relevancia (TF-IDF).
+- **IndexedDB (Persistencia Fragmentada):** Sustituye a localStorage para permitir almacenar cientos de megabytes de datos clínicos. Los esqueletos y el índice se fragmentan en bloques para evitar límites de memoria del navegador.
+- **Web Workers de Alto Rendimiento:** Delegación del procesamiento intensivo (parsing e indexación) a hilos paralelos.
+- **Librerías de Motor Interno (V2.5 Optimized):**
+  - *`csvParser.ts`*: Parser de flujo (streaming) que procesa registros iterativamente sin cargar sábanas de líneas en RAM.
+  - *`db.ts`*: Capa de persistencia con soporte para transacciones por lotes (Batching) para inyecciones de datos ultra-rápidas.
+  - *`searchEngine.ts`*: Buscador asíncrono con "Flushing" incremental a disco para soportar 100k+ registros sin OOM.
+
 
 ---
 
@@ -60,9 +60,16 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva, el st
 - **Búsqueda Booleana Persistente**: Corrección del operador `NOT` para consultas a base de datos.
 - **Precisión Clínica**: Tokenización de corto espectro (`pH`, `O2`, `Na`, `K`).
 
-### Fase 7: Calidad y Gobernanza de Datos (V2.3 - Actual ✅)
+### Fase 7: Calidad y Gobernanza de Datos (V2.3 ✅)
 - **Suite de Pruebas Automatizadas**: Integración de Vitest y Playwright para asegurar la fidelidad absoluta de la Historia Clínica Electrónica.
 - **Auditoría de Ingesta**: Resolución de bugs de parseo mediante tests de regresión.
+
+### Fase 8: Resolución de Auditoría Clínica y Big Data (V2.5 - Actual ✅)
+- **Reestructuración HCE-Comun**: Rediseño de la interfaz visual con cabecera demográfica persistente y eliminación de duplicidades.
+- **Historia Completa (Modo Lectura)**: Implementación de visualización secuencial de registros para facilitar la revisión clínica continuada.
+- **Inmunidad a OOM (100k+ registros)**: Refactorización total de los motores de ingesta para soportar datasets masivos mediante flushing incremental de memoria a disco (V2.5).
+- **Seguridad y Privacidad**: Implementación de session-wipe automático y blindaje de datos locales.
+
 
 ---
 
@@ -77,8 +84,16 @@ La aplicación es accesible en red local compartiendo la IP del host en el puert
 
 ---
 
-## 6. Gobernanza y Desarrollo
-El proyecto se rige por el documento **[RULES.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/RULES.md)**, que asegura que cualquier modificación mantenga la coherencia histórica de la documentación y la fidelidad absoluta a los datos clínicos originales. 
+## 6. Estructura y Gobernanza
+
+El proyecto está organizado para garantizar el orden y la escalabilidad:
+
+-   `scripts/`: Herramientas de generación y diagnóstico técnico.
+-   `tests/data/`: Datasets de prueba controlados.
+-   `docs/`: Diseños y especificaciones originales.
+-   **[RULES.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/RULES.md)**: El marco de gobernanza estricta ("Constitución").
+-   **[BATTLE_LOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/BATTLE_LOG.md)**: Diario narrativo de desafíos técnicos y soluciones.
+-   **[CHANGELOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/CHANGELOG.md)**: Registro histórico de modificaciones.
 
 > [!IMPORTANT]
-> **Instrucciones para Agentes de IA:** Cualquier asistente de IA que trabaje en este repositorio tiene la obligación de actualizar el `CHANGELOG.md` tras cada modificación y el Roadmap de este `README.md` tras alcanzar hitos significativos, siguiendo estrictamente las directrices de `RULES.md`.
+> **Instrucciones para Agentes de IA:** Cualquier asistente de IA que trabaje en este repositorio tiene la obligación de actualizar el `CHANGELOG.md` tras cada modificación y el historial de `TASKS.md`, siguiendo estrictamente las directrices de `RULES.md`.

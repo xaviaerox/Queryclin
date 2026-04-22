@@ -24,10 +24,16 @@ export class SearchEngine {
     let index: Record<string, any> = {};
     this.documentCount = 0;
     const skeletons: Record<string, any> = {};
+    const nhcs = Object.keys(data.patients);
+    const totalPatients = nhcs.length;
 
-    for (const nhc in data.patients) {
+    console.log(`[SearchEngine] Iniciando indexación de ${totalPatients} pacientes...`);
+
+    for (let i = 0; i < totalPatients; i++) {
+      const nhc = nhcs[i];
       const patient = data.patients[nhc];
-      // Esqueleto optimizado con resumen de servicios y fechas para filtros instantáneos
+      
+      // Esqueleto optimizado
       skeletons[nhc] = { 
         nhc: patient.nhc, 
         demographics: patient.demographics, 
@@ -39,7 +45,7 @@ export class SearchEngine {
         for (const registro of patient.tomas[idToma].registros) {
           this.documentCount++;
           
-          // Indexación de atributos para filtros rápidos
+          // Indexación de atributos
           const srvKey = Object.keys(registro.data).find(k => k.toUpperCase().includes('SERVICIO') || k.toUpperCase().includes('PROCESO'));
           if (srvKey && registro.data[srvKey]) {
             skeletons[nhc].services.add(registro.data[srvKey].toLowerCase());
@@ -69,40 +75,69 @@ export class SearchEngine {
           }
         }
       }
-      // Convertir Set a Array para persistencia
       skeletons[nhc].services = Array.from(skeletons[nhc].services);
+
+      // FLUSHING INCREMENTAL: Si acumulamos demasiada memoria en el índice, volcamos a DB
+      // Aumentado a 5000 para reducir el número de flushes ahora que el proceso es más rápido
+      if (i > 0 && i % 5000 === 0) {
+        console.log(`[SearchEngine] Flushing parcial (${i}/${totalPatients})...`);
+        await this.flushIndexPart(index);
+        index = {}; // Liberar memoria
+      }
     }
 
-    console.log(`[SearchEngine] Indexación completada. Guardando metadatos fragmentados...`);
+    // Guardado final de lo restante en index y esqueletos
+    await this.flushIndexPart(index);
     
-    // Guardar esqueletos fragmentados para evitar límites de IDB (100k registros)
-    const nhcs = Object.keys(skeletons);
-    const skeletonBatchSize = 5000;
+    console.log(`[SearchEngine] Guardando esqueletos fragmentados de forma robusta`);
+    const finalNhcs = Object.keys(skeletons);
+    const skeletonBatchSize = 1000;
     let fragmentCount = 0;
-    for (let i = 0; i < nhcs.length; i += skeletonBatchSize) {
-      const slice = nhcs.slice(i, i + skeletonBatchSize);
-      const batch: Record<string, any> = {};
-      slice.forEach(nhc => batch[nhc] = skeletons[nhc]);
+
+    for (let i = 0; i < finalNhcs.length; i += skeletonBatchSize) {
+      const slice = finalNhcs.slice(i, i + skeletonBatchSize);
+      const batch: Record<string, PatientSkeleton> = {};
+      slice.forEach(nhc => {
+        batch[nhc] = skeletons[nhc];
+      });
       await db.saveBatch(db.stores.metadata, { [`skeletons_frag_${fragmentCount}`]: batch });
       fragmentCount++;
     }
 
     await db.saveBatch(db.stores.metadata, { 
       'skeleton_fragments': fragmentCount, 
-      'document_count': this.documentCount 
+      'document_count': this.documentCount,
+      'last_indexed': new Date().toISOString()
     });
-    
-    // Guardar índice fragmentado por términos
-    const terms = Object.keys(index);
-    const termBatchSize = 2000;
-    for (let i = 0; i < terms.length; i += termBatchSize) {
+  }
+
+  private async flushIndexPart(partialIndex: Record<string, any>) {
+    const terms = Object.keys(partialIndex);
+    if (terms.length === 0) return;
+
+    // Procesamos en trozos de 1000 términos para no saturar la transacción
+    for (let i = 0; i < terms.length; i += 1000) {
+      const slice = terms.slice(i, i + 1000);
+      
+      // 1. Lectura masiva en UNA sola transacción
+      const existingData = await db.getBatch(db.stores.search_index, slice);
+      
       const batch: Record<string, any> = {};
-      const slice = terms.slice(i, i + termBatchSize);
-      slice.forEach(t => batch[t] = index[t]);
+      for (const term of slice) {
+        const existing = existingData[term];
+        if (existing) {
+          batch[term] = [...existing, ...partialIndex[term]];
+        } else {
+          batch[term] = partialIndex[term];
+        }
+      }
+      
+      // 2. Escritura masiva en UNA sola transacción
       await db.saveBatch(db.stores.search_index, batch);
-      slice.forEach(t => delete index[t]);
     }
   }
+
+
 
   async loadIndex(data: HCEData) {
     this.data = data;
@@ -195,19 +230,36 @@ export class SearchEngine {
     }
 
     let results: SearchResult[] = [];
+    const filterService = filters?.service?.toLowerCase();
+    const filterStart = filters?.dateRange?.[0] ? new Date(filters.dateRange[0]).getTime() : null;
+    const filterEnd = filters?.dateRange?.[1] ? new Date(filters.dateRange[1]).getTime() : null;
+
     for (const nhc in patientMatches) {
       if (mustNotNhcs.has(nhc)) continue;
 
       const pm = patientMatches[nhc];
+      const skeleton = this.patientSkeletons[nhc];
+
+      // FILTRO POR SERVICIO
+      if (filterService && skeleton) {
+        const hasService = skeleton.services.some((s: string) => s.includes(filterService));
+        if (!hasService) continue;
+      }
+
+      // FILTRO POR FECHA
+      if (skeleton && (filterStart || filterEnd)) {
+        if (filterStart && skeleton.dates.end < filterStart) continue;
+        if (filterEnd && skeleton.dates.start > filterEnd) continue;
+      }
+
       const flatRegistros = Object.values(pm.registros).sort((a: any, b: any) => b.score - a.score);
-      
       if (flatRegistros.length === 0) continue;
 
       const uniqueTomasCount = new Set(flatRegistros.map((r: any) => r.idToma)).size;
 
       results.push({
         nhc: pm.nhc,
-        patient: this.patientSkeletons[pm.nhc] || { nhc: pm.nhc, demographics: {}, tomas: {} },
+        patient: skeleton || { nhc: pm.nhc, demographics: {}, tomas: {}, services: [], dates: { start: Infinity, end: -Infinity } },
         totalScore: pm.totalScore,
         matchingTomasCount: uniqueTomasCount,
         bestMatchUrl: { idToma: (flatRegistros[0] as any).idToma, ordenToma: (flatRegistros[0] as any).ordenToma },

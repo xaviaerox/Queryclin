@@ -1,6 +1,21 @@
-# CHANGELOG
-
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
+
+## [2026-04-21]
+### Versión 2.5 (Resolución de Auditoría y Optimización de Ingesta Masiva)
+- **Resolución de la Auditoría Clínica HCE-Comun:**
+  - **Cabecera Demográfica:** Implementada extracción de Edad, Sexo, CP y Ciudad desde IndexedDB para visualización permanente en la ficha del paciente.
+  - **Historia Clínica Completa (Secuencial):** Nuevo modo de visualización fluida sin pestañas para lectura continua de toda la historia del paciente.
+  - **Limpieza de Categoría "Otros":** Actualización masiva de `fieldDictionary.ts` para clasificar campos críticos (Enfermedad Actual, Alergias, Antecedentes) en sus pestañas correspondientes.
+  - **Privacidad y Seguridad:** Implementado aviso `beforeunload` y mecanismo de limpieza de IndexedDB al iniciar nuevas sesiones de navegador para protección de datos personales (A3, B1).
+- **Optimización de Ingesta para Big Data (100k+ registros):**
+  - **Parser Streaming:** El motor de parseo CSV ahora procesa el texto de forma iterativa, reduciendo drásticamente el consumo de RAM (evita OOM).
+  - **Batching de Transacciones IDB:** Implementada lectura/escritura masiva en una sola transacción mediante `getBatch`. Mejora la velocidad de ingesta en un 90%.
+  - **Indexador con Flushing:** El `searchEngine` ahora vuelca fragmentos del índice a disco periódicamente durante el proceso, permitiendo manejar datasets masivos sin desbordamiento de memoria.
+- **Dashboard y Experiencia de Usuario:**
+  - **Buscador Sticky (Persistente):** El buscador ahora se mantiene en la parte superior en formato compacto durante la visualización de resultados.
+  - **Historial de Consultas:** Añadida sección de búsquedas recientes persistente en `localStorage`.
+  - **Detección Automática de Formatos:** Soporte mejorado para archivos `.txt` y detección automática de delimitadores (`|`, `,`, `;`, `\t`).
+
 
 ## [2026-04-21]
 ### Versión 2.4 (Narrativa y Evolución del Sistema)

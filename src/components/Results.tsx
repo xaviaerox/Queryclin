@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, FileText, Download, Activity, User } from 'lucide-react';
+import { ArrowLeft, FileText, Download, Activity, User, UserPlus } from 'lucide-react';
 
 interface ResultsProps {
   results: SearchResult[];
@@ -10,7 +10,38 @@ interface ResultsProps {
 }
 
 import { db } from '../lib/db';
-import { Patient } from '../lib/dataStore';
+import { Patient, getGender } from '../lib/dataStore';
+
+function PatientAvatar({ gender, size = 28 }: { gender: 'male' | 'female' | 'neutral', size?: number }) {
+  const config = {
+    male: {
+      bg: 'bg-cyan-500/10',
+      text: 'text-cyan-500',
+      border: 'border-cyan-500/20',
+      Icon: User
+    },
+    female: {
+      bg: 'bg-purple-400/10',
+      text: 'text-purple-400',
+      border: 'border-purple-400/20',
+      Icon: User
+    },
+    neutral: {
+      bg: 'bg-[var(--accent-clinical)]/10',
+      text: 'text-[var(--accent-clinical)]',
+      border: 'border-[var(--accent-clinical)]/20',
+      Icon: User
+    }
+  };
+
+  const { bg, text, border, Icon } = config[gender];
+
+  return (
+    <div className={`w-14 h-14 ${bg} ${text} ${border} border rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm`}>
+      <Icon size={size} />
+    </div>
+  );
+}
 
 function ResultCard({ res, onSelect }: { res: SearchResult, onSelect: (r: SearchResult) => void }) {
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -38,9 +69,7 @@ function ResultCard({ res, onSelect }: { res: SearchResult, onSelect: (r: Search
       onClick={() => onSelect(res)}
       className="bg-[var(--surface-clinical)] p-6 rounded-2xl shadow-lg border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] transition-all cursor-pointer flex items-center gap-6 group relative overflow-hidden"
     >
-      <div className="w-14 h-14 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-        <User size={28} />
-      </div>
+      <PatientAvatar gender={getGender(demographics)} />
       <div className="flex-1">
         <div className="flex items-center justify-between mb-2">
           {loading ? (
@@ -57,11 +86,17 @@ function ResultCard({ res, onSelect }: { res: SearchResult, onSelect: (r: Search
         
         <div className="flex gap-3 flex-wrap mt-3 items-center text-[12px] text-[var(--text-secondary)]">
           <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">NHC: {res.nhc}</span>
-          <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5">
+          <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] font-bold flex items-center gap-1.5" title="Número de sesiones con hallazgos">
             <Activity size={14} className="text-[var(--accent-clinical)]" /> 
             {res.matchingTomasCount} Tomas
           </span>
+          {res.matchedRegistros.length > 0 && (
+            <span className="bg-[var(--accent-clinical)] text-white px-3 py-1.5 rounded-lg font-black flex items-center gap-1.5 shadow-sm">
+              {res.matchedRegistros.length} Coincidencias
+            </span>
+          )}
         </div>
+
       </div>
     </div>
   );
@@ -81,33 +116,42 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     setCurrentPage(1);
   }, [results]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     if (results.length === 0) return;
 
+    // Obtener los pacientes completos desde la DB (asíncrono)
+    const fullPatients: Patient[] = [];
+    for (const res of results) {
+       const p = await db.getFromStore(db.stores.patients, res.nhc);
+       if (p) fullPatients.push(p);
+    }
+
+    if (fullPatients.length === 0) {
+      alert("No se pudieron cargar los datos completos para exportar.");
+      return;
+    }
+
+    // Identificar todas las cabeceras posibles de los registros de estos pacientes
     const tempKeys = new Set<string>();
-    results.forEach(res => {
-       res.matchedRegistros.forEach(match => {
-          Object.keys(match.record.data).forEach(k => tempKeys.add(k));
+    fullPatients.forEach(p => {
+       Object.values(p.tomas).forEach(toma => {
+          toma.registros.forEach(registro => {
+             Object.keys(registro.data).forEach(k => tempKeys.add(k));
+          });
        });
     });
     const keys = Array.from(tempKeys);
     
-    const metaKeys = ['NHC_ID', 'ID_TOMA', 'ORDEN_TOMA', 'SCORE_BUSQUEDA'];
-
+    // Generar CSV
     let csvContent = '\uFEFF'; 
-    csvContent += [...metaKeys, ...keys].map(k => `"${k.replace(/"/g, '""')}"`).join(',') + '\n';
+    csvContent += keys.map(k => `"${k.replace(/"/g, '""')}"`).join(',') + '\n';
 
-    results.forEach(res => {
-      res.matchedRegistros.forEach(match => {
-        const row = [
-          res.nhc,
-          match.idToma,
-          match.ordenToma.toString(),
-          match.score.toString(),
-          ...keys.map(k => match.record.data[k] || '')
-        ];
-        
-        csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n';
+    fullPatients.forEach(p => {
+      Object.values(p.tomas).forEach(toma => {
+        toma.registros.forEach(registro => {
+          const row = keys.map(k => registro.data[k] || '');
+          csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n';
+        });
       });
     });
 
@@ -121,6 +165,7 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     link.click();
     document.body.removeChild(link);
   };
+
 
   return (
     <div className="max-w-5xl mx-auto w-full">

@@ -29,15 +29,43 @@ export const db = {
   async saveBatch(storeName: string, items: Record<string, any>): Promise<void> {
     const database = await this.open();
     return new Promise((resolve, reject) => {
+      // Usamos una sola transacción para todo el lote
       const transaction = database.transaction(storeName, 'readwrite');
       const store = transaction.objectStore(storeName);
+      
       for (const key in items) {
         store.put(items[key], key);
       }
+      
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });
   },
+
+  async getBatch(storeName: string, keys: string[]): Promise<Record<string, any>> {
+    const database = await this.open();
+    return new Promise((resolve, reject) => {
+      const transaction = database.transaction(storeName, 'readonly');
+      const store = transaction.objectStore(storeName);
+      const results: Record<string, any> = {};
+      let count = 0;
+
+      if (keys.length === 0) return resolve({});
+
+      keys.forEach(key => {
+        const request = store.get(key);
+        request.onsuccess = () => {
+          if (request.result !== undefined) {
+            results[key] = request.result;
+          }
+          count++;
+          if (count === keys.length) resolve(results);
+        };
+        request.onerror = () => reject(request.error);
+      });
+    });
+  },
+
 
   async getFromStore(storeName: string, key: string): Promise<any> {
     const database = await this.open();

@@ -10,20 +10,23 @@ self.onmessage = async (e: MessageEvent) => {
   const { csvText } = e.data;
   
   try {
-    console.log("[Worker] Fase 1: Parseo de CSV...");
+    console.log("[Worker] Fase 1: Parseo de CSV (Optimizado)...");
     const records = parseCSV(csvText);
     
     console.log("[Worker] Fase 2: Agrupación lógica de pacientes...");
     const grouped = groupData(records);
     
-    console.log("[Worker] Fase 3: Indexación Semántica Fragmentada...");
-    // Ahora buildIndex es asíncrona y guarda por términos
+    // IMPORTANTE: Liberar el string original de memoria lo antes posible
+    // (JavaScript no garantiza el recolector de basura inmediato, pero ayuda)
+    (e.data.csvText as any) = null;
+
+    console.log("[Worker] Fase 3: Indexación Semántica Fragmentada con Flushing...");
     await searchEngine.buildIndex(grouped);
 
     console.log("[Worker] Fase 4: Persistencia granular de pacientes...");
     const nhcs = Object.keys(grouped.patients);
     const totalPatients = nhcs.length;
-    const batchSize = 5000;
+    const batchSize = 1000; // Reducido para mayor suavidad en el hilo principal
     
     for (let i = 0; i < nhcs.length; i += batchSize) {
       const batch: Record<string, any> = {};
@@ -31,12 +34,17 @@ self.onmessage = async (e: MessageEvent) => {
       slice.forEach(nhc => batch[nhc] = grouped.patients[nhc]);
       await db.saveBatch(db.stores.patients, batch);
       
-      // Liberar memoria inmediatamente
+      // Liberar memoria inmediatamente de los pacientes guardados
       slice.forEach(nhc => delete (grouped.patients as any)[nhc]);
       
-      if (i % 10000 === 0 || i + batchSize >= totalPatients) {
-        console.log(`[Worker] Progreso de almacenamiento: ${Math.min(i + batchSize, totalPatients)} / ${totalPatients} pacientes.`);
+      if (i % 5000 === 0 || i + batchSize >= totalPatients) {
+        self.postMessage({ 
+          type: 'progress',
+          progress: Math.min(i + batchSize, totalPatients), 
+          total: totalPatients 
+        });
       }
+
     }
 
     await db.saveBatch(db.stores.metadata, { 'patient_count': totalPatients });
@@ -51,3 +59,4 @@ self.onmessage = async (e: MessageEvent) => {
     self.postMessage({ success: false, error: (error as Error).message });
   }
 };
+

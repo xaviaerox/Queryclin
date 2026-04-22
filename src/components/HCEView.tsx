@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { HCEData } from '../lib/dataStore';
 import { FieldCategory, classifyField } from '../lib/fieldDictionary';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import HighlightedText from './HighlightedText';
 
 interface HCEViewProps {
@@ -14,10 +14,40 @@ interface HCEViewProps {
 }
 
 import { db } from '../lib/db';
-import { Patient } from '../lib/dataStore';
+import { Patient, getGender } from '../lib/dataStore';
+
+function PatientAvatar({ gender, size = 24 }: { gender: 'male' | 'female' | 'neutral', size?: number }) {
+  const config = {
+    male: {
+      bg: 'bg-cyan-500/10',
+      text: 'text-cyan-500',
+      border: 'border-cyan-500/20',
+      Icon: User
+    },
+    female: {
+      bg: 'bg-purple-400/10',
+      text: 'text-purple-400',
+      border: 'border-purple-400/20',
+      Icon: User
+    },
+    neutral: {
+      bg: 'bg-[var(--accent-clinical)]/10',
+      text: 'text-[var(--accent-clinical)]',
+      border: 'border-[var(--accent-clinical)]/20',
+      Icon: User
+    }
+  };
+
+  const { bg, text, border, Icon } = config[gender];
+
+  return (
+    <div className={`w-12 h-12 ${bg} ${text} ${border} border rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm`}>
+      <Icon size={size} />
+    </div>
+  );
+}
 
 const TABS: FieldCategory[] = [
-  'Demografía',
   'Antecedentes',
   'Anamnesis y Exploración',
   'Diagnóstico y Tratamiento',
@@ -25,6 +55,7 @@ const TABS: FieldCategory[] = [
   'Hospitalización',
   'OTROS'
 ];
+
 
 export default function HCEView({ results, currentIndex, onIndexChange, onBack, query }: HCEViewProps) {
   const currentResult = results[currentIndex];
@@ -35,6 +66,8 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
   const [selectedTomaId, setSelectedTomaId] = useState(currentResult.bestMatchUrl.idToma);
   const [selectedOrdenToma, setSelectedOrdenToma] = useState(currentResult.bestMatchUrl.ordenToma);
   const [activeTab, setActiveTab] = useState<FieldCategory>('Anamnesis y Exploración');
+  const [showFullHistory, setShowFullHistory] = useState(false);
+
 
   useEffect(() => {
     const loadPatient = async () => {
@@ -99,13 +132,22 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
 
   const categorizedFields = useMemo(() => {
     const result = {} as Record<FieldCategory, { key: string; value: string }[]>;
-    TABS.forEach(tab => result[tab] = []);
+    TABS.forEach(tab => {
+      result[tab as FieldCategory] = [];
+    });
+    
     if (!registro) return result;
 
     for (const [key, value] of Object.entries(registro.data)) {
-      if (!value || value.trim() === '') continue;
+      if (!value || String(value).trim() === '') continue;
       const category = classifyField(key);
-      result[category].push({ key, value });
+      
+      // Inicialización bajo demanda si la categoría no está en TABS (ej: Demografía)
+      if (!result[category]) {
+        result[category] = [];
+      }
+      
+      result[category].push({ key, value: String(value) });
     }
     return result;
   }, [registro]);
@@ -128,12 +170,13 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
       <div className="flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
           <button 
-            onClick={onBack}
+            onClick={showFullHistory ? () => setShowFullHistory(false) : onBack}
             className="p-2 hover:bg-[var(--surface-clinical)] rounded-xl transition-colors text-[var(--text-secondary)]"
           >
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-xl font-black text-[var(--text-primary)] hidden sm:block uppercase tracking-wider">Expediente Clínico</h2>
+          <h2 className="text-xl font-black text-[var(--text-primary)] hidden sm:block uppercase tracking-wider">{showFullHistory ? 'Historia Clínica Completa' : 'Expediente Clínico'}</h2>
+
         </div>
 
         <div className="flex items-center gap-3 bg-[var(--surface-clinical)] px-4 py-2 rounded-xl border border-[var(--border-clinical)] shadow-md">
@@ -190,20 +233,42 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
         {/* Main Content Area */}
         <main className="flex-1 flex flex-col gap-5 overflow-y-auto lg:pr-2 hide-scrollbar">
           {/* Patient Profile Card */}
-          <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
-              <h1 className="text-[26px] font-black text-[var(--text-primary)] mb-3 tracking-tight">Paciente {patient.nhc}</h1>
-              <div className="flex gap-3 text-[13px] text-[var(--text-secondary)] flex-wrap">
-                <span className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)]"><strong className="text-[var(--text-primary)] font-black uppercase text-[10px] mr-1">N.H.C:</strong> {patient.nhc}</span>
-                {categorizedFields['Demografía'].slice(0, 3).map(field => (
-                  <span key={field.key} className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)]"><strong className="text-[var(--text-primary)] font-black uppercase text-[10px] mr-1">{field.key}:</strong> {field.value}</span>
-                ))}
+          <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-lg flex items-center gap-6 ring-1 ring-[var(--accent-clinical)]/5">
+            <PatientAvatar gender={getGender(patient.demographics)} size={32} />
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
+                <h1 className="text-[26px] font-black text-[var(--text-primary)] tracking-tight">
+                  {Object.keys(patient.demographics).find(k => k.toUpperCase().includes('NOMBRE')) ? patient.demographics[Object.keys(patient.demographics).find(k => k.toUpperCase().includes('NOMBRE'))!] : `Paciente ${patient.nhc}`}
+                </h1>
+                <div className="flex gap-2">
+                  <span className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-lg text-[9px] font-black tracking-widest uppercase border border-emerald-500/20">HISTORIA ACTIVA</span>
+                  {!showFullHistory && (
+                    <button 
+                      onClick={() => setShowFullHistory(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-[10px] font-black tracking-wider uppercase transition-all shadow-md active:scale-95"
+                      title="Ver historia clínica completa formateada"
+                    >
+                      Historia Completa
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-2 text-[12px] text-[var(--text-secondary)] flex-wrap items-center">
+                {['EDAD', 'SEXO', 'CIUDAD', 'POSTAL'].map(key => {
+                  const actualKey = Object.keys(patient.demographics || {}).find(k => k.toUpperCase().includes(key));
+                  if (!actualKey) return null;
+                  const displayLabel = key === 'POSTAL' ? 'C.P.' : key;
+                  return (
+                    <span key={key} className="bg-[var(--bg-clinical)] px-3 py-1.5 rounded-lg border border-[var(--border-clinical)] flex items-center gap-2">
+                      <span className="text-[var(--text-primary)] font-black uppercase text-[9px] opacity-60">{displayLabel}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{patient.demographics[actualKey]}</span>
+                    </span>
+                  );
+                })}
               </div>
             </div>
-            <div className="text-right shrink-0">
-              <span className="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-[11px] font-black tracking-widest uppercase border border-emerald-500/20">HISTORIA ACTIVA</span>
-            </div>
           </div>
+
 
           {/* Timeline Selector */}
           <div className="bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl p-4 flex items-center gap-4 flex-wrap">
@@ -211,65 +276,121 @@ export default function HCEView({ results, currentIndex, onIndexChange, onBack, 
             <div className="w-[1px] h-5 bg-[var(--border-clinical)] hidden sm:block"></div>
             <div className="text-[13px] font-black text-[var(--text-primary)] uppercase tracking-wider">Registros Evolutivos:</div>
             <div className="flex gap-2 flex-wrap">
-              {toma.registros.map(r => (
-                <button
-                  key={r.ordenToma}
-                  onClick={() => setSelectedOrdenToma(r.ordenToma)}
-                  className={`px-4 py-1.5 rounded-lg border text-[12px] transition-all font-bold ${
-                    r.ordenToma === selectedOrdenToma
-                      ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)] shadow-lg scale-105'
-                      : 'bg-[var(--surface-clinical)] border-[var(--border-clinical)] text-[var(--text-secondary)] hover:border-[var(--accent-clinical)]'
-                  }`}
-                >
-                  Reg #{r.ordenToma} {r.ordenToma === toma.latest.ordenToma ? '(Último)' : ''}
-                </button>
+              {toma.registros.map(r => {
+                const dateKey = Object.keys(r.data).find(k => k.toUpperCase().includes('FECHA_TOMA') || k.toUpperCase().includes('FECHA_OBSERVACION'));
+                const dateVal = dateKey ? r.data[dateKey] : '';
+                return (
+                  <button
+                    key={r.ordenToma}
+                    onClick={() => setSelectedOrdenToma(r.ordenToma)}
+                    className={`px-4 py-1.5 rounded-lg border text-[11px] transition-all font-bold flex flex-col items-center ${
+                      r.ordenToma === selectedOrdenToma
+                        ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)] shadow-lg scale-105'
+                        : 'bg-[var(--surface-clinical)] border-[var(--border-clinical)] text-[var(--text-secondary)] hover:border-[var(--accent-clinical)]'
+                    }`}
+                  >
+                    <span className="opacity-80 text-[9px] uppercase tracking-tighter">Reg #{r.ordenToma}</span>
+                    <span>{dateVal || 'Sin Fecha'}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+          </div>
+
+          {/* Content Area Rendering */}
+          {showFullHistory ? (
+            <div className="flex-1 space-y-8 pb-20 animate-in fade-in slide-in-from-bottom-4">
+              {Object.values(patient.tomas).map(t => (
+                <div key={t.idToma} className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="h-[2px] flex-1 bg-[var(--border-clinical)]"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[4px] text-[var(--text-secondary)]">Toma: {t.idToma}</span>
+                    <div className="h-[2px] flex-1 bg-[var(--border-clinical)]"></div>
+                  </div>
+                  {[...t.registros].sort((a,b) => b.ordenToma - a.ordenToma).map(r => (
+                    <div key={r.ordenToma} className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-3xl p-8 shadow-sm">
+                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-[var(--border-clinical)]">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] flex items-center justify-center font-black">
+                            {r.ordenToma}
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-black uppercase text-[var(--text-secondary)] tracking-widest">Registro Evolutivo</div>
+                            <div className="text-[14px] font-bold text-[var(--text-primary)]">
+                              {Object.entries(r.data).find(([k]) => k.toUpperCase().includes('FECHA_TOMA'))?.[1] || 'Fecha no disponible'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-[11px] font-black uppercase text-[var(--text-secondary)] tracking-wider">
+                          {Object.entries(r.data).find(([k]) => k.toUpperCase().includes('USUARIO'))?.[1] || 'Personal Sanitario'}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                        {Object.entries(r.data)
+                          .filter(([k, v]) => v && v.trim() !== '' && classifyField(k) !== 'Demografía' && !['ID_TOMA', 'ORDEN_TOMA', 'NHC_ID'].includes(k.toUpperCase().replace(/\W/g, '')))
+                          .map(([k, v]) => (
+                            <div key={k} className="group">
+                              <div className="text-[9px] font-black uppercase text-[var(--accent-clinical)]/60 tracking-widest mb-1">{k}</div>
+                              <div className="text-[14px] text-[var(--text-primary)] leading-relaxed">
+                                <HighlightedText text={v} query={query} />
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ))}
             </div>
-          </div>
-
-          {/* Tabs Selector */}
-          <div className="flex gap-3 border-b border-[var(--border-clinical)] overflow-x-auto hide-scrollbar shrink-0 pt-2">
-            {TABS.map(tab => {
-              const count = categorizedFields[tab].length;
-              if (count === 0 && tab !== activeTab) return null;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-3 text-[14px] font-bold cursor-pointer whitespace-nowrap border-b-2 transition-all flex items-center gap-2 uppercase tracking-tight ${
-                    activeTab === tab 
-                      ? 'text-[var(--accent-clinical)] border-[var(--accent-clinical)]' 
-                      : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  {tab} 
-                  <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${activeTab === tab ? 'bg-[var(--accent-clinical)] text-white' : 'bg-[var(--border-clinical)] text-[var(--text-secondary)]'}`}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-6">
-            {categorizedFields[activeTab].length === 0 ? (
-              <div className="col-span-full text-center py-20 text-[var(--text-secondary)] bg-[var(--surface-clinical)] rounded-2xl border border-dashed border-[var(--border-clinical)]">
-                <p className="text-[14px] font-bold uppercase tracking-wider opacity-50">Datos no disponibles en esta categoría</p>
+          ) : (
+            <>
+              {/* Tabs Selector */}
+              <div className="flex gap-3 border-b border-[var(--border-clinical)] overflow-x-auto hide-scrollbar shrink-0 pt-2">
+                {TABS.map(tab => {
+                  const count = categorizedFields[tab].length;
+                  if (count === 0 && tab !== activeTab) return null;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-5 py-3 text-[14px] font-bold cursor-pointer whitespace-nowrap border-b-2 transition-all flex items-center gap-2 uppercase tracking-tight ${
+                        activeTab === tab 
+                          ? 'text-[var(--accent-clinical)] border-[var(--accent-clinical)]' 
+                          : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {tab} 
+                      <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${activeTab === tab ? 'bg-[var(--accent-clinical)] text-white' : 'bg-[var(--border-clinical)] text-[var(--text-secondary)]'}`}>{count}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ) : (
-              categorizedFields[activeTab].map((field, idx) => (
-                <div key={`${field.key}_${idx}`} className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 flex flex-col gap-4 shadow-lg hover:border-[var(--accent-clinical)] transition-all">
-                  <div className="text-[10px] font-black uppercase text-[var(--text-secondary)] tracking-widest border-b border-[var(--border-clinical)] pb-3">
-                    {field.key}
+
+              {/* Content Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-6">
+                {categorizedFields[activeTab].length === 0 ? (
+                  <div className="col-span-full text-center py-20 text-[var(--text-secondary)] bg-[var(--surface-clinical)] rounded-2xl border border-dashed border-[var(--border-clinical)]">
+                    <p className="text-[14px] font-bold uppercase tracking-wider opacity-50">Datos no disponibles en esta categoría</p>
                   </div>
-                  <div className="text-[15px] text-[var(--text-primary)] font-medium whitespace-pre-wrap leading-[1.6]">
-                    <HighlightedText text={field.value} query={query} />
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+                ) : (
+                  categorizedFields[activeTab].map((field, idx) => (
+                    <div key={`${field.key}_${idx}`} className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 flex flex-col gap-4 shadow-lg hover:border-[var(--accent-clinical)] transition-all">
+                      <div className="text-[10px] font-black uppercase text-[var(--text-secondary)] tracking-widest border-b border-[var(--border-clinical)] pb-3">
+                        {field.key}
+                      </div>
+                      <div className="text-[15px] text-[var(--text-primary)] font-medium whitespace-pre-wrap leading-[1.6]">
+                        <HighlightedText text={field.value} query={query} />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>
   );
 }
+
