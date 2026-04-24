@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope, Users } from 'lucide-react';
+import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope } from 'lucide-react';
 
 interface HomeProps {
   hasData: boolean;

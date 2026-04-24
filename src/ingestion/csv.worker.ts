@@ -1,7 +1,7 @@
-import { streamCSV } from './csvParser';
-import { db } from './db';
-import { searchEngine } from './searchEngine';
-import { PatientData } from './dataStore';
+import { streamCSV } from './csvStreamer';
+import { db } from '../storage/indexedDB';
+import { searchEngine } from '../lib/searchEngine';
+import { PatientData } from '../core/types';
 
 // FIX BUG-003: Función centralizada de detección de NHC.
 // Antes se duplicaba esta lógica en el loop principal Y en processBatch,

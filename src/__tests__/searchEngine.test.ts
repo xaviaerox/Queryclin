@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchEngine } from '../searchEngine';
-import { HCEData } from '../dataStore';
+import { searchEngine } from '../lib/searchEngine';
+import { HCEData } from '../core/types';
 
 // Mock de la base de datos
 const mockDb: Record<string, any> = {};
 
-vi.mock('../db', () => ({
+vi.mock('../storage/indexedDB', () => ({
   db: {
     stores: {
       search_index: 'search_index',

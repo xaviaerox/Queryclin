@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, FileText, Download, Activity, User, ChevronRight, FileSpreadsheet } from 'lucide-react';
-import { db } from '../lib/db';
-import { Patient, getGender } from '../lib/dataStore';
+import { ArrowLeft, FileText, Activity, User, ChevronRight, FileSpreadsheet } from 'lucide-react';
+import { db } from '../storage/indexedDB';
+import { Patient, getGender } from '../core/types';
 
 interface ResultsProps {
   results: SearchResult[];

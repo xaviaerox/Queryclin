@@ -47,8 +47,19 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **E8. Índice Fragmentado (Bucketing)**: Solución al error `Failed to read large IndexedDB value`.
 - [x] **E9. Cumplimiento de Gobernanza**: Limpieza total de la raíz del proyecto (Regla 3).
 - [x] **E10. Estabilización de UI**: Corrección de autocompletado en `Home.tsx`.
-- [ ] **E1. Snapshot Médico**: Dashboard visual con gráficos de distribución poblacional (Próximo objetivo).
+## 🟠 FASE 7: Auditoría Estructural y Motor de 2ª Generación (V3.8 - V3.9 ✅)
+- [x] **A6. Refactorización a Clean Architecture**: Separación en capas (Core, Engine, Ingestion, Storage).
+- [x] **A7. Escisión del God Object**: Fractura de `searchEngine.ts` en micro-servicios especializados.
+- [x] **A8. Implementación de BM25**: Salto del TF-IDF lineal a **Okapi BM25** con saturación de frecuencia.
+- [x] **A9. Clinical Synonym Mapper**: Diccionario de 23 patologías para expansión de consultas.
+- [x] **A10. Limpieza de Deuda**: Purga total de código muerto y optimización de tipos.
+- [x] **Logro**: Arquitectura de grado empresarial lista para escalado horizontal de funcionalidades.
+
+---
+## 🟡 PRÓXIMOS OBJETIVOS (V4.0)
+- [ ] **E1. Snapshot Médico**: Dashboard visual con gráficos de distribución poblacional.
 - [ ] **E2. Generador de Informes**: Exportación de fichas clínicas a PDF profesional.
+- [ ] **E11. Motor Semántico Híbrido**: Integración de embeddings locales con Transformers.js.
 
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

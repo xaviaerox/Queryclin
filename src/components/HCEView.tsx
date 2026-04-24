@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, ChevronLeft, ChevronRight, User, AlertTriangle, Activity, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, User, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import HighlightedText from './HighlightedText';
-import { db } from '../lib/db';
-import { Patient, Toma, getGender } from '../lib/dataStore';
-import { SECTION_ORDER, SECTION_LABELS, classifyFields } from '../lib/fieldDictionary';
+import { db } from '../storage/indexedDB';
+import { Patient, Toma, getGender } from '../core/types';
+import { SECTION_ORDER, SECTION_LABELS, classifyFields } from '../core/clinicalTaxonomy';
 
 interface HCEViewProps {
   results: SearchResult[];

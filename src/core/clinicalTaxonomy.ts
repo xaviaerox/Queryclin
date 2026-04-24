@@ -77,7 +77,7 @@ const categoryKeywords: Record<FieldCategory, string[]> = {
   'OTROS': [],
 };
 
-export function classifyField(fieldName: string): FieldCategory {
+function classifyField(fieldName: string): FieldCategory {
   const lower = fieldName.toLowerCase().replace(/[_\s-]+/g, '_');
 
   for (const [category, keywords] of Object.entries(categoryKeywords)) {

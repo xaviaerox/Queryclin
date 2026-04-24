@@ -12,6 +12,47 @@ Todos los cambios notables realizados en el proyecto Queryclin serán documentad
 - **`parser.worker.ts`**: Reparada la telemetría de la barra de carga durante la ingesta. Se ha reducido el `BATCH_SIZE` de 10.000 a 2.500 y se ha forzado el reporte del progreso en el lote final, garantizando que la barra evolucione dinámicamente en UI incluso con archivos pequeños.
 
 ## [2026-04-24]
+### Motor de Búsqueda de 2ª Generación: BM25 + Clinical Synonym Mapper (V3.9.0)
+- **`engine/QueryEngine.ts` — Okapi BM25**: Se ha reemplazado el scoring TF-IDF lineal por el algoritmo **Okapi BM25** (estándar de la industria IR). Mejoras clave:
+  - **IDF Robertson**: La fórmula `log((N - df + 0.5) / (df + 0.5) + 1)` evita IDF negativos y es numéricamente más estable.
+  - **Saturación de TF** (`k1=1.5`): Mencionar "diabetes" 50 veces ya no da 50x más score que mencionarlo 1 vez. Curva asintótica que neutraliza el sesgo de historias clínicas largas.
+  - **Normalización por longitud** (`b=0.75`): Pacientes con historias cortas pero altamente relevantes ya no son aplastados por pacientes con 200 visitas rutinarias.
+- **`engine/IndexerService.ts` — Persistencia BM25**: El indexador ahora calcula y persiste `avg_doc_length` y `docLen` por registro durante la ingesta, para que `QueryEngine` pueda aplicar BM25 con datos reales.
+- **`engine/Tokenizer.ts` — Clinical Synonym Mapper**: Se ha implementado un diccionario de sinónimos canónicos con cobertura de 23 patologías de alta prevalencia hospitalaria:
+  - **Tokens SYN unificados**: Abreviaturas (`HTA`, `DM2`, `TEP`), nombres completos y variantes coloquiales son indexados con un token sintético `__syn_*__` adicional al token original.
+  - **Expansión de Bigramas y Trigramas**: El método `expandQuery()` detecta automáticamente frases compuestas ("presion alta", "diabetes mellitus") en la query del usuario.
+  - **Indexación dual no destructiva**: Ambos tokens (original + SYN) se indexan simultáneamente, preservando la recuperabilidad exacta.
+
+## [2026-04-24]
+### Refactorización Arquitectónica: Clean Architecture (V3.8.0)
+- **Topología de Capas**: Se ha desmantelado la carpeta monolítica `src/lib/` en favor de una arquitectura orientada a dominios:
+  - `src/core/`: Tipos y taxonomía clínica (`types.ts`, `clinicalTaxonomy.ts`).
+  - `src/engine/`: Microservicios del motor de búsqueda.
+  - `src/ingestion/`: Workers de procesamiento CSV (`csv.worker.ts`, `csvStreamer.ts`).
+  - `src/storage/`: Capa de persistencia (`indexedDB.ts`).
+  - `src/utils/`: Utilidades compartidas (`dateParser.ts`, `stringNormalizer.ts`).
+- **Escisión del God Object (`searchEngine.ts`)**:
+  - El monolito de 600 líneas ha sido fracturado en tres piezas independientes de alta cohesión: `IndexerService.ts` (ingesta y fragmentación), `QueryEngine.ts` (consultas booleanas y TF-IDF), y `Tokenizer.ts` (procesamiento lingüístico y stopwords).
+  - `searchEngine.ts` ahora actúa exclusivamente como una clase **Facade** transparente, previniendo romper los contratos de la UI.
+- **Limpieza de Código Muerto**: Purgadas importaciones de UI huérfanas (`lucide-react`) y variables de lógica heredada en el motor.
+
+## [2026-04-24]
+### Refactorización Semántica y Precisión de Búsqueda (V3.7.2)
+- **`searchEngine.ts`**: Corrección masiva de 4 bugs críticos que provocaban pérdida de datos y falsos positivos/negativos:
+  - **Filtro NOT a Nivel Registro**: Un término de exclusión (`-HIPERTENSION`) ya no veta al paciente entero históricamente, sino que descarta únicamente la toma clínica afectada.
+  - **Filtros de Fecha y Servicio Quirúrgicos**: Los filtros en la interfaz ahora se validan contra los metadatos específicos de la toma clínica que contiene la coincidencia, ignorando el resto del historial irrelevante del paciente. (Se ha incorporado `tomasMeta` en la estructura `Skeleton`).
+  - **Heurística de Fechas Extendida**: El motor de indexación ahora soporta columnas nombradas `FECHA`, `FECHA_INGRESO` o `DATE` en cualquier formato delimitado por `/` o `-`, evitando que los pacientes queden ocultos en los filtros temporales.
+  - **Indexación Recursiva Total**: Se ha reescrito `tokenizeRecord` para procesar nativamente datos estructurados (Arrays) y Booleanos de historiales clínicos complejos, evitando la pérdida silenciosa de esta metainformación.
+
+## [2026-04-24]
+### Auditoría Estructural Continua (V3.7.1)
+- **Gobernanza (`docs/`)**: Se han movido masivamente todos los documentos técnicos de diseño (`AUDITORIA_V25.md`, `AUDITORIA_V3.md`, `BATTLE_LOG.md`, `METAPROMPT.md`, `PROPOSAL_AI.md`) desde la raíz del proyecto hacia el directorio `/docs` para cumplir estrictamente la Regla 3.
+- **Deuda Técnica (`package.json`)**: Moviendo dependencias de transpilación y UI (`@tailwindcss/vite`, `@vitejs/plugin-react`) de la rama `dependencies` a `devDependencies` para mantener una semántica de paquete impecable.
+- **Limpieza de Código Muerto y Encapsulación**:
+  - Eliminado el objeto obsoleto `storage` de `dataStore.ts`.
+  - Retirada de la palabra clave `export` en múltiples elementos de uso estrictamente local (`ClinicalRecord`, `classifyField`, `SearchEngine`, `VERSION`, `BUILD_DATE`, `ViewState`) para evitar fugas de scope (Leaks de Encapsulación) detectados por `ts-prune`.
+
+## [2026-04-24]
 ### Vista HCE Continua — Metaprompt Clínico (V3.4.0)
 - **`HCEView.tsx`**: Rediseño completo. Eliminación de pestañas de categoría. La vista es ahora **única, continua y jerárquica** conforme al metaprompt clínico. Cabecera fija con datos demográficos (NHC, Edad, Ciudad). Alergias con tratamiento visual prioritario (borde ámbar + icono de alerta). Secciones en orden fijo: Alergias → Antecedentes → Anamnesis y Exploración → Exploraciones Complementarias → Diagnóstico y Tratamiento → Resultados y Pruebas → Hospitalización. Orden temporal descendente (última toma primero). Cada toma muestra fecha, hora y usuario. Campos booleanos con chip compacto de color. Campos largos (>80 chars) con renderizado de párrafo. Cada campo ocupa su propia línea.
 - **`fieldDictionary.ts`**: Taxonomía extendida a 8 categorías HCE. Añadidas constantes `SECTION_ORDER` (orden fijo de renderizado) y `SECTION_LABELS` (etiquetas legibles). Nuevas palabras clave para Alergias, Exploraciones Complementarias e Hospitalización. Normalización de claves con `replace(/[_\s-]+/g, '_')` antes de clasificar. Versión: **V3.4.0**.

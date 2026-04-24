@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sun, Moon, Database, Users, HelpCircle } from 'lucide-react';
-import { HCEData } from './lib/dataStore';
+import { HCEData } from './core/types';
 import { searchEngine, SearchResult } from './lib/searchEngine';
-import { db } from './lib/db';
+import { db } from './storage/indexedDB';
 import Home from './components/Home';
 import Results from './components/Results';
 import HCEView from './components/HCEView';
@@ -33,10 +33,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-export const VERSION = '3.7.0';
-export const BUILD_DATE = '24/04/2026 12:30';
+const VERSION = '3.9.0';
+const BUILD_DATE = '24/04/2026 13:45';
 
-export type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
+type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
 export default function App() {
   const [view, setView] = useState<ViewState>('home');
@@ -110,7 +110,7 @@ export default function App() {
       const decoder = new TextDecoder('utf-8');
       const text = decoder.decode(buffer);
 
-      const worker = new Worker(new URL('./lib/parser.worker.ts', import.meta.url) + '?v=' + Date.now(), { type: 'module' });
+      const worker = new Worker(new URL('./ingestion/csv.worker.ts', import.meta.url) + '?v=' + Date.now(), { type: 'module' });
       worker.postMessage({ csvText: text });
       worker.onmessage = async (event) => {
         const { type, progress, total, message, patientCount } = event.data;
@@ -198,10 +198,11 @@ export default function App() {
             </div>
             <button 
               onClick={() => setView('evolution')}
-              className="px-2 py-0.5 text-[9px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border border-[var(--accent-clinical)]/20 rounded-full hover:bg-[var(--accent-clinical)] hover:text-white transition-all active:scale-95" 
-              title={`Compilación: ${BUILD_DATE} | Click para ver la evolución del proyecto`}
+              className="px-2 py-0.5 text-[9px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border border-[var(--accent-clinical)]/20 rounded-full hover:bg-[var(--accent-clinical)] hover:text-white transition-all active:scale-95 flex items-center gap-1" 
+              title={`Click para ver la evolución del proyecto`}
             >
-              V{VERSION}
+              <span>V{VERSION}</span>
+              <span className="opacity-50 border-l border-[var(--accent-clinical)]/30 pl-1">{BUILD_DATE}</span>
             </button>
           </div>
           

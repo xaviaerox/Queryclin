@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { streamCSV } from '../csvParser';
+import { streamCSV } from '../ingestion/csvStreamer';
 
 // Helper para convertir el generador a array (igual que haría el Worker)
 function parseCSV(csv: string): any[] {

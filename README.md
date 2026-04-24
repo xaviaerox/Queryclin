@@ -23,14 +23,17 @@ La visión original se basó en transformar la experiencia de auditoría clínic
 
 ---
 
-Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y estabilidad ante la auditoría, el stack se compone de:
+Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y estabilidad ante la auditoría, el stack se compone de una **Arquitectura Limpia (Clean Architecture)** desacoplada:
 
 - **React 19 + TypeScript:** Esquema de datos estricto para garantizar la integridad clínica.
-- **IndexedDB (Persistencia Fragmentada):** Sustituye a localStorage para permitir almacenar cientos de megabytes de datos clínicos. Los esqueletos y el índice se fragmentan en bloques para evitar límites de memoria del navegador.
-- **Web Workers de Alto Rendimiento:** Delegación del procesamiento intensivo (parsing e indexación) a hilos paralelos.
-- **Librerías de Motor Interno (V2.5 Optimized):**
-  - *`csvParser.ts`*: Parser de flujo (streaming) que procesa registros iterativamente sin cargar sábanas de líneas en RAM.
-  - *`db.ts`*: Capa de persistencia con soporte para transacciones por lotes (Batching) para inyecciones de datos ultra-rápidas.
+- **Capa de Dominio (`src/core/`):** Modelos de datos y taxonomía clínica unificada.
+- **Capa de Aplicación e Ingesta (`src/ingestion/`):** Workers de procesamiento paralelo y streaming de CSV.
+- **Capa de Infraestructura y Storage (`src/storage/`):** Persistencia en IndexedDB con fragmentación inteligente.
+- **Motor de Búsqueda Clínico (`src/engine/`):** 
+  - *`IndexerService.ts`*: Ingesta asíncrona con seguimiento de longitudes para BM25.
+  - *`QueryEngine.ts`*: Motor de recuperación de información basado en **Okapi BM25**.
+  - *`Tokenizer.ts`*: Procesamiento lingüístico con **Clinical Synonym Mapper** y expansión de consultas.
+- **Fachada de Integración (`src/lib/searchEngine.ts`):** Punto único de contacto para la UI que delega en los micro-servicios del motor.te para transacciones por lotes (Batching) para inyecciones de datos ultra-rápidas.
   - *`searchEngine.ts`*: Buscador asíncrono con "Flushing" incremental a disco para soportar 100k+ registros sin OOM.
 
 
@@ -70,10 +73,20 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Inmunidad a OOM (100k+ registros)**: Refactorización de ingesta mediante flushing incremental.
 - **Inteligencia Clínica**: Sugerencias de autocompletado y filtrado de ruido (Stopwords).
 
-### Fase 9: Optimización Extrema y Motor Ultra-Eficiente (V2.7 - ACTUAL ✅)
+### Fase 9: Optimización Extrema y Motor Ultra-Eficiente (V2.7 - V3.0 ✅)
 - **Arquitectura de Ingesta Single-Pass**: El sistema procesa, indexa y guarda registros en un único flujo lineal, minimizando el consumo de RAM.
 - **Batching de Consultas**: Refactorización del motor de búsqueda para realizar consultas por lotes, reduciendo las transacciones de IndexedDB en un 80% en búsquedas complejas.
 - **Robustez de Datos**: Implementación de filtrado de líneas vacías y normalización estricta durante el parseo masivo.
+
+### Fase 10: Refactorización a Clean Architecture (V3.8 ✅)
+- **Desacoplamiento Total**: Migración de una estructura plana a capas funcionales (`core`, `engine`, `ingestion`, `storage`).
+- **Patrón Facade**: Implementación de una interfaz unificada para el motor de búsqueda que oculta la complejidad interna de los micro-servicios.
+- **Purga de Deuda Técnica**: Eliminación de código muerto y optimización de dependencias visuales.
+
+### Fase 11: Recuperación de Información de 2ª Generación (V3.9 - ACTUAL ✅)
+- **Algoritmo BM25**: Implementación de **Okapi BM25** con saturación de frecuencia y normalización por longitud de documento, superando al TF-IDF tradicional.
+- **Clinical Synonym Mapper**: Diccionario integrado de 23 patologías de alta prevalencia para expansión automática de consultas (ej. `HTA` → `Hipertensión`).
+- **Expansión de Bigramas**: Detección de frases clínicas compuestas en la búsqueda del usuario.
 
 
 ---

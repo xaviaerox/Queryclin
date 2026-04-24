@@ -1,4 +1,4 @@
-export interface ClinicalRecord {
+interface ClinicalRecord {
   [key: string]: string;
 }
 
@@ -26,17 +26,10 @@ export interface HCEData {
   patients: Record<string, Patient>;
 }
 
-import { db } from './db';
-
 /**
  * Capa de almacenamiento. Arquitectura Local-First (V3+):
  * la persistencia real la gestiona el Worker via IndexedDB.
  */
-export const storage = {
-  clearData: async () => {
-    await db.clear();
-  }
-};
 
 /**
  * Detecta el género del paciente basándose en los datos demográficos.
