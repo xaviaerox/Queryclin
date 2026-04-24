@@ -91,3 +91,29 @@ export function classifyField(fieldName: string): FieldCategory {
 
   return 'OTROS';
 }
+
+/**
+ * Clasifica un conjunto de registros en un mapa de categorías para su renderizado.
+ */
+export function classifyFields(registros: any[]): Record<FieldCategory, { key: string, value: string }[]> {
+  const result: Record<string, { key: string, value: string }[]> = {};
+  
+  // Inicializar categorías
+  SECTION_ORDER.forEach(cat => result[cat] = []);
+  result['Demografía'] = [];
+
+  if (!Array.isArray(registros)) return result as any;
+
+  registros.forEach(reg => {
+    if (!reg || !reg.data) return;
+    Object.entries(reg.data).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      const category = classifyField(key);
+      if (result[category]) {
+        result[category].push({ key, value: String(value) });
+      }
+    });
+  });
+
+  return result as Record<FieldCategory, { key: string, value: string }[]>;
+}

@@ -246,14 +246,14 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
       </form>
 
       {hasData && !compact && (
-        <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+        <div className="mt-16 max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
           {/* Histórico Column */}
-          <div className="lg:col-span-2">
+          <div className="w-full">
             <h3 className="text-[10px] font-black uppercase tracking-[3px] text-[var(--accent-clinical)] mb-6 flex items-center gap-3">
               <div className="w-6 h-[1px] bg-[var(--accent-clinical)] opacity-30"></div>
               Consultas Recientes
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {recentSearches.length > 0 ? recentSearches.map((s, idx) => (
                 <button
                   key={idx}
@@ -274,74 +274,6 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                   <p className="text-[12px] text-[var(--text-secondary)] font-medium italic opacity-40">No hay registros en esta sesión.</p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Premium Analytics Dashboard Column */}
-          <div className="space-y-6">
-            <h3 className="text-[10px] font-black uppercase tracking-[3px] text-[var(--text-secondary)] mb-6 flex items-center gap-3">
-              <div className="w-6 h-[1px] bg-[var(--text-secondary)] opacity-30"></div>
-              Consola de Análisis
-            </h3>
-            <div className="flex flex-col gap-4">
-              {/* Card: Pacientes */}
-              <div className="relative group bg-[var(--surface-clinical)] p-5 rounded-2xl border border-[var(--border-clinical)] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Users size={64} />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-[var(--accent-clinical)] animate-pulse"></div>
-                    <span className="text-[9px] font-black uppercase text-[var(--accent-clinical)] tracking-widest">Base de Datos</span>
-                  </div>
-                  <div className="text-3xl font-black text-[var(--text-primary)] tracking-tighter mb-1">Activo</div>
-                  <div className="text-[11px] text-[var(--text-secondary)] font-medium leading-relaxed">
-                    Sincronización persistente con IndexedDB habilitada.
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t border-[var(--border-clinical)] flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-[var(--text-secondary)]">Motor: RAM-First</span>
-                  <div className="flex gap-1">
-                    <div className="w-1 h-3 bg-[var(--accent-clinical)]/30 rounded-full h-1/2"></div>
-                    <div className="w-1 h-3 bg-[var(--accent-clinical)] rounded-full"></div>
-                    <div className="w-1 h-3 bg-[var(--accent-clinical)]/50 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card: Seguridad */}
-              <div className="relative group bg-[var(--surface-clinical)] p-5 rounded-2xl border border-[var(--border-clinical)] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden">
-                <div className="absolute -bottom-4 -right-4 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12">
-                  <ShieldCheck size={80} />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Protocolo Privacidad</span>
-                  </div>
-                  <div className="text-2xl font-black text-[var(--text-primary)] tracking-tight">Isolated Local</div>
-                  <div className="text-[11px] text-[var(--text-secondary)] mt-1 font-medium italic">
-                    Sin rastro en servidor externo.
-                  </div>
-                </div>
-              </div>
-
-              {/* Card: Status Visualizer */}
-              <div className="bg-gradient-to-br from-[var(--surface-clinical)] to-[var(--bg-clinical)] p-5 rounded-2xl border border-[var(--border-clinical)] shadow-inner">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[9px] font-black uppercase text-orange-500 tracking-widest">Rendimiento</span>
-                  <span className="text-[11px] font-bold text-orange-500">Optimum</span>
-                </div>
-                <div className="space-y-3">
-                  <div className="h-1.5 w-full bg-[var(--border-clinical)] rounded-full overflow-hidden">
-                    <div className="h-full w-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-1000"></div>
-                  </div>
-                  <div className="flex justify-between text-[9px] font-bold text-[var(--text-secondary)] uppercase">
-                    <span>Indexación</span>
-                    <span>Latencia (12ms)</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

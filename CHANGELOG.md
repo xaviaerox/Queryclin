@@ -1,6 +1,17 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
 ## [2026-04-24]
+### Refinamiento UI y Navegación HCE (V3.7.0)
+- **`App.tsx`**: Restauración del tooltip de fecha de última compilación (`BUILD_DATE`) en el badge de versión para mantener la trazabilidad de actualizaciones. Cumplimiento proactivo de sincronía de versiones (Regla 5).
+- **`Home.tsx`**: Eliminación del bloque "Consola de Análisis" genérico para limpiar la UI. El histórico de "Consultas Recientes" se ha centrado para ofrecer una vista inicial minimalista y profesional.
+- **`HCEView.tsx`**: 
+  - Corrección crítica de renderizado (Crash "Sistema Fuera de Servicio") al mapear propiedades incompatibles en la interfaz `Toma` (`idToma` y `latest.data`).
+  - Añadido margen de simetría (espaciador derecho fantasma) en el layout principal para garantizar el centrado estético del expediente clínico.
+  - Ajuste del anclaje de scroll en las tomas (`scroll-mt-8`) para que al pulsar el menú de navegación, la sesión se posicione directamente en la cabecera (top) en lugar del centro de la pantalla.
+  - Resolución de errores TypeScript de exportación garantizando la tipificación segura mediante casting a `Toma[]`.
+- **`parser.worker.ts`**: Reparada la telemetría de la barra de carga durante la ingesta. Se ha reducido el `BATCH_SIZE` de 10.000 a 2.500 y se ha forzado el reporte del progreso en el lote final, garantizando que la barra evolucione dinámicamente en UI incluso con archivos pequeños.
+
+## [2026-04-24]
 ### Vista HCE Continua — Metaprompt Clínico (V3.4.0)
 - **`HCEView.tsx`**: Rediseño completo. Eliminación de pestañas de categoría. La vista es ahora **única, continua y jerárquica** conforme al metaprompt clínico. Cabecera fija con datos demográficos (NHC, Edad, Ciudad). Alergias con tratamiento visual prioritario (borde ámbar + icono de alerta). Secciones en orden fijo: Alergias → Antecedentes → Anamnesis y Exploración → Exploraciones Complementarias → Diagnóstico y Tratamiento → Resultados y Pruebas → Hospitalización. Orden temporal descendente (última toma primero). Cada toma muestra fecha, hora y usuario. Campos booleanos con chip compacto de color. Campos largos (>80 chars) con renderizado de párrafo. Cada campo ocupa su propia línea.
 - **`fieldDictionary.ts`**: Taxonomía extendida a 8 categorías HCE. Añadidas constantes `SECTION_ORDER` (orden fijo de renderizado) y `SECTION_LABELS` (etiquetas legibles). Nuevas palabras clave para Alergias, Exploraciones Complementarias e Hospitalización. Normalización de claves con `replace(/[_\s-]+/g, '_')` antes de clasificar. Versión: **V3.4.0**.

@@ -33,7 +33,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-export const VERSION = '3.4.0';
+export const VERSION = '3.7.0';
+export const BUILD_DATE = '24/04/2026 12:30';
 
 export type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -44,6 +45,7 @@ export default function App() {
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progressPercent, setProgressPercent] = useState(0);
   const [patientCount, setPatientCount] = useState<number>(0);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -100,17 +102,23 @@ export default function App() {
 
   const handleFileUpload = (file: File) => {
     setIsProcessing(true);
+    setProgressPercent(0);
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string;
+      // FIX UTF-8: Leer como ArrayBuffer y decodificar explícitamente para evitar fallos de codificación
+      const buffer = e.target?.result as ArrayBuffer;
+      const decoder = new TextDecoder('utf-8');
+      const text = decoder.decode(buffer);
+
       const worker = new Worker(new URL('./lib/parser.worker.ts', import.meta.url) + '?v=' + Date.now(), { type: 'module' });
       worker.postMessage({ csvText: text });
       worker.onmessage = async (event) => {
         const { type, progress, total, message, patientCount } = event.data;
-        
 
         if (type === 'progress') {
-          console.log(`[Ingesta] Progreso: ${progress} / ${total}`);
+          const percent = Math.round((progress / total) * 100);
+          setProgressPercent(percent);
+          console.log(`[Ingesta] Progreso: ${progress} / ${total} (${percent}%)`);
           return;
         }
 
@@ -146,7 +154,7 @@ export default function App() {
         worker.terminate();
       };
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string }) => {
@@ -191,7 +199,7 @@ export default function App() {
             <button 
               onClick={() => setView('evolution')}
               className="px-2 py-0.5 text-[9px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border border-[var(--accent-clinical)]/20 rounded-full hover:bg-[var(--accent-clinical)] hover:text-white transition-all active:scale-95" 
-              title="Click para ver la evolución y fases del proyecto"
+              title={`Compilación: ${BUILD_DATE} | Click para ver la evolución del proyecto`}
             >
               V{VERSION}
             </button>
@@ -236,10 +244,26 @@ export default function App() {
 
         <main className="flex-1 overflow-y-auto relative bg-[var(--bg-clinical)]">
           {isProcessing && (
-            <div className="absolute inset-0 bg-[var(--bg-clinical)]/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-16 h-16 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin mb-6"></div>
-              <h2 className="text-2xl font-black mb-2">Procesando registros médicos...</h2>
-              <p className="text-[var(--text-secondary)] max-w-md">Queryclin está organizando e indexando la base de datos local para permitir la búsqueda instantánea de los pacientes importados.</p>
+            <div className="fixed inset-0 bg-[var(--bg-clinical)]/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
+              <div className="w-20 h-20 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(var(--accent-clinical-rgb),0.2)]"></div>
+              
+              <div className="max-w-md w-full space-y-6 text-center">
+                <h2 className="text-2xl font-black text-[var(--text-primary)]">Procesando registros médicos...</h2>
+                <p className="text-[var(--text-secondary)] font-medium">Queryclin está organizando e indexando la base de datos local para permitir la búsqueda instantánea de los pacientes importados.</p>
+                
+                {/* Barra de Progreso Evolutiva */}
+                <div className="w-full bg-[var(--surface-clinical)] h-4 rounded-full border border-[var(--border-clinical)] overflow-hidden shadow-inner p-1">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[var(--accent-clinical)] to-emerald-500 rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(var(--accent-clinical-rgb),0.4)]"
+                    style={{ width: `${progressPercent}%` }}
+                  ></div>
+                </div>
+                
+                <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60">
+                  <span>Estado: Ingesta Activa</span>
+                  <span>{progressPercent}% Completado</span>
+                </div>
+              </div>
             </div>
           )}
 
@@ -274,7 +298,7 @@ export default function App() {
               currentIndex={selectedIndex}
               onBack={() => setView('results')}
               query={query}
-              onIndexChange={setSelectedIndex}
+              onNavigate={(idx: number) => setSelectedIndex(idx)}
             />
           )}
           {view === 'help' && (

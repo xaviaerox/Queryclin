@@ -7,13 +7,31 @@ import { PatientData } from './dataStore';
 // Antes se duplicaba esta lógica en el loop principal Y en processBatch,
 // lo que causaba desincronización de identidades si el primer registro de un lote tenía el campo vacío.
 function detectNhcKey(keys: string[]): string {
-  const found = keys.find(k => {
-    const cleanKey = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const isId = cleanKey.includes('ID') || cleanKey.includes('COD') || cleanKey.includes('IDENTIF');
-    const isPatient = cleanKey.includes('PAC') || cleanKey.includes('PAT') || cleanKey.includes('NHC') || cleanKey.includes('HCE') || cleanKey.includes('HISTORIA');
-    return (isId && isPatient) || cleanKey === 'NHC' || cleanKey === 'ID' || cleanKey === 'CIPA' || cleanKey === 'CIP';
+  // PRIORIDAD 1: Buscar coincidencias exactas o términos clínicos inequívocos
+  const clinicalMatch = keys.find(k => {
+    const clean = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return clean === 'NHC' || clean === 'NHCID' || clean === 'HISTORIACLINICA' || clean === 'NUMEROHISTORIA' || clean === 'HCE';
   });
-  return found || keys[0] || '';
+  if (clinicalMatch) return clinicalMatch;
+
+  // PRIORIDAD 2: Buscar combinaciones de ID + PACIENTE (evitando CARM o IDs de sistema)
+  const patientMatch = keys.find(k => {
+    const clean = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (clean.includes('CARM') || clean.includes('SISTEMA') || clean.includes('CONTADOR')) return false;
+    const isId = clean.includes('ID') || clean.includes('COD') || clean.includes('IDENT');
+    const isPatient = clean.includes('PAC') || clean.includes('PAT') || clean.includes('NHC') || clean.includes('HIST');
+    return isId && isPatient;
+  });
+  if (patientMatch) return patientMatch;
+
+  // PRIORIDAD 3: CIP/CIPA
+  const cipMatch = keys.find(k => {
+    const clean = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return clean === 'CIPA' || clean === 'CIP';
+  });
+  if (cipMatch) return cipMatch;
+
+  return keys[0] || '';
 }
 
 self.onmessage = async (e: MessageEvent) => {
@@ -22,7 +40,7 @@ self.onmessage = async (e: MessageEvent) => {
   try {
     console.log('[Worker] Iniciando Ingesta Solid-State (V3.1)...');
     
-    const BATCH_SIZE = 10000;
+    const BATCH_SIZE = 2500;
     let recordsBatch: any[] = [];
     let totalProcessed = 0;
     const uniqueNhcs = new Set<string>();
@@ -70,6 +88,11 @@ self.onmessage = async (e: MessageEvent) => {
     // Procesar el último lote
     if (recordsBatch.length > 0) {
       await processBatch(recordsBatch, totalProcessed, nhcKey);
+      self.postMessage({ 
+        type: 'progress', 
+        progress: totalProcessed, 
+        total: estimatedTotal
+      });
     }
 
     console.log(`[Worker] Finalizando indexación de ${totalProcessed} registros (${uniqueNhcs.size} pacientes)...`);
@@ -131,7 +154,8 @@ async function processBatch(records: any[], currentTotal: number, nhcKey: string
           NOMBRE: findValue(['NOMBRE', 'APELLIDO'], ['CIUDAD', 'POBLACION', 'USUARIO', 'PROCESO']),
           SEXO: findValue(['SEXO', 'GENERO']),
           EDAD: findValue(['EDAD', 'ANOS'], ['FECHA', 'NACIMIENTO']), 
-          CIUDAD: findValue(['CIUDAD', 'POBLACION', 'LOCALIDAD']),
+          // Corrección según Coordinación: Usar domicilio o CP si ciudad es código numérico
+          CIUDAD: findValue(['DOMICILIO', 'DIRECCION', 'POBLACION', 'CIUDAD'], ['CODIGO', 'NUM']),
           POSTAL: findValue(['POSTAL', 'CP', 'ZIP'])
         },
         tomas: {}

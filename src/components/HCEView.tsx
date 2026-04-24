@@ -1,32 +1,21 @@
 import { useState, useEffect, useMemo } from 'react';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, ChevronLeft, ChevronRight, User, AlertTriangle, Activity } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, User, AlertTriangle, Activity, FileSpreadsheet } from 'lucide-react';
 import HighlightedText from './HighlightedText';
 import { db } from '../lib/db';
 import { Patient, Toma, getGender } from '../lib/dataStore';
-import { FieldCategory, SECTION_ORDER, SECTION_LABELS, classifyField } from '../lib/fieldDictionary';
+import { SECTION_ORDER, SECTION_LABELS, classifyFields } from '../lib/fieldDictionary';
 
-// ─── Tipos Internos ────────────────────────────────────────────────────────────
 interface HCEViewProps {
   results: SearchResult[];
   currentIndex: number;
-  onIndexChange: (index: number) => void;
-  onBack: () => void;
   query: string;
+  onBack: () => void;
+  onNavigate: (index: number) => void;
 }
 
-// Campos técnicos internos que nunca se muestran en la vista clínica
-const INTERNAL_FIELDS = new Set([
-  'IDTOMA','ORDENTOMA','NHCID','CONTADOR','NHC_ID','NHC','CIPA','ID_TOMA','ORDEN_TOMA',
-]);
-
-function isInternalField(key: string): boolean {
-  const uk = key.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  return INTERNAL_FIELDS.has(uk) || uk === 'NHC';
-}
-
-// ─── Avatar de Paciente ────────────────────────────────────────────────────────
-function PatientAvatar({ gender, size = 28 }: { gender: 'male' | 'female' | 'neutral'; size?: number }) {
+// ─── Avatar de Paciente ───────────────────────────────────────────────────────
+function PatientAvatar({ gender, size = 28 }: { gender: 'male' | 'female' | 'neutral', size?: number }) {
   const cfg = {
     male:    { bg: 'bg-cyan-500/10',    text: 'text-cyan-500',    border: 'border-cyan-500/20' },
     female:  { bg: 'bg-purple-400/10',  text: 'text-purple-400',  border: 'border-purple-400/20' },
@@ -40,7 +29,7 @@ function PatientAvatar({ gender, size = 28 }: { gender: 'male' | 'female' | 'neu
 }
 
 // ─── Chip de Dato Demográfico ──────────────────────────────────────────────────
-function DemoChip({ label, value }: { key?: string; label: string; value: string }) {
+function DemoChip({ label, value }: { key?: any; label: string; value: string }) {
   return (
     <span className="inline-flex items-center gap-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] px-3 py-1.5 rounded-lg text-[12px]">
       <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">{label}</span>
@@ -50,29 +39,29 @@ function DemoChip({ label, value }: { key?: string; label: string; value: string
 }
 
 // ─── Campo Clínico Individual ──────────────────────────────────────────────────
-function ClinicalField({ label, value, query, highlight }: { key?: string; label: string; value: string; query: string; highlight?: boolean }) {
+function ClinicalField({ label, value, query, highlight }: { key?: any; label: string; value: string; query: string; highlight?: boolean }) {
   const isLong = value.length > 80;
   const isBoolean = ['SI','NO','SÍ','TRUE','FALSE','POSITIVO','NEGATIVO'].includes(value.trim().toUpperCase());
 
   return (
-    <div className={`flex flex-col gap-1.5 ${highlight ? 'bg-[var(--accent-clinical)]/5 rounded-xl p-3 -mx-3' : ''}`}>
-      <span className="text-[9px] font-black uppercase tracking-[0.15em] text-[var(--accent-clinical)]/60 leading-none">
+    <div className={`flex flex-col gap-1.5 border-b border-[var(--border-clinical)]/60 last:border-0 pb-4 last:pb-0 ${highlight ? 'bg-[var(--accent-clinical)]/5 rounded-xl p-3 -mx-3 ring-1 ring-[var(--accent-clinical)]/20' : ''}`}>
+      <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--accent-clinical)] leading-none mb-1">
         {label.replace(/_/g, ' ')}
       </span>
       {isBoolean ? (
         <span className={`inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-lg text-[12px] font-black uppercase tracking-wide ${
           ['SI','SÍ','TRUE','POSITIVO'].includes(value.trim().toUpperCase())
-            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-            : 'bg-red-500/10 text-red-500 border border-red-500/20'
+            ? 'bg-emerald-600 text-white shadow-sm'
+            : 'bg-red-600 text-white shadow-sm'
         }`}>
           {value}
         </span>
       ) : isLong ? (
-        <p className="text-[14px] text-[var(--text-primary)] leading-[1.75] whitespace-pre-wrap font-normal">
+        <p className="text-[15px] text-slate-900 dark:text-slate-100 leading-[1.75] whitespace-pre-wrap font-bold">
           <HighlightedText text={value} query={query} />
         </p>
       ) : (
-        <span className="text-[15px] text-[var(--text-primary)] font-medium leading-snug">
+        <span className="text-[16px] text-slate-900 dark:text-slate-100 font-black leading-snug">
           <HighlightedText text={value} query={query} />
         </span>
       )}
@@ -81,19 +70,13 @@ function ClinicalField({ label, value, query, highlight }: { key?: string; label
 }
 
 // ─── Cabecera de Sección Clínica ───────────────────────────────────────────────
-function SectionHeader({ label, count }: { label: string; count: number }) {
+function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-4 mt-8 mb-4">
-      <div className="h-[1px] w-6 bg-[var(--accent-clinical)]/40 flex-shrink-0" />
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--accent-clinical)]/70 whitespace-nowrap flex-shrink-0">
+    <div className="flex items-center gap-4 mb-6 px-1">
+      <span className="text-[12px] font-black uppercase tracking-[0.3em] text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 px-4 py-1.5 rounded-lg border border-emerald-500/20">
         {label}
       </span>
-      {count > 0 && (
-        <span className="text-[9px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] px-2 py-0.5 rounded-full">
-          {count}
-        </span>
-      )}
-      <div className="h-[1px] flex-1 bg-[var(--border-clinical)]" />
+      <div className="h-[2px] flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
     </div>
   );
 }
@@ -101,267 +84,272 @@ function SectionHeader({ label, count }: { label: string; count: number }) {
 // ─── Separador Temporal de Toma ────────────────────────────────────────────────
 function TomaDivider({ idToma, fecha, hora, usuario, index }: { idToma: string; fecha: string; hora: string; usuario: string; index: number }) {
   return (
-    <div className={`flex items-center gap-4 ${index === 0 ? 'mt-2' : 'mt-10'} mb-5`}>
-      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${index === 0 ? 'bg-[var(--accent-clinical)]' : 'bg-[var(--border-clinical)]'}`} />
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-3 flex-wrap">
-          {fecha && <span className="text-[13px] font-black text-[var(--text-primary)]">{fecha}</span>}
-          {hora && <span className="text-[12px] font-medium text-[var(--text-secondary)]">{hora}</span>}
-          {index === 0 && (
-            <span className="text-[9px] font-black uppercase tracking-widest bg-[var(--accent-clinical)] text-white px-2 py-0.5 rounded-full">
-              Última toma
+    <div id={`toma-${idToma}`} className="flex items-center gap-4 scroll-mt-8">
+      <div className={`flex items-center gap-4 ${index === 0 ? 'mt-4' : 'mt-16'} mb-8 w-full`}>
+        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${index === 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[14px] font-black text-[var(--text-primary)] uppercase tracking-tight">
+              {index === 0 ? 'Última Intervención / Toma' : `Sesión Clínica - ${fecha}`}
             </span>
-          )}
+            {index === 0 && (
+              <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                Actual
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)] font-bold">
+            <span>{fecha} a las {hora}</span>
+            <span className="opacity-40">·</span>
+            <span>{usuario}</span>
+            <span className="opacity-40">·</span>
+            <span className="font-mono opacity-60">#{idToma.slice(0, 8)}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-[var(--text-secondary)]">
-          <span className="font-mono font-bold opacity-60">#{idToma}</span>
-          {usuario && <><span className="opacity-40">·</span><span>{usuario}</span></>}
-        </div>
+        <div className="flex-1 h-[1px] bg-[var(--border-clinical)]" />
       </div>
-      <div className="flex-1 h-[1px] bg-[var(--border-clinical)]" />
     </div>
   );
 }
 
-// ─── Bloque de Registro (una toma) ────────────────────────────────────────────
-function RegistroBlock({ registro, query, isFirst }: { key?: string; registro: any; query: string; isFirst: boolean }) {
-  const data = registro.data as Record<string, string>;
-  const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1);
-
-  // Extraer metadatos temporales
-  const fechaKey = Object.keys(data).find(k => k.toUpperCase().includes('FECHA_TOMA') || k.toUpperCase().includes('FECHA_OBS'));
-  const horaKey  = Object.keys(data).find(k => k.toUpperCase().includes('HORA_TOMA') || k.toUpperCase().includes('HORA'));
-  const userKey  = Object.keys(data).find(k => k.toUpperCase().includes('USUARIO'));
-
-  const fecha   = fechaKey ? data[fechaKey] : '';
-  const hora    = horaKey  ? data[horaKey]  : '';
-  const usuario = userKey  ? data[userKey]  : '';
-
-  // Agrupar campos por categoría HCE
-  const sections: Record<FieldCategory, { key: string; value: string }[]> = {} as any;
-  for (const cat of SECTION_ORDER) sections[cat] = [];
-
-  for (const [k, v] of Object.entries(data)) {
-    if (!v || String(v).trim() === '') continue;
-    if (isInternalField(k)) continue;
-    if (k === fechaKey || k === horaKey || k === userKey) continue;
-    const cat = classifyField(k);
-    if (!sections[cat]) sections[cat] = [];
-    sections[cat].push({ key: k, value: String(v) });
-  }
-
-  // Campos de alerta (alergia) para tratamiento visual especial
-  const alergiaSection = sections['Alergias y Motivo'];
-
+// ─── Navegador Lateral (Timeline) ─────────────────────────────────────────────
+function TomaNav({ sortedTomas, onScrollTo }: { sortedTomas: Toma[]; onScrollTo: (id: string) => void }) {
   return (
-    <div className={`pb-2 ${!isFirst ? 'border-t border-[var(--border-clinical)] pt-2' : ''}`}>
-      <TomaDivider
-        idToma={registro.ordenToma}
-        fecha={fecha}
-        hora={hora}
-        usuario={usuario}
-        index={isFirst ? 0 : 1}
-      />
-
-      {/* ALERGIAS — tratamiento visual prioritario */}
-      {alergiaSection.length > 0 && (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 mb-1">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle size={14} className="text-amber-500 flex-shrink-0" />
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-500/80">
-              {SECTION_LABELS['Alergias y Motivo']}
+    <div className="flex flex-col gap-4 sticky top-[240px] max-h-[60vh] overflow-y-auto pr-6 hide-scrollbar">
+      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] mb-2 px-3 opacity-50">
+        Navegación Cronológica
+      </h3>
+      <div className="flex flex-col border-l-2 border-[var(--border-clinical)] ml-3">
+        {sortedTomas.map((t, idx) => (
+          <button
+            key={t.idToma}
+            onClick={() => onScrollTo(`toma-${t.idToma}`)}
+            className="group flex flex-col items-start gap-1 py-4 px-5 -ml-[2px] border-l-2 border-transparent hover:border-[var(--accent-clinical)] hover:bg-[var(--accent-clinical)]/5 transition-all text-left"
+          >
+            <span className={`text-[13px] font-black ${idx === 0 ? 'text-[var(--accent-clinical)]' : 'text-[var(--text-primary)]'} group-hover:text-[var(--accent-clinical)]`}>
+              {t.latest?.data['FECHA_TOMA'] || 'Sin fecha'}
             </span>
-          </div>
-          <div className="flex flex-col gap-4">
-            {alergiaSection.map(f => (
-              <ClinicalField
-                key={f.key}
-                label={f.key}
-                value={f.value}
-                query={query}
-                highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* RESTO DE SECCIONES en orden fijo */}
-      {SECTION_ORDER.filter(s => s !== 'Alergias y Motivo').map(section => {
-        const fields = sections[section];
-        if (!fields || fields.length === 0) return null;
-        return (
-          <div key={section}>
-            <SectionHeader label={SECTION_LABELS[section]} count={fields.length} />
-            <div className="flex flex-col gap-5">
-              {fields.map(f => (
-                <ClinicalField
-                  key={f.key}
-                  label={f.key}
-                  value={f.value}
-                  query={query}
-                  highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+            <span className="text-[10px] font-bold text-[var(--text-secondary)] opacity-70">
+              {t.latest?.data['HORA_TOMA'] || '--:--'}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ─── Componente Principal ──────────────────────────────────────────────────────
-export default function HCEView({ results, currentIndex, onIndexChange, onBack, query }: HCEViewProps) {
+// ─── Componente Principal HCEView ──────────────────────────────────────────────
+export default function HCEView({ results, currentIndex, query, onBack, onNavigate }: HCEViewProps) {
   const currentResult = results[currentIndex];
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar paciente completo desde IndexedDB
   useEffect(() => {
+    if (!currentResult) return;
     let active = true;
-    const loadPatient = async () => {
+    const fetchPatient = async () => {
       setLoading(true);
-      setPatient(null);
-      const fullPatient = await db.getFromStore(db.stores.patients, currentResult.nhc);
-      if (active && fullPatient) {
-        setPatient(fullPatient);
-        setLoading(false);
+      try {
+        const p = await db.getFromStore(db.stores.patients, currentResult.nhc);
+        if (active && p) {
+          setPatient(p);
+          setLoading(false);
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        } else if (active) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Error fetching patient:", err);
+        if (active) setLoading(false);
       }
     };
-    loadPatient();
+    fetchPatient();
     return () => { active = false; };
-  }, [currentResult.nhc]);
+  }, [currentResult?.nhc]);
 
-  // Scroll automático al primer highlight
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const el = document.querySelector('.highlight-match');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [currentResult.nhc, query]);
-
-  // Ordenar tomas descendente (más reciente primero)
   const sortedTomas = useMemo(() => {
-    if (!patient) return [];
-    return (Object.values(patient.tomas) as Toma[]).sort((a, b) => {
+    if (!patient || !patient.tomas) return [];
+    return Object.values(patient.tomas).sort((a, b) => {
       const getTime = (t: Toma) => {
-        const dateKey = Object.keys(t.latest.data).find(k => k.toUpperCase().includes('FECHA_TOMA'));
-        if (!dateKey || !t.latest.data[dateKey]) return 0;
-        let d = t.latest.data[dateKey] as string;
+        if (!t || !t.latest || !t.latest.data) return 0;
+        const dateStr = t.latest.data['FECHA_TOMA'] || '';
+        const timeStr = t.latest.data['HORA_TOMA'] || '00:00';
+        let d = dateStr;
         if (d.includes('/')) {
           const p = d.split('/');
           if (p.length === 3) d = `${p[2]}-${p[1]}-${p[0]}`;
         }
-        return new Date(d).getTime() || 0;
+        return new Date(`${d}T${timeStr}`).getTime() || 0;
       };
-      return getTime(b) - getTime(a);
+      return getTime(b as unknown as Toma) - getTime(a as unknown as Toma);
     });
   }, [patient]);
 
   const hasNext = currentIndex < results.length - 1;
   const hasPrev = currentIndex > 0;
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  const handleExportPatient = () => {
+    if (!patient) return;
+    const allKeys = new Set<string>();
+    (Object.values(patient.tomas) as Toma[]).forEach(t => t.registros.forEach(r => Object.keys(r.data).forEach(k => allKeys.add(k))));
+    const keys = Array.from(allKeys);
+    let csv = '\uFEFF' + keys.map(k => `"${k}"`).join(';') + '\n';
+    (Object.values(patient.tomas) as Toma[]).forEach(t => t.registros.forEach(r => {
+      csv += keys.map(k => `"${String(r.data[k] || '').replace(/"/g, '""')}"`).join(';') + '\n';
+    }));
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `HCE_${patient.nhc}.csv`;
+    link.click();
+  };
+
+  const scrollToToma = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  if (!currentResult) {
+    return (
+      <div className="flex flex-col items-center justify-center py-40 gap-4 text-center">
+        <h2 className="text-xl font-black text-[var(--accent-clinical)] uppercase tracking-widest">Error de Referencia</h2>
+        <p className="text-sm text-[var(--text-secondary)] font-bold">No se ha podido localizar el expediente seleccionado.</p>
+        <button onClick={onBack} className="mt-4 px-8 py-3 bg-[var(--accent-clinical)] text-white rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+          Volver a Resultados
+        </button>
+      </div>
+    );
+  }
+
   if (loading || !patient) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 py-24">
-        <div className="w-10 h-10 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[var(--text-secondary)] font-bold text-sm">
-          Recuperando historial clínico del NHC {currentResult.nhc}…
-        </p>
+      <div className="flex flex-col items-center justify-center py-40 gap-4">
+        <div className="w-12 h-12 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[var(--text-secondary)] font-bold animate-pulse">Recuperando Historia Clínica...</p>
       </div>
     );
   }
 
   const demo = patient.demographics || {};
+  const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
 
   return (
-    <div className="flex flex-col h-full w-full gap-0">
-
-      {/* ── Barra de Navegación ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between shrink-0 mb-5">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-[var(--surface-clinical)] rounded-xl transition-colors text-[var(--text-secondary)]"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <h2 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-wider hidden sm:block">
-            Historia Clínica Electrónica
-          </h2>
-        </div>
-        <div className="flex items-center gap-3 bg-[var(--surface-clinical)] px-4 py-2 rounded-xl border border-[var(--border-clinical)] shadow-md">
-          <span className="text-[12px] font-bold text-[var(--text-secondary)] uppercase tracking-wide">
-            {currentIndex + 1} / {results.length}
+    <div className="flex flex-col w-full pb-40">
+      
+      {/* Navegación Superior */}
+      <div className="flex items-center justify-between mb-8 shrink-0">
+        <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-bold transition-colors">
+          <ArrowLeft size={20} />
+          <span>Volver al Listado</span>
+        </button>
+        <div className="flex items-center gap-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] px-4 py-2 rounded-2xl shadow-sm">
+          <span className="text-[12px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+            Expediente {currentIndex + 1} de {results.length}
           </span>
-          <div className="flex gap-1 border-l border-[var(--border-clinical)] pl-2">
-            <button disabled={!hasPrev} onClick={() => onIndexChange(currentIndex - 1)}
-              className="p-1 rounded-lg hover:bg-[var(--bg-clinical)] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--text-primary)]">
-              <ChevronLeft size={18} />
+          <div className="flex gap-1 border-l border-[var(--border-clinical)] pl-3">
+            <button disabled={!hasPrev} onClick={() => onNavigate(currentIndex - 1)} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
+              <ChevronLeft size={20} />
             </button>
-            <button disabled={!hasNext} onClick={() => onIndexChange(currentIndex + 1)}
-              className="p-1 rounded-lg hover:bg-[var(--bg-clinical)] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--text-primary)]">
-              <ChevronRight size={18} />
+            <button disabled={!hasNext} onClick={() => onNavigate(currentIndex + 1)} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
+              <ChevronRight size={20} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── CABECERA FIJA: Datos Demográficos ───────────────────────────── */}
-      <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-lg ring-1 ring-[var(--accent-clinical)]/5 shrink-0 mb-6">
-        <div className="flex items-start gap-5">
-          <PatientAvatar gender={getGender(demo)} size={28} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-3 flex-wrap mb-3">
-              <h1 className="text-[24px] font-black text-[var(--text-primary)] tracking-tight leading-none">
+      {/* Cabecera Demográfica Fija */}
+      <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-3xl p-8 mb-12 shadow-xl ring-1 ring-[var(--accent-clinical)]/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+          <div className="flex items-center gap-8">
+            <PatientAvatar gender={getGender(demo)} />
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight uppercase leading-none mb-2">
                 {demo.NOMBRE || `Paciente ${patient.nhc}`}
               </h1>
-              <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-1 rounded-full mt-1">
-                Historia Activa
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <DemoChip label="NHC" value={patient.nhc} />
-              {['EDAD', 'SEXO', 'CIUDAD', 'POSTAL'].map(k => {
-                const actualKey = Object.keys(demo).find(dk => dk.toUpperCase().includes(k));
-                if (!actualKey || !demo[actualKey]) return null;
-                return <DemoChip key={k} label={k === 'POSTAL' ? 'C.P.' : k} value={demo[actualKey]} />;
-              })}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-3 py-1 rounded-full">
+                  Historia Activa
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-[12px] text-[var(--text-secondary)] shrink-0">
-            <Activity size={14} className="text-[var(--accent-clinical)]" />
-            <span className="font-bold">{sortedTomas.length} toma{sortedTomas.length !== 1 ? 's' : ''}</span>
+          <div className="flex flex-wrap gap-3 max-w-xl">
+             <DemoChip label="NHC" value={patient.nhc} />
+             {['EDAD', 'SEXO', 'CIUDAD', 'POSTAL'].map(k => {
+                const key = Object.keys(demo).find(dk => dk.toUpperCase().includes(k));
+                return key ? <DemoChip key={k} label={k === 'POSTAL' ? 'C.P.' : k} value={demo[key]} /> : null;
+             })}
           </div>
+          <button onClick={handleExportPatient} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest transition-all shadow-lg active:scale-95">
+            <FileSpreadsheet size={18} />
+            Descargar HCE
+          </button>
         </div>
       </div>
 
-      {/* ── VISTA ÚNICA CONTINUA ─────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto hide-scrollbar">
-        <div className="max-w-3xl mx-auto pb-24 space-y-0">
-          {sortedTomas.length === 0 ? (
-            <div className="text-center py-20 text-[var(--text-secondary)]">
-              <p className="font-bold">No se encontraron registros clínicos para este paciente.</p>
-            </div>
-          ) : (
-            sortedTomas.map((toma, tomaIdx) =>
-              // Dentro de cada toma, mostrar registros ordenados descendente
-              [...toma.registros]
-                .sort((a, b) => b.ordenToma - a.ordenToma)
-                .map((registro, regIdx) => (
-                  <RegistroBlock
-                    key={`${toma.idToma}_${registro.ordenToma}`}
-                    registro={registro}
-                    query={query}
-                    isFirst={tomaIdx === 0 && regIdx === 0}
-                  />
-                ))
-            )
-          )}
+      {/* Cuerpo Principal: Sidebar + Contenido + Espaciador Simétrico */}
+      <div className="flex gap-12 items-start justify-center">
+        
+        {/* Navegador Izquierdo */}
+        <aside className="w-56 shrink-0 hidden lg:block">
+          <TomaNav sortedTomas={sortedTomas} onScrollTo={scrollToToma} />
+        </aside>
+
+        {/* Contenido Central */}
+        <div className="flex-1 min-w-0 max-w-4xl">
+          {sortedTomas.map((toma, idx) => {
+            const sections = classifyFields(toma.registros);
+            return (
+              <div key={toma.idToma} className="mb-24 last:mb-0">
+                <TomaDivider 
+                   idToma={toma.idToma} 
+                   fecha={toma.latest?.data['FECHA_TOMA'] || '--'} 
+                   hora={toma.latest?.data['HORA_TOMA'] || '--'} 
+                   usuario={toma.latest?.data['USUARIO_TOMA'] || 'Sistema'}
+                   index={idx} 
+                />
+
+                {/* Información Crítica Especial (Alergias/Motivo) */}
+                {sections['Alergias y Motivo'] && sections['Alergias y Motivo'].length > 0 && (
+                  <div className="bg-amber-50 dark:bg-amber-900/10 border-2 border-amber-200 dark:border-amber-900/30 rounded-3xl p-8 mb-10 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6 text-amber-700">
+                      <AlertTriangle size={20} />
+                      <span className="text-[12px] font-black uppercase tracking-widest">Información Crítica</span>
+                    </div>
+                    <div className="flex flex-col gap-6">
+                      {sections['Alergias y Motivo'].map(f => (
+                        <ClinicalField key={f.key} label={f.key} value={f.value} query={query} highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Resto de Categorías */}
+                {SECTION_ORDER.filter(s => s !== 'Alergias y Motivo').map(section => {
+                  const fields = sections[section];
+                  if (!fields || fields.length === 0) return null;
+                  return (
+                    <div key={`${toma.idToma}-${section}`} className="bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-8 mb-8 shadow-md">
+                      <SectionHeader label={SECTION_LABELS[section]} />
+                      <div className="flex flex-col gap-6">
+                        {fields.map(f => (
+                          <ClinicalField key={f.key} label={f.key} value={f.value} query={query} highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
+
+        {/* Espaciador Derecho (Simetría) */}
+        <aside className="w-56 shrink-0 hidden lg:block"></aside>
       </div>
     </div>
   );
