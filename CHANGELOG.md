@@ -1,5 +1,22 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
+## [2026-04-27]
+### Rediseño de Navegación HCE - Toma Única Activa
+- **`HCEView.tsx`**: Rediseño arquitectónico completo del visor de historias clínicas. Se elimina el scroll infinito de tomas apiladas y se implementa un **navegador de toma única activa**: solo se muestra una toma en pantalla a la vez.
+- **`HCEView.tsx`**: El timeline lateral ahora muestra para cada toma: número de orden (`#`), fecha completa, hora y usuario, permitiendo identificar y saltar a cualquier sesión clínica de un vistazo.
+- **`HCEView.tsx`**: Añadida barra de navegación contextual en la cabecera de la toma activa con flechas "Anterior / Siguiente" y contador de posición (ej. "2 / 7").
+
+- **`App.tsx`**: Implementada detección de codificación multinivel con fallback automático a **CP850 (MS-DOS)**. Se ha desarrollado un transcodificador manual para solucionar errores de visualización en caracteres específicos (`¢` -> `ó`) procedentes de sistemas hospitalarios heredados.
+- **`clinicalTaxonomy.ts`**: Refinada la normalización de campos (NFD) y ampliada la base de conocimientos para reconocer términos de obstetricia y ginecología del dataset real (`cesárea`, `gestación`, `FPP`, etc.).
+- **`HCEView.tsx`**: Añadido soporte para mapeo de fechas dinámico (`EC_Fecha_Toma`) y limpieza de formatos temporales complejos.
+- **`Results.tsx`**: Migración completa del sistema de exportación de CSV a **XLSX (Excel nativo)** utilizando la librería SheetJS.
+- **`Results.tsx`**: Modificada la visualización del listado para priorizar el campo `EC_Proceso2` (Proceso) sobre el nombre, mejorando la identificación contextual.
+- **`csv.worker.ts`**: Actualizada la lógica de ingesta para capturar automáticamente `EC_Proceso2` como dato demográfico (`PROCESO`).
+- **`csv.worker.ts`**: Refactorizado el algoritmo `findKey` para priorizar el **orden de las palabras clave** sobre el orden físico de las columnas. Esto garantiza que se elija la información descriptiva (`EC_Proceso2`) incluso si el sistema la exporta después de los IDs internos.
+- **`csv.worker.ts`**: Corregido un falso positivo en la detección del Código Postal (CP) mediante exclusiones semánticas.
+- **Dependencias**: Incorporada la librería `xlsx` al proyecto.
+- **`DIARIO_APRENDIZAJE.md`**: Sincronización completa de la Fase 7 para auditoría de prácticas.
+
 ## [2026-04-24]
 ### Refinamiento UI y Navegación HCE (V3.7.0)
 - **`App.tsx`**: Restauración del tooltip de fecha de última compilación (`BUILD_DATE`) en el badge de versión para mantener la trazabilidad de actualizaciones. Cumplimiento proactivo de sincronía de versiones (Regla 5).

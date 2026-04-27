@@ -19,7 +19,9 @@ La visión original se basó en transformar la experiencia de auditoría clínic
 - **Simplicidad de Uso:** Un buscador central limpio que acepta la carga de archivos por arrastre.
 - **Arquitectura de Escala (v3):** Capacidad para gestionar hasta **100.000 pacientes** de forma fluida mediante procesamiento paralelo (Web Workers).
 - **Sintaxis Booleana Estricta:** Motor de búsqueda que soporta lógica natural (`diabetes AND asma NOT fumador`).
-- **Navegación Evolutiva:** Capacidad para recorrer cronológicamente las distintas versiones (Toma y Orden_Toma) de una historia clínica.
+- **Navegación de Toma Única Activa (v4):** Rediseño del visor HCE para centrar la atención en una única sesión clínica, con timeline lateral para navegación cronológica rápida.
+- **Exportación Profesional (v4):** Motor de exportación nativo a formato **Excel (.xlsx)** para facilitar el análisis externo por parte de los facultativos.
+- **Resiliencia de Codificación:** Transcodificación automática (UTF8/Windows-1252/CP850) para archivos heredados de sistemas hospitalarios antiguos.
 
 ---
 
@@ -33,8 +35,7 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
   - *`IndexerService.ts`*: Ingesta asíncrona con seguimiento de longitudes para BM25.
   - *`QueryEngine.ts`*: Motor de recuperación de información basado en **Okapi BM25**.
   - *`Tokenizer.ts`*: Procesamiento lingüístico con **Clinical Synonym Mapper** y expansión de consultas.
-- **Fachada de Integración (`src/lib/searchEngine.ts`):** Punto único de contacto para la UI que delega en los micro-servicios del motor.te para transacciones por lotes (Batching) para inyecciones de datos ultra-rápidas.
-  - *`searchEngine.ts`*: Buscador asíncrono con "Flushing" incremental a disco para soportar 100k+ registros sin OOM.
+- **Fachada de Integración (`src/lib/searchEngine.ts`):** Punto único de contacto para la UI que delega en los micro-servicios del motor, garantizando una transición transparente desde la arquitectura anterior.
 
 
 ---

@@ -41,33 +41,36 @@ export const SECTION_LABELS: Record<FieldCategory, string> = {
 const categoryKeywords: Record<FieldCategory, string[]> = {
   'Demografía': [
     'nhc', 'cipa', 'fecha_nacimiento', 'nacimiento', 'edad', 'sexo', 'ciudad', 'postal',
-    'domicilio', 'estado_civil', 'nombre', 'apellido',
+    'domicilio', 'estado_civil', 'nombre', 'apellido', 'demog', 'proceso', 'cipa',
   ],
   'Alergias y Motivo': [
     'alergia', 'alerg', 'intoleranc', 'motivo_consulta', 'motivo_ingreso', 'motivo',
   ],
   'Antecedentes': [
     'antecedente', 'ant_fam', 'antfam', 'ant_med', 'antmed', 'familiar', 'personal',
-    'quirurgico', 'quirúrgico', 'habito', 'hábito', 'vacuna', 'ant_',
+    'quirurgico', 'quirúrgico', 'habito', 'hábito', 'vacuna', 'ant_', 'cesarea', 'cesárea',
+    'gestaciones', 'abortos', 'ectopicos', 'paridad', 'obstetrica', 'obstétrica',
   ],
   'Anamnesis y Exploración': [
     'anamnesis', 'anam', 'enfermedad_actual', 'enfermedad', 'exploracion', 'exploración',
     'expl', 'sintoma', 'síntoma', 'talla', 'peso', 'ta', 'fc', 'temperatura', 'constante',
-    'imc', 'perimetro', 'perímetro', 'edema',
+    'imc', 'perimetro', 'perímetro', 'edema', 'gestacion', 'gestación', 'fpp', 'fur',
+    'movimientos_fetales', 'fcf', 'exploracion_general', 'auscultacion', 'auscultación',
   ],
   'Exploraciones Complementarias': [
     'complementaria', 'ecs', 'solicitud', 'solicita', 'observacion', 'observación', 'obs',
-    'peticion', 'petición',
+    'peticion', 'petición', 'pruebas_solicitadas', 'analitica_solicitada',
   ],
   'Diagnóstico y Tratamiento': [
     'diagnostico', 'diagnóstico', 'diag', 'juicio', 'tratamiento', 'tto', 'medicacion',
     'medicación', 'prescripcion', 'prescripción', 'plan', 'receta', 'recomendacion',
-    'recomendación', 'evolucion', 'evolución', 'proxima_revision', 'revision',
+    'recomendación', 'evolucion', 'evolución', 'proxima_revision', 'revision', 'tratamiento_crónico',
   ],
   'Resultados y Pruebas': [
     'analitica', 'analítica', 'laboratorio', 'prueba', 'imagen', 'rx', 'tac', 'rmn',
     'ecografia', 'ecografía', 'biopsia', 'cultivo', 'resultado', 'anatomia', 'anatomía',
-    'radiodiagnostico', 'radiodiagnóstico', 'otras_pruebas',
+    'radiodiagnostico', 'radiodiagnóstico', 'otras_pruebas', 'cribado', 'screening',
+    'rubeola', 'toxoplasmosis', 'hb', 'htc', 'glucemia', 'urocultivo', 'chagas',
   ],
   'Hospitalización': [
     'tipo_ingreso', 'ingreso', 'alta', 'traslado', 'uci', 'urgencia', 'servicio',
@@ -78,7 +81,11 @@ const categoryKeywords: Record<FieldCategory, string[]> = {
 };
 
 function classifyField(fieldName: string): FieldCategory {
-  const lower = fieldName.toLowerCase().replace(/[_\s-]+/g, '_');
+  // Normalizar: quitar acentos (NFD) y caracteres no alfanuméricos para robustez clínica
+  const lower = fieldName.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, '_');
 
   for (const [category, keywords] of Object.entries(categoryKeywords)) {
     if (category === 'OTROS') continue;

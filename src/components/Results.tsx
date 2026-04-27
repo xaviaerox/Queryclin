@@ -3,6 +3,7 @@ import { SearchResult } from '../lib/searchEngine';
 import { ArrowLeft, FileText, Activity, User, ChevronRight, FileSpreadsheet } from 'lucide-react';
 import { db } from '../storage/indexedDB';
 import { Patient, getGender } from '../core/types';
+import * as XLSX from 'xlsx';
 
 interface ResultsProps {
   results: SearchResult[];
@@ -45,8 +46,21 @@ function ResultRow({ res, onSelect }: { key?: any; res: SearchResult, onSelect: 
   }, [res.nhc]);
 
   const demographics = patient?.demographics || {};
-  const nameKey = Object.keys(demographics).find(k => k.toUpperCase().includes('NOMBRE')) || '';
-  const name = nameKey ? demographics[nameKey] : `Paciente ${res.nhc}`;
+  
+  // Búsqueda del valor a mostrar: Prioridad PROCESO (mapeado a EC_Proceso2 en worker) -> Nombre
+  let displayValue = demographics['PROCESO'] || demographics['ECPROCESO2'] || demographics['EC_Proceso2'];
+  
+  if (!displayValue && patient) {
+    const firstToma = Object.values(patient.tomas)[0];
+    if (firstToma) {
+      displayValue = firstToma.latest.data['EC_Proceso2'] || firstToma.latest.data['EC_PROCESO2'];
+    }
+  }
+
+  if (!displayValue) {
+    const nameKey = Object.keys(demographics).find(k => k.toUpperCase().includes('NOMBRE')) || '';
+    displayValue = nameKey ? demographics[nameKey] : `Paciente ${res.nhc}`;
+  }
 
   return (
     <div 
@@ -63,11 +77,11 @@ function ResultRow({ res, onSelect }: { key?: any; res: SearchResult, onSelect: 
         </div>
         
         <div className="flex flex-col flex-1 min-w-0">
-          <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-tighter leading-none mb-1 opacity-60">Nombre del Paciente</span>
+          <span className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-tighter leading-none mb-1 opacity-60">Proceso / Nombre</span>
           {loading ? (
             <div className="h-4 w-32 bg-[var(--border-clinical)] animate-pulse rounded"></div>
           ) : (
-            <span className="text-[14px] font-bold text-[var(--text-primary)] truncate uppercase tracking-tight">{name}</span>
+            <span className="text-[14px] font-bold text-[var(--text-primary)] truncate uppercase tracking-tight">{displayValue}</span>
           )}
         </div>
       </div>
@@ -116,32 +130,46 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     setCurrentPage(1);
   }, [results]);
 
-  const handleExportCSV = async () => {
+  const handleExportExcel = async () => {
     if (results.length === 0) return;
-    // ... (lógica de exportación ya existente preservada para mantener funcionalidad)
+    
+    // Tarea E2: Generador de Informes / Exportación XLSX Profesional
     const fullPatients: Patient[] = [];
     for (const res of results) {
        const p = await db.getFromStore(db.stores.patients, res.nhc);
        if (p) fullPatients.push(p);
     }
+    
     if (fullPatients.length === 0) return;
-    const tempKeys = new Set<string>();
-    fullPatients.forEach(p => Object.values(p.tomas).forEach(toma => toma.registros.forEach(registro => Object.keys(registro.data).forEach(k => tempKeys.add(k)))));
-    const keys = Array.from(tempKeys);
-    let csvContent = '\uFEFF' + keys.map(k => `"${k.replace(/"/g, '""')}"`).join(';') + '\n';
-    fullPatients.forEach(p => Object.values(p.tomas).forEach(toma => toma.registros.forEach(registro => {
-      const row = keys.map(k => registro.data[k] || '');
-      csvContent += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';') + '\n';
-    })));
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+
+    // Aplanamiento de datos para formato tabla Excel
+    const exportData: any[] = [];
+    
+    fullPatients.forEach(p => {
+      Object.values(p.tomas).forEach(toma => {
+        toma.registros.forEach(reg => {
+          // Consolidar NHC, Metadatos de la Toma y todos los campos clínicos
+          exportData.push({
+            'NHC': p.nhc,
+            'Identificador_Toma': toma.idToma,
+            'Version_Registro': reg.ordenToma,
+            ...p.demographics,
+            ...reg.data
+          });
+        });
+      });
+    });
+
+    // Generación del libro de Excel
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Resultados Queryclin");
+    
+    // Generar nombre de archivo basado en la búsqueda
     const safeQuery = query.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    link.href = url;
-    link.setAttribute('download', `queryclin_export_${safeQuery || 'all'}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileName = `queryclin_export_${safeQuery || 'all'}.xlsx`;
+    
+    XLSX.writeFile(workbook, fileName);
   };
 
   return (
@@ -167,12 +195,12 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
 
         {results.length > 0 && (
           <button 
-            onClick={handleExportCSV}
+            onClick={handleExportExcel}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 border-b-4 border-emerald-800"
-            title="Exportar resultados actuales a Excel"
+            title="Exportar resultados actuales a archivo Excel (.xlsx)"
           >
             <FileSpreadsheet size={18} />
-            <span className="hidden sm:inline">Exportar a Excel</span>
+            <span className="hidden sm:inline">Descargar Excel</span>
           </button>
         )}
       </div>

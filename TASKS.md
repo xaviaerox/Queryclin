@@ -58,7 +58,7 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (V4.0)
 - [ ] **E1. Snapshot Médico**: Dashboard visual con gráficos de distribución poblacional.
-- [ ] **E2. Generador de Informes**: Exportación de fichas clínicas a PDF profesional.
+- [x] **E2. Generador de Informes**: Exportación de fichas clínicas a Excel nativo (.xlsx) (Fase inicial completada).
 - [ ] **E11. Motor Semántico Híbrido**: Integración de embeddings locales con Transformers.js.
 
 ---

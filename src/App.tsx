@@ -107,8 +107,27 @@ export default function App() {
     reader.onload = (e) => {
       // FIX UTF-8: Leer como ArrayBuffer y decodificar explícitamente para evitar fallos de codificación
       const buffer = e.target?.result as ArrayBuffer;
-      const decoder = new TextDecoder('utf-8');
-      const text = decoder.decode(buffer);
+      let text = '';
+      
+      try {
+        // Intento 1: UTF-8 estricto
+        const decoder = new TextDecoder('utf-8', { fatal: true });
+        text = decoder.decode(buffer);
+        console.log('[App] Archivo decodificado como UTF-8');
+      } catch (err) {
+        // Intento 2: IBM850 (Codificación MS-DOS común en exportaciones antiguas de hospitales españoles)
+        // El usuario reportó 'Inducci¢n', lo cual confirma que el byte 0xA2 (ó en DOS) 
+        // se está malinterpretando. IBM850 es el estándar para estos casos.
+        console.warn('[App] Fallo en UTF-8, intentando con IBM850 (DOS)...');
+        const testDecoder = new TextDecoder('windows-1252');
+        text = testDecoder.decode(buffer);
+        
+        // Si detectamos el patrón de error del usuario (¢ en lugar de ó), forzamos la decodificación DOS
+        if (text.includes('¢') || text.includes(' ') || text.includes('¡') || text.includes('¤')) {
+           console.log('[App] Detectada codificación CP850 (DOS), aplicando transcodificación...');
+           text = decodeCP850(buffer);
+        }
+      }
 
       const worker = new Worker(new URL('./ingestion/csv.worker.ts', import.meta.url) + '?v=' + Date.now(), { type: 'module' });
       worker.postMessage({ csvText: text });
@@ -312,4 +331,29 @@ export default function App() {
       </div>
     </ErrorBoundary>
   );
+}
+
+/**
+ * Decodificador manual para CP850 (MS-DOS Latin 1).
+ * Esencial para exportaciones de sistemas hospitalarios antiguos que no usan estándares modernos.
+ */
+function decodeCP850(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  const cp850Map: Record<number, string> = {
+    160: 'á', 130: 'é', 161: 'í', 162: 'ó', 163: 'ú',
+    164: 'ñ', 165: 'Ñ', 129: 'ü', 154: 'Ü',
+    181: 'Á', 144: 'É', 214: 'Í', 224: 'Ó', 233: 'Ú',
+    173: '¡', 168: '¿', 245: '§', 241: '±'
+  };
+
+  let result = '';
+  for (let i = 0; i < bytes.length; i++) {
+    const byte = bytes[i];
+    if (byte < 128) {
+      result += String.fromCharCode(byte);
+    } else {
+      result += cp850Map[byte] || '?';
+    }
+  }
+  return result;
 }

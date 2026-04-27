@@ -127,12 +127,15 @@ async function processBatch(records: any[], currentTotal: number, nhcKey: string
   const batchPatients: Record<string, PatientData> = { ...existingPatients };
 
   const findKey = (keywords: string[], exclusions: string[] = []) => {
-    return keys.find(k => {
-      const uk = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const matches = keywords.some(kw => uk.includes(kw));
-      const isExcluded = exclusions.some(ex => uk.includes(ex));
-      return matches && !isExcluded;
-    });
+    for (const kw of keywords) {
+      const match = keys.find(k => {
+        const uk = k.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const isExcluded = exclusions.some(ex => uk.includes(ex));
+        return uk.includes(kw) && !isExcluded;
+      });
+      if (match) return match;
+    }
+    return undefined;
   };
 
   const idTomaKey = findKey(['IDTOMA', 'IDENTIFICADORTOMA', 'EPISODIO']) || 'ID_TOMA';
@@ -156,7 +159,9 @@ async function processBatch(records: any[], currentTotal: number, nhcKey: string
           EDAD: findValue(['EDAD', 'ANOS'], ['FECHA', 'NACIMIENTO']), 
           // Corrección según Coordinación: Usar domicilio o CP si ciudad es código numérico
           CIUDAD: findValue(['DOMICILIO', 'DIRECCION', 'POBLACION', 'CIUDAD'], ['CODIGO', 'NUM']),
-          POSTAL: findValue(['POSTAL', 'CP', 'ZIP'])
+          // Corrección BUG-007: Excluir 'PROCESO' de la búsqueda de CP/POSTAL para evitar que 'EC_Proceso' coincida con 'CP'
+          POSTAL: findValue(['POSTAL', 'CP', 'ZIP'], ['PROCESO']),
+          PROCESO: findValue(['ECPROCESO2', 'PROCESO'])
         },
         tomas: {}
       };
