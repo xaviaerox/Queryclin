@@ -15,7 +15,8 @@ Todos los cambios notables realizados en el proyecto Queryclin serán documentad
 - **`csv.worker.ts`**: Refactorizado el algoritmo `findKey` para priorizar el **orden de las palabras clave** sobre el orden físico de las columnas. Esto garantiza que se elija la información descriptiva (`EC_Proceso2`) incluso si el sistema la exporta después de los IDs internos.
 - **`csv.worker.ts`**: Corregido un falso positivo en la detección del Código Postal (CP) mediante exclusiones semánticas.
 - **Dependencias**: Incorporada la librería `xlsx` al proyecto.
-- **`DIARIO_APRENDIZAJE.md`**: Sincronización completa de la Fase 7 para auditoría de prácticas.
+- **`tests/stress/`**: Creada infraestructura de pruebas de rendimiento. Incluye un dataset sintético de **17.379 registros** (`HC_Stress_Test.txt`) protegido como solo lectura, un script generador (`gen_stress_test.js`) y un plan de pruebas guiado para auditorías.
+- **`DIARIO_APRENDIZAJE.md`**: Sincronización completa de la Fase 8 (Robustez y Datos Reales) para auditoría de prácticas.
 
 ## [2026-04-24]
 ### Refinamiento UI y Navegación HCE (V3.7.0)
