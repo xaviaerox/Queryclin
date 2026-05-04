@@ -1,27 +1,112 @@
-/**
- * Utilidades para el parseo heurístico de fechas clínicas.
- */
+import { parse, isValid } from 'date-fns';
 
-/**
- * Intenta convertir un string de fecha (en variados formatos clínicos) a un timestamp numérico.
- * Soporta delimitadores mixtos y formatos como DD/MM/YYYY, YYYY-MM-DD, etc.
- * Retorna null si la fecha no es válida.
- */
 export const parseClinicalDate = (dateStrRaw: any): number | null => {
   if (!dateStrRaw) return null;
   
-  let dateStr = String(dateStrRaw);
-  
-  if (dateStr.includes('/') || dateStr.includes('-')) {
-    const sep = dateStr.includes('/') ? '/' : '-';
-    const parts = dateStr.split(sep);
-    
-    // Si viene en formato DD/MM/YYYY o DD-MM-YYYY, lo invertimos a formato ISO para JS Date
-    if (parts.length === 3 && parts[2].length === 4) {
-      dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+  // Limpiar caracteres invisibles y comillas
+  let dateStr = String(dateStrRaw).replace(/[\u200B-\u200D\uFEFF'"]/g, '').trim();
+  if (!dateStr) return null;
+
+  // Normalizar delimitadores: convertir puntos y barras invertidas a barras normales
+  if (!/^\d+(\.\d+)?$/.test(dateStr)) {
+      dateStr = dateStr.replace(/[.\\]/g, '/');
+  }
+
+  const now = new Date();
+
+  // Si es un número puro, determinamos su origen por la longitud
+  if (/^\d+(\.\d+)?$/.test(dateStr)) {
+     const numStr = dateStr.split('.')[0];
+     const num = parseFloat(dateStr);
+     
+     if (numStr.length <= 6) {
+         // Excel Serial (ej: 46146)
+         const time = (num - 25569) * 86400 * 1000;
+         return isNaN(time) ? null : time;
+     } else if (numStr.length === 8) {
+         // YYYYMMDD (ej: 20260504)
+         const yyyy = numStr.substring(0, 4);
+         const mm = numStr.substring(4, 6);
+         const dd = numStr.substring(6, 8);
+         const parsed = parse(`${yyyy}-${mm}-${dd}`, 'yyyy-MM-dd', now);
+         if (isValid(parsed)) return parsed.getTime();
+     } else if (numStr.length === 10) {
+         // Unix Timestamp en segundos
+         return num * 1000;
+     } else if (numStr.length >= 13) {
+         // Unix Timestamp en milisegundos
+         return num;
+     }
+  }
+
+  // Lista de formatos clínicos posibles en España e internacional
+  const formatsToTry = [
+    // Formatos con meses en texto (ej: 04-May-2026)
+    'dd-MMM-yyyy HH:mm:ss',
+    'dd-MMM-yyyy',
+    'dd MMM yyyy HH:mm:ss',
+    'dd MMM yyyy',
+    // 4 dígitos
+    'dd/MM/yyyy HH:mm:ss',
+    'dd/MM/yyyy HH:mm',
+    'dd/MM/yyyy',
+    'dd-MM-yyyy HH:mm:ss',
+    'dd-MM-yyyy HH:mm',
+    'dd-MM-yyyy',
+    'yyyy-MM-dd HH:mm:ss.SSS',
+    'yyyy-MM-dd HH:mm:ss',
+    'yyyy-MM-dd HH:mm',
+    'yyyy-MM-dd',
+    'yyyy/MM/dd HH:mm:ss',
+    'yyyy/MM/dd HH:mm',
+    'yyyy/MM/dd',
+    'MM/dd/yyyy hh:mm:ss a',
+    'MM/dd/yyyy HH:mm:ss',
+    'MM/dd/yyyy HH:mm',
+    'MM/dd/yyyy',
+    // 2 dígitos
+    'dd/MM/yy HH:mm:ss',
+    'dd/MM/yy HH:mm',
+    'dd/MM/yy',
+    'dd-MM-yy HH:mm:ss',
+    'dd-MM-yy HH:mm',
+    'dd-MM-yy',
+    'yy-MM-dd HH:mm:ss',
+    'yy-MM-dd HH:mm',
+    'yy-MM-dd',
+    'MM/dd/yy hh:mm:ss a',
+    'MM/dd/yy HH:mm:ss',
+    'MM/dd/yy HH:mm',
+    'MM/dd/yy'
+  ];
+
+
+
+  // Intentamos con notación ISO nativa primero
+  const nativeDate = new Date(dateStr);
+  if (!isNaN(nativeDate.getTime()) && dateStr.includes('T')) {
+      return nativeDate.getTime();
+  }
+
+  // Intentamos iterar sobre los formatos soportados
+  for (const fmt of formatsToTry) {
+    const parsed = parse(dateStr, fmt, now);
+    if (isValid(parsed)) {
+      // Evitar que un patrón 'yyyy' acepte un año de 2 dígitos y lo convierta en 0026
+      if (fmt.includes('yyyy') && parsed.getFullYear() < 100) {
+        continue;
+      }
+      return parsed.getTime();
     }
   }
-  
-  const time = new Date(dateStr).getTime();
-  return isNaN(time) ? null : time;
+
+  // Si falla todo pero el nativo JS logró parsear algo lógico
+  if (!isNaN(nativeDate.getTime())) {
+    const yr = nativeDate.getFullYear();
+    // Prevenir el mismo bug en el parseador nativo
+    if (yr >= 100) return nativeDate.getTime();
+  }
+
+  return null;
 };
+

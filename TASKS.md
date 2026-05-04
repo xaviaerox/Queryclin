@@ -83,10 +83,11 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A16. Subgrupo de Constantes Vitales**: Implementación de tabla inmutable para parámetros biométricos (IMC, Peso, etc).
 - [x] **Logro**: El sistema alcanza un nivel de madurez visual y técnica industrial, listo para producción.
 
-## 🔵 FASE 13: Trazabilidad Temporal en Navegación (V4.2.2 ✅)
+## 🔵 FASE 13: Trazabilidad Temporal en Navegación (V4.2.3 ✅)
 - [x] **U7. Trazabilidad en Timeline**: Integración de fechas en cabeceras de Toma y horas en Orden_Toma.
 - [x] **A17. Eliminación de Redundancia Demográfica**: Retirado el campo "Edad" de las categorías clínicas (Anamnesis) al estar ya presente en la cabecera.
-- [x] **Logro**: Navegación cronológica intuitiva y limpieza visual de la historia clínica.
+- [x] **E16. Estabilización de Motor de Fechas**: Soporte nativo para MS-Excel (`cellDates: true`) y corrección del filtro cronológico (`getAllRecords`) con padding +24h.
+- [x] **Logro**: Navegación cronológica intuitiva y motor de búsqueda de fechas 100% fiable.
 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)

@@ -35,8 +35,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.2.2';
-const BUILD_DATE = '04/05/2026 10:05';
+const VERSION = '4.2.3';
+const BUILD_DATE = '04/05/2026 10:33';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -122,10 +122,29 @@ export default function App() {
       let text = '';
 
       if (file.name.toLowerCase().endsWith('.xlsx') || config?.fileType === 'xlsx') {
-        const workbook = XLSX.read(buffer, { type: 'array' });
+        const workbook = XLSX.read(buffer, { type: 'array', cellDates: true, cellFormula: true, dateNF: 'dd/mm/yyyy hh:mm:ss' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        text = XLSX.utils.sheet_to_csv(worksheet, { FS: config?.delimiter || '|' });
-        console.log('[App] Archivo Excel convertido a CSV para procesamiento');
+        
+        // Rescatar campos que Excel malinterpretó como fórmulas (ej: "- Paciente con tos" -> #NAME?)
+        if (worksheet['!ref']) {
+          const range = XLSX.utils.decode_range(worksheet['!ref']);
+          for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+              const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+              const cell = worksheet[cellAddress];
+              if (cell && cell.t === 'e' && cell.f) {
+                cell.t = 's'; // Cambiar tipo a string
+                cell.v = cell.f; // Restaurar el texto original (ej: "- Paciente")
+                delete cell.w; // Forzar que sheet_to_csv recalcule el formato
+              }
+            }
+          }
+        }
+        
+        text = XLSX.utils.sheet_to_csv(worksheet, { FS: config?.delimiter || '|', raw: false, dateNF: 'dd/mm/yyyy hh:mm:ss' });
+        console.log('[App] Archivo Excel convertido a CSV para procesamiento. Errores rescatados.');
+
+
       } else {
         try {
           const decoder = new TextDecoder('utf-8', { fatal: true });

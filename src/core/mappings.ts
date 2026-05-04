@@ -43,7 +43,8 @@ export const FORMS: FormMapping[] = [
       ambito: 'Ámbito',
       ciudad: 'EC_Ciudad_Paciente',
       estadoCivil: 'EC_Estado_Civil',
-      unidadEnfermeria: 'Unidad de Enfermería'
+      unidadEnfermeria: 'Unidad de Enfermería',
+      reacciones: 'Antecedentes de alergia:'
     },
     visualCategories: {
       'CABECERA': [
@@ -82,19 +83,63 @@ export const FORMS: FormMapping[] = [
     id: 'hce_mir',
     name: 'HCE-MIR',
     keys: {
-      nhc: 'NHC',
+      nhc: 'N.H.C',
       idToma: 'Id_Toma',
       ordenToma: 'Orden_Toma',
       fechaToma: 'EC_Fecha_Toma',
     },
+    headerAliases: {
+      'N.H.C': ['NHC', 'N.H.C.', 'N.H.C'],
+      'Años desde que dejo de fumar': ['Años desde que dejo de fumar', 'Años desde que dejó de fumar'],
+      'Años fumando': ['Años fumando', 'Años Fumando'],
+      'Cigarrillos al dia': ['Cigarrillos al dia', 'Cigarrillos al día'],
+      'HTA (Hipertensión Arterial)': ['HTA (Hipertensión Arterial)', 'HTA', 'Hipertension Arterial'],
+      'IMC:': ['IMC:', 'IMC'],
+      'Peso:': ['Peso:', 'Peso'],
+      'Talla:': ['Talla:', 'Talla'],
+      'Enfermedad Actual': ['Enfermedad Actual', 'Enfermedad actual', 'Enfermedad Actual:', 'Enfermedad actual:'],
+      'Exploración Física': ['Exploración Física', 'Exploracion Fisica', 'Exploración física', 'Exploración Física:', 'Exploración física:'],
+      'Motivo de Consulta': ['Motivo de Consulta', 'Motivo de la consulta'],
+      'Otras Pruebas Realizadas': ['Otras Pruebas Realizadas', 'Otras pruebas realizadas'],
+      'Próxima revisión': ['Próxima revisión', 'Proxima revisión', 'Proxima revision']
+    },
     demographics: {
-      nhc: 'NHC',
+      cipa: 'Cipa',
+      cp: 'DEMOG-Código postal',
       sexo: 'EC_Sexo',
-      edad: 'Edad',
+      fechaNacimiento: 'Fecha de Nacimiento',
+      nhc: 'N.H.C',
+      proceso2: 'EC_Proceso2',
+      reacciones: 'Reacciones Adversas a fármacos',
+      unidadEnfermeria: 'Unidad de Enfermería'
     },
     visualCategories: {
-      'DATOS GENERALES': ['NHC', 'EC_Sexo', 'EC_Fecha_Toma'],
-      'EVOLUCIÓN': ['Observaciones', 'Diagnóstico', 'Tratamiento']
+      'ANTECEDENTES': [
+        'Antecedentes Familiares Generales', 'Antecedentes MIR:', 'Antecedentes Personales Generales', 
+        'Antecedentes Quirúrgicos Generales', 'Tratamiento Previo'
+      ],
+      'ANAMNESIS Y EXPLORACION': [
+        'Enfermedad Actual', 'Exploración Física', 'Observaciones', 'Situación Basal', 'Otras Exploraciones',
+        // --- BLOQUE CRÍTICO: CONSTANTES ---
+        'IMC:', 'Valoración IMC', 'Diabetes Mellitus', 'Detalles DM', 'O2 Hb', 'Hábito Enólico', 'Hábitos Tóxicos',
+        'Peso:', 'Superficie Corporal', 'FC', 'HTA (Hipertensión Arterial)', 'Años desde que dejo de fumar', 'Cigarrillos al dia', 'Hábito Tabáquico',
+        'Grupo Sanguíneo', 'Transfusiones', 'Perímetro abdominal', 'Dislipemia', 'Detalles Dislipemia', 'Paquetes año',
+        'Talla:', 'Tmp', 'PAD', 'PAS', 'Grado NYHA'
+      ],
+      'DIAGNOSTICO Y TTO': [
+        'Diagnóstico', 'Evolución (CEX)', 'Próxima revisión', 'Recomendaciones', 'Tratamiento'
+      ],
+      'RESULTADOS PRUEBAS': [
+        'Otras Pruebas Realizadas', 'Recetas Prescritas', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
+      ],
+      'PROCESO HOSP/CEX': [
+        'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 'Motivo de Consulta', 
+        'Motivo de Ingreso', 'Resumen de evolución', 'Revisiones posteriores', 'Tipo de Ingreso:', 
+        'Tratamiento crónico', 'Tratamiento recomendado'
+      ],
+      'OTROS': [
+        'Contador', 'EC_Ciudad_Paciente', 'EC_Estado_Civil', 'EC_Proceso', 'EC_Usuario_Creador', 'Pruebas solicitadas', 'Unidad de Enfermería'
+      ]
     }
   },
   {

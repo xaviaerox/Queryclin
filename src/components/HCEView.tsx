@@ -5,6 +5,7 @@ import HighlightedText from './HighlightedText';
 import { db } from '../storage/indexedDB';
 import { Patient, Toma, getGender } from '../core/types';
 import { FORMS } from '../core/mappings';
+import { parseClinicalDate } from '../utils/dateParser';
 
 interface HCEViewProps {
   results: SearchResult[];
@@ -77,7 +78,7 @@ function ClinicalField({ label, value, query, highlight }: { key?: any; label: s
 }
 
 // ─── Bloque de Constantes Clínicas (Inmutable) ────────────────────────────────
-function ClinicalConstants({ data, query }: { data: Record<string, string>, query: string }) {
+function ClinicalConstants({ data, query, formId }: { data: Record<string, string>, query: string, formId?: string }) {
   const getV = (keys: string[]) => {
     for (const k of keys) {
       const val = data[k];
@@ -96,6 +97,52 @@ function ClinicalConstants({ data, query }: { data: Record<string, string>, quer
       </div>
     </div>
   );
+
+  if (formId === 'hce_mir') {
+    return (
+      <div className="my-6 select-none">
+        <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 inline-block mb-[1px] shadow-sm">
+          Constantes MIR:
+        </div>
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+            <Field label="IMC:" keys={['IMC:', 'IMC']} minW="110px" valW="80px" />
+            <Field label="Valoración IMC:" keys={['Valoración IMC']} minW="110px" valW="80px" />
+            <Field label="Diabetes Mellitus:" keys={['Diabetes Mellitus']} minW="110px" valW="80px" />
+            <Field label="Detalles DM:" keys={['Detalles DM']} minW="110px" valW="80px" />
+            <Field label="O2 Hb:" keys={['O2 Hb']} minW="110px" valW="80px" />
+            <Field label="Hábito Enólico:" keys={['Hábito Enólico']} minW="110px" valW="80px" />
+            <Field label="Hábitos Tóxicos:" keys={['Hábitos Tóxicos']} minW="110px" valW="80px" />
+          </div>
+          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+            <Field label="Peso:" keys={['Peso:', 'Peso']} minW="120px" valW="80px" />
+            <Field label="Sup. Corporal:" keys={['Superficie Corporal']} minW="120px" valW="80px" />
+            <Field label="FC:" keys={['FC']} minW="120px" valW="80px" />
+            <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA']} minW="120px" valW="80px" />
+            <Field label="Años Fumando:" keys={['Años fumando']} minW="120px" valW="80px" />
+            <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día']} minW="120px" valW="80px" />
+            <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico']} minW="120px" valW="80px" />
+          </div>
+          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+            <Field label="Grupo Sanguíneo:" keys={['Grupo Sanguíneo', 'Grupo sanguineo y RH']} minW="120px" valW="80px" />
+            <Field label="Transfusiones:" keys={['Transfusiones']} minW="120px" valW="80px" />
+            <Field label="Perímetro abd.:" keys={['Perímetro abdominal']} minW="120px" valW="80px" />
+            <Field label="Años dejó fumar:" keys={['Años desde que dejo de fumar', 'Años desde que dejó de fumar']} minW="120px" valW="80px" />
+            <Field label="Dislipemia:" keys={['Dislipemia']} minW="120px" valW="80px" />
+            <Field label="Detalle Dislip.:" keys={['Detalles Dislipemia']} minW="120px" valW="80px" />
+            <Field label="Paquetes año:" keys={['Paquetes año']} minW="120px" valW="80px" />
+          </div>
+          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+            <Field label="Talla:" keys={['Talla:', 'Talla']} minW="80px" valW="70px" />
+            <Field label="Tmp:" keys={['Tmp', 'T', 'Temperatura']} minW="80px" valW="70px" />
+            <Field label="PAD:" keys={['PAD']} minW="80px" valW="70px" />
+            <Field label="PAS:" keys={['PAS']} minW="80px" valW="70px" />
+            <Field label="NYHA:" keys={['Grado NYHA', 'NYHA']} minW="80px" valW="70px" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="my-6 select-none">
@@ -155,13 +202,23 @@ function HeaderField({ label, value, highlight = false }: { label: string; value
 function extractFecha(data: Record<string, string>): string {
   const raw = data['EC_Fecha_Toma'] || data['FECHA_TOMA'] || '';
   if (!raw) return '--';
-  return raw.includes(' ') ? raw.split(' ')[0] : raw;
+  const ts = parseClinicalDate(raw);
+  if (!ts) return raw.includes(' ') ? raw.split(' ')[0] : raw;
+  
+  const d = new Date(ts);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 function extractHora(data: Record<string, string>): string {
   const raw = data['EC_Fecha_Toma'] || '';
+  const hStr = data['HORA_TOMA'] || data['EC_Hora_Toma'] || '';
+  
+  if (hStr && hStr.includes(':')) return hStr.slice(0, 5);
   if (raw.includes(' ')) return raw.split(' ')[1]?.slice(0, 5) || '--:--';
-  return data['HORA_TOMA'] || data['EC_Hora_Toma'] || '--:--';
+  return '--:--';
 }
 
 // ─── Timeline Lateral de Tomas ─────────────────────────────────────────────────
@@ -331,14 +388,21 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
     return Object.values(patient.tomas).sort((a, b) => {
       const getTime = (t: Toma) => {
         if (!t || !t.latest || !t.latest.data) return 0;
-        let d = t.latest.data['EC_Fecha_Toma'] || t.latest.data['FECHA_TOMA'] || '';
-        if (d.includes(' ')) d = d.split(' ')[0];
-        if (d.includes('/')) {
-          const p = d.split('/');
-          if (p.length === 3) d = `${p[2]}-${p[1]}-${p[0]}`;
+        const dStr = t.latest.data['EC_Fecha_Toma'] || t.latest.data['FECHA_TOMA'] || '';
+        const hStr = t.latest.data['HORA_TOMA'] || t.latest.data['EC_Hora_Toma'] || '';
+        const ts = parseClinicalDate(dStr);
+        if (!ts) return 0;
+        
+        // Si hay hora, intentamos añadirla al timestamp
+        if (hStr && hStr.includes(':')) {
+           const [h, m] = hStr.split(':').map(Number);
+           if (!isNaN(h) && !isNaN(m)) {
+              const d = new Date(ts);
+              d.setHours(h, m, 0, 0);
+              return d.getTime();
+           }
         }
-        const timeStr = t.latest.data['HORA_TOMA'] || t.latest.data['EC_Hora_Toma'] || '00:00';
-        return new Date(`${d}T${timeStr}`).getTime() || 0;
+        return ts;
       };
       return getTime(b as unknown as Toma) - getTime(a as unknown as Toma);
     });
@@ -402,15 +466,19 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
       }
     });
 
-    const mappedKeys = new Set(Object.values(formMapping.visualCategories).flat());
+    const excludedKeys = new Set([
+      ...Object.values(formMapping.keys),
+      ...Object.values(formMapping.demographics),
+      ...Object.values(formMapping.visualCategories).flat(),
+      ...Object.values(formMapping.headerAliases || {}).flat(),
+      '_is_duplicate'
+    ]);
+
     const unmappedFields: { key: string, value: string }[] = [];
     Object.entries(activeVersion.data).forEach(([key, value]) => {
-       const uk = key.toUpperCase();
-       if (key === '_is_duplicate' || 
-           ['NHC', 'N.H.C', 'ID_TOMA', 'ORDEN_TOMA', 'EC_FECHA_TOMA', 'EDAD', 'EDAD TOMA', 'CIPA', 'SEXO', 'EC_SEXO', 'AMBITO', 'ÁMBITO', 'CP', 'C.P.', 'FECHA DE NACIMIENTO', 'F_NACIMIENTO'].includes(uk)
-       ) return;
+       if (excludedKeys.has(key)) return;
        
-       if (!mappedKeys.has(key) && value !== undefined && value !== null && String(value).trim() !== '') {
+       if (value !== undefined && value !== null && String(value).trim() !== '') {
          unmappedFields.push({ key, value: String(value) });
        }
     });
@@ -452,7 +520,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
             sortedTomas={sortedTomas}
             activeIndex={activeTomaIndex}
             activeVersionIndex={activeVersionIndex}
-            isHCEALG={formId === 'hce_alg'}
+            isHCEALG={formId === 'hce_alg' || formId === 'hce_mir'}
             onSelect={(tIdx, vIdx) => { 
               setActiveTomaIndex(tIdx); 
               setActiveVersionIndex(vIdx); 
@@ -462,7 +530,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
         </aside>
 
         <div className="flex-1 min-w-0 max-w-4xl">
-          {formId === 'hce_alg' ? (
+          {(formId === 'hce_alg' || formId === 'hce_mir') ? (
             <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl mb-6 shadow-sm overflow-hidden flex flex-col">
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 border-b border-[var(--border-clinical)] bg-[#FFF9E5]">
                 <div className="flex items-center gap-2 min-w-[140px]">
@@ -477,8 +545,13 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 bg-white">
                 <HeaderField label="AMBITO" value={activeVersion?.data['Ámbito'] || activeVersion?.data['AMBITO']} />
                 <HeaderField label="EC_Proceso2" value={activeVersion?.data['EC_Proceso2'] || activeVersion?.data['Proceso 2']} />
+                <HeaderField label="UNIDAD" value={demo['unidadEnfermeria']} />
                 <div className="flex-1" />
-                <HeaderField label="ALERGIAS" value={activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']} highlight={!!(activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']) && (activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']).toUpperCase() !== 'NO CONSTAN'} />
+                <HeaderField 
+                  label="ALERGIAS" 
+                  value={demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']} 
+                  highlight={!!(demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']) && String(demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']).toUpperCase() !== 'NO CONSTAN'} 
+                />
                 <HeaderField label="Edad" value={activeVersion?.data['Edad'] || activeVersion?.data['EDAD']} />
               </div>
             </div>
@@ -511,7 +584,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
 
           {activeToma ? (
             <>
-              <div className={`flex items-center justify-between mb-6 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${formId === 'hce_alg' ? 'hidden' : ''}`}>
+              <div className={`flex items-center justify-between mb-6 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${(formId === 'hce_alg' || formId === 'hce_mir') ? 'hidden' : ''}`}>
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60 mb-1">Toma</span>
@@ -584,17 +657,20 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
               </div>
 
               {renderedSections.map(section => {
-                const isAnamnesis = section.title === 'ANAMNESIS Y EXPLORACIÓN' || section.title === 'Anamnesis y exploraciones';
+                const isAnamnesis = section.title === 'ANAMNESIS Y EXPLORACIÓN' || section.title === 'Anamnesis y exploraciones' || section.title === 'ANAMNESIS Y EXPLORACION';
                 
                 return (
                   <div key={section.title} className={`bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-8 mb-8 shadow-md ${section.title === 'Campos no mapeados (debug)' ? 'bg-red-950/10 border-red-500/30' : ''}`}>
                     <SectionHeader label={section.title} />
                     <div className="flex flex-col gap-6">
                       {section.fields.map((f) => {
-                        const isAfterExploracion = isAnamnesis && f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA');
+                        const isAfterExploracion = isAnamnesis && (f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA') || f.key.toUpperCase().includes('EXPLORACION FISICA'));
                         const isConstantsField = isAnamnesis && [
                           'PESO:', 'TALLA:', 'IMC:', 'VALORACIÓN IMC', 'SUPERFICIE CORPORAL', 'T', 'GRUPO SANGUINEO Y RH', 'TRANSFUSIONES',
-                          'PESO', 'TALLA', 'SUPERFICIE CORP:', 'TMP', 'GRUPO SANGUINEO:', 'TRANSFUSIONES:'
+                          'PESO', 'TALLA', 'SUPERFICIE CORP:', 'TMP', 'GRUPO SANGUINEO:', 'TRANSFUSIONES:',
+                          'DIABETES MELLITUS', 'DETALLES DM', 'O2 HB', 'HÁBITO ENÓLICO', 'HÁBITOS TÓXICOS', 'FC', 'HTA (HIPERTENSIÓN ARTERIAL)',
+                          'AÑOS DESDE QUE DEJO DE FUMAR', 'CIGARRILLOS AL DIA', 'HÁBITO TABÁQUICO', 'GRUPO SANGUÍNEO', 'PERÍMETRO ABDOMINAL',
+                          'DISLIPEMIA', 'DETALLES DISLIPEMIA', 'PAQUETES AÑO', 'PAD', 'PAS', 'GRADO NYHA'
                         ].includes(f.key.toUpperCase());
 
                         // Si es un campo que va en la tabla de constantes, no lo renderizamos individualmente
@@ -610,7 +686,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
                             />
                             {/* Insertar tabla de constantes justo después de Exploración Física */}
                             {isAfterExploracion && (
-                              <ClinicalConstants data={activeVersion.data} query={query} />
+                              <ClinicalConstants data={activeVersion.data} query={query} formId={formId} />
                             )}
                           </div>
                         );
@@ -618,7 +694,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
 
                       {/* Caso de seguridad: si Anamnesis existe pero no se renderizó la tabla porque no hubo "Exploración Física" */}
                       {isAnamnesis && !section.fields.some(f => f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA')) && (
-                        <ClinicalConstants data={activeVersion.data} query={query} />
+                        <ClinicalConstants data={activeVersion.data} query={query} formId={formId} />
                       )}
                     </div>
                   </div>

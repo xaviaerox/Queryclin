@@ -1,6 +1,21 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
 ## [2026-05-04]
+### Estabilización de Motor de Fechas y Búsqueda (V4.2.3)
+- **`App.tsx`**: Resolución definitiva de fechas y errores en Excel (.xlsx):
+  - Modificado el formato de exportación a `dateNF: 'dd/mm/yyyy hh:mm:ss'` para forzar la compatibilidad con el estándar europeo (Día/Mes/Año) y recuperar la hora de las tomas.
+  - Implementado un "Rescatador de Fórmulas" (`cell.f` a `cell.v` para `t === 'e'`). Excel a menudo interpreta textos clínicos como "`- Paciente con tos`" como fórmulas matemáticas y devuelve `#NAME?`. Ahora el sistema intercepta este error y restaura el texto original escrito por el usuario.
+- **`QueryEngine.ts`**: Solucionado fallo crítico que ignoraba los filtros temporales (DateRange) y de Servicio en la vista global sin búsqueda por términos (`getAllRecords`). Se ha añadido precisión de zona horaria local (`T00:00:00` y `T23:59:59`) a los límites del filtro para evitar desplazamientos por UTC, y exclusión estricta de tomas sin fecha.
+- **`IndexerService.ts`**: Corregido bug heurístico crítico ("El secuestro de la fecha de nacimiento"). El motor estaba capturando la "Fecha de Nacimiento" del paciente como si fuera la fecha de la toma debido a que la clave contenía la palabra "FECHA". Esto provocaba que todas las tomas tuvieran fechas de décadas pasadas (ej. 1980) y fuesen excluidas al aplicar filtros modernos (2025/2026). Ahora se prioriza explícitamente `EC_Fecha_Toma` y se excluyen activamente campos demográficos como nacimiento.
+- **`dateParser.ts` (NUEVO MOTOR)**: Refactorización absoluta del analizador de fechas clínicas. Se ha instalado la librería especializada **`date-fns`** para reemplazar la heurística manual. El sistema ahora itera sobre 28 estándares clínicos (`dd/MM/yyyy`, `yyyy-MM-dd`, formatos Unix Timestamps masivos, etc.) garantizando el parseo robusto independientemente de si la ingesta se realiza por .xlsx, .csv o .txt. Se mantiene el soporte matemático para números de serie nativos de Excel.
+- **`mappings.ts` & `HCEView.tsx` (Plantilla HCE-MIR)**: Implementada la estructura canónica jerárquica para HCE-MIR. 
+  - Desarrollado mapeo estructural estricto de categorías (Antecedentes, Anamnesis, Diagnóstico, Resultados, etc).
+  - Implementada tolerancia a ruido semántico mediante resolución interna de Alias (ej. "Años fumando" vs "Años desde que dejó de fumar").
+  - Extendido el diseño paramétrico de ALG para que MIR disfrute de la misma navegación lateral de tomas.
+  - Creado renderizado dinámico de **Tabla de Constantes a 4 Columnas** anclada en la sección de Anamnesis y Exploración con métricas ampliadas (NYHA, PAD, PAS, Dislipemia, Hábitos Tóxicos).
+- **`App.tsx`**: Incrementada la versión a **V4.2.3**.
+
+## [2026-05-04]
 ### Mejora de Navegación y Trazabilidad Temporal (V4.2.2)
 - **`HCEView.tsx`**: Refinada la **Línea de Tiempo (TomaTimeline)** en el modo HCE-ALG. Se ha integrado la fecha y la hora de la toma en una **única línea** tanto en la cabecera del ID-Toma como en cada Orden_Toma. Esta disposición optimiza el espacio vertical y permite una lectura cronológica más fluida durante la revisión de expedientes.
 - **`mappings.ts`**: Eliminado el campo **Edad** de las categorías visuales (`ANAMNESIS Y EXPLORACIÓN`, etc.) en todos los modelos (ALG, MIR, OBS). Se ha erradicado esta redundancia ya que la edad ya se visualiza de forma permanente en la cabecera demográfica de la aplicación.

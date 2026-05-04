@@ -41,7 +41,19 @@ export class IndexerService {
         
         // Fecha
         let time: number | null = null;
-        const dateKey = Object.keys(registro.data).find(k => k.toUpperCase().includes('FECHA') || k.toUpperCase().includes('DATE'));
+        const recordKeys = Object.keys(registro.data);
+        let dateKey = recordKeys.find(k => {
+            const up = k.toUpperCase();
+            return up === 'EC_FECHA_TOMA' || up === 'FECHA_TOMA' || up === 'FECHA';
+        });
+
+        if (!dateKey) {
+            dateKey = recordKeys.find(k => {
+               const up = k.toUpperCase();
+               if (up.includes('NACIMIENTO') || up.includes('BIRTH')) return false;
+               return up.includes('FECHA') || up.includes('DATE') || up.includes('TIME') || up.includes('HORA');
+            });
+        }
         if (dateKey && registro.data[dateKey]) {
            time = parseClinicalDate(registro.data[dateKey]);
            if (time) {
@@ -52,7 +64,7 @@ export class IndexerService {
         
         // Servicio
         let srv = '';
-        const srvKey = Object.keys(registro.data).find(k => k.toUpperCase().includes('SERVICIO') || k.toUpperCase().includes('PROCESO'));
+        const srvKey = recordKeys.find(k => k.toUpperCase().includes('SERVICIO') || k.toUpperCase().includes('PROCESO'));
         if (srvKey && registro.data[srvKey]) {
           srv = String(registro.data[srvKey]).toLowerCase();
           skeleton.services.add(srv);

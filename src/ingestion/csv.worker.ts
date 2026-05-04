@@ -138,15 +138,8 @@ async function processBatch(records: any[], currentTotal: number, mapping: FormM
       }
     }
     
-    // Añadir campos que ya vengan en formato canónico o estén en visualCategories
-    const allExpectedKeys = new Set([
-      mapping.keys.nhc, mapping.keys.idToma, mapping.keys.ordenToma, mapping.keys.fechaToma,
-      ...Object.values(mapping.demographics),
-      ...Object.values(mapping.visualCategories).flat()
-    ]);
-
     for (const key of Object.keys(record)) {
-      if (!normalized[key] && allExpectedKeys.has(key)) {
+      if (!normalized[key]) {
         normalized[key] = record[key];
       }
     }

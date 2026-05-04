@@ -210,8 +210,8 @@ export class QueryEngine {
 
     let results: SearchResult[] = [];
     const filterService = filters?.service?.toLowerCase();
-    const filterStart = filters?.dateRange?.[0] ? new Date(filters.dateRange[0]).getTime() : null;
-    const filterEnd = filters?.dateRange?.[1] ? new Date(filters.dateRange[1]).getTime() : null;
+    const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
+    const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
 
     for (const nhc in patientMatches) {
       const pm = patientMatches[nhc];
@@ -224,15 +224,19 @@ export class QueryEngine {
 
       const validRegistros = flatRegistros.filter((reg: any) => {
         const meta = skeleton?.tomasMeta?.[reg.idToma];
-        if (!meta) return true;
         
-        if (filterService && meta.service) {
-          if (!meta.service.includes(filterService)) return false;
-        }
-        
-        if (meta.date) {
-          if (filterStart && meta.date < filterStart) return false;
-          if (filterEnd && meta.date > filterEnd) return false;
+        if (filterService || filterStart || filterEnd) {
+           if (!meta) return false;
+           
+           if (filterService && meta.service) {
+             if (!meta.service.toLowerCase().includes(filterService)) return false;
+           }
+           
+           if (filterStart || filterEnd) {
+             if (!meta.date) return false;
+             if (filterStart && meta.date < filterStart) return false;
+             if (filterEnd && meta.date > filterEnd) return false;
+           }
         }
         return true;
       });
@@ -266,12 +270,50 @@ export class QueryEngine {
     const results: SearchResult[] = [];
     const nhcs = Object.keys(this.patientSkeletons);
     
+    const filterService = filters?.service?.toLowerCase();
+    const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
+    const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
+    
     for (const nhc of nhcs) {
+      const skeleton = this.patientSkeletons[nhc];
+      
+      let isValidPatient = true;
+      let validTomasCount = 0;
+      
+      if (filterService || filterStart || filterEnd) {
+         isValidPatient = false;
+         if (skeleton.tomasMeta) {
+             for (const tomaId in skeleton.tomasMeta) {
+                 const meta = skeleton.tomasMeta[tomaId];
+                 let isValidToma = true;
+                 
+                 if (!meta) isValidToma = false;
+                 else {
+                     if (filterService && meta.service && !meta.service.toLowerCase().includes(filterService)) isValidToma = false;
+                     if (filterStart || filterEnd) {
+                         if (!meta.date) isValidToma = false;
+                         if (filterStart && meta.date < filterStart) isValidToma = false;
+                         if (filterEnd && meta.date > filterEnd) isValidToma = false;
+                     }
+                 }
+                 
+                 if (isValidToma) {
+                    isValidPatient = true;
+                    validTomasCount++;
+                 }
+             }
+         }
+      } else {
+        validTomasCount = Object.keys(skeleton.tomasMeta || {}).length || 1;
+      }
+      
+      if (!isValidPatient) continue;
+
       results.push({
         nhc,
-        patient: this.patientSkeletons[nhc],
+        patient: skeleton,
         totalScore: 1,
-        matchingTomasCount: 1,
+        matchingTomasCount: validTomasCount,
         bestMatchUrl: { idToma: 'N/A', ordenToma: 0 },
         matchedRegistros: []
       });
