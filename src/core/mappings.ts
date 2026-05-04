@@ -101,7 +101,16 @@ export const FORMS: FormMapping[] = [
       'Exploración Física': ['Exploración Física', 'Exploracion Fisica', 'Exploración física', 'Exploración Física:', 'Exploración física:'],
       'Motivo de Consulta': ['Motivo de Consulta', 'Motivo de la consulta'],
       'Otras Pruebas Realizadas': ['Otras Pruebas Realizadas', 'Otras pruebas realizadas'],
-      'Próxima revisión': ['Próxima revisión', 'Proxima revisión', 'Proxima revision']
+      'Próxima revisión': ['Próxima revisión', 'Proxima revisión', 'Proxima revision'],
+      'Id_Toma': ['Id_Toma', 'Identificador Toma', 'ID_TOMA'],
+      'Orden_Toma': ['Orden_Toma', 'Version Registro', 'ORDEN_TOMA'],
+      'Cipa': ['Cipa', 'cipa', 'CIPA'],
+      'EC_Sexo': ['EC_Sexo', 'sexo', 'Sexo'],
+      'Fecha de Nacimiento': ['Fecha de Nacimiento', 'fechaNacimiento', 'F_Nacimiento'],
+      'DEMOG-Código postal': ['DEMOG-Código postal', 'cp', 'CP', 'C.P.'],
+      'Edad': ['Edad', 'edad', 'EDAD'],
+      'Ámbito': ['Ámbito', 'ambito', 'Ambito'],
+      'EC_Ciudad_Paciente': ['EC_Ciudad_Paciente', 'ciudad', 'CIUDAD']
     },
     demographics: {
       cipa: 'Cipa',

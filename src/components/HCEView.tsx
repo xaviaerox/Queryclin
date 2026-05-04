@@ -466,17 +466,29 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
       }
     });
 
+    const cleanKeyStr = (s: string) => String(s)
+      .replace(/[\u00A0\u200B-\u200D\uFEFF'"]/g, ' ')
+      .replace(/[_-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+
     const excludedKeys = new Set([
-      ...Object.values(formMapping.keys),
-      ...Object.values(formMapping.demographics),
-      ...Object.values(formMapping.visualCategories).flat(),
-      ...Object.values(formMapping.headerAliases || {}).flat(),
-      '_is_duplicate'
+      ...Object.keys(formMapping.keys).map(cleanKeyStr),
+      ...Object.values(formMapping.keys).map(cleanKeyStr),
+      ...Object.keys(formMapping.demographics).map(cleanKeyStr),
+      ...Object.values(formMapping.demographics).map(cleanKeyStr),
+      ...Object.values(formMapping.visualCategories).flat().map(cleanKeyStr),
+      ...Object.keys(formMapping.headerAliases || {}).map(cleanKeyStr),
+      ...Object.values(formMapping.headerAliases || {}).flat().map(cleanKeyStr),
+      'NHC', 'N.H.C', 'ID_TOMA', 'ORDEN_TOMA', 'EC_FECHA_TOMA', 'FECHA_TOMA', 'FECHA', 'HORA', 'USUARIO', 'IDENTIFICADOR TOMA', 'VERSION REGISTRO',
+      '_IS_DUPLICATE'
     ]);
 
     const unmappedFields: { key: string, value: string }[] = [];
     Object.entries(activeVersion.data).forEach(([key, value]) => {
-       if (excludedKeys.has(key)) return;
+       const cleanKey = cleanKeyStr(key);
+       if (excludedKeys.has(cleanKey)) return;
        
        if (value !== undefined && value !== null && String(value).trim() !== '') {
          unmappedFields.push({ key, value: String(value) });
@@ -543,6 +555,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
                 <HeaderField label="C.P" value={demo['cp']} />
               </div>
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 bg-white">
+                <HeaderField label="Edad" value={activeVersion?.data['Edad'] || activeVersion?.data['EDAD']} />
                 <HeaderField label="AMBITO" value={activeVersion?.data['Ámbito'] || activeVersion?.data['AMBITO']} />
                 <HeaderField label="EC_Proceso2" value={activeVersion?.data['EC_Proceso2'] || activeVersion?.data['Proceso 2']} />
                 <HeaderField label="UNIDAD" value={demo['unidadEnfermeria']} />
@@ -552,7 +565,6 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
                   value={demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']} 
                   highlight={!!(demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']) && String(demo['reacciones'] || activeVersion?.data['ALERGIAS'] || activeVersion?.data['Alergias']).toUpperCase() !== 'NO CONSTAN'} 
                 />
-                <HeaderField label="Edad" value={activeVersion?.data['Edad'] || activeVersion?.data['EDAD']} />
               </div>
             </div>
           ) : (
