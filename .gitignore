@@ -6,11 +6,16 @@ coverage/
 *.log
 .env*
 !.env.example
+
 # Local data and scratch
 local_workspace/
 scratch/
 scratch_parser/
 DIARIO_APRENDIZAJE.md
+docs/
+tests/
+scripts/
+
 # Test results (playwright) and large generated test data files
 test-results/
 tests/data/*.csv
