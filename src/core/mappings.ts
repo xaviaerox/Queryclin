@@ -61,7 +61,7 @@ export const FORMS: FormMapping[] = [
       ],
       'ANAMNESIS Y EXPLORACIÓN': [
         'Enfermedad actual', 'Exploración física', 'Observaciones', 'Peso:', 'Talla:', 
-        'IMC:', 'Valoración IMC', 'Superficie Corporal', 'T', 'Edad', 
+        'IMC:', 'Valoración IMC', 'Superficie Corporal', 'T', 
         'Grupo sanguineo y RH', 'Transfusiones'
       ],
       'DIAGNÓSTICO Y TRATAMIENTO': [
@@ -93,7 +93,7 @@ export const FORMS: FormMapping[] = [
       edad: 'Edad',
     },
     visualCategories: {
-      'DATOS GENERALES': ['NHC', 'EC_Sexo', 'Edad', 'EC_Fecha_Toma'],
+      'DATOS GENERALES': ['NHC', 'EC_Sexo', 'EC_Fecha_Toma'],
       'EVOLUCIÓN': ['Observaciones', 'Diagnóstico', 'Tratamiento']
     }
   },
@@ -150,7 +150,7 @@ export const FORMS: FormMapping[] = [
         'FCF$Taquicardia grave', 'FCF$Taquicardia leve', 'FCF$Taquicardia moderada',
         'Movimientos Fetales', 'Vitalidad (F.C. F.)', 'Perfil Biofísico',
         'Plano presentación:', 'Posición', 'Posición:', 'Exploración general:',
-        'Edad', 'Talla:', 'Peso 1ª Visita', 'Peso:', 'IMC:', 'Intensidad Dinámica',
+        'Talla:', 'Peso 1ª Visita', 'Peso:', 'IMC:', 'Intensidad Dinámica',
         'Tipo de Dinámica', 'Tipo de Rotura de bolsa'
       ],
       'Exploraciones Complementarias solicitadas': [

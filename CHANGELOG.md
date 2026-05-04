@@ -1,5 +1,12 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
+## [2026-05-04]
+### Mejora de Navegación y Trazabilidad Temporal (V4.2.2)
+- **`HCEView.tsx`**: Refinada la **Línea de Tiempo (TomaTimeline)** en el modo HCE-ALG. Se ha integrado la fecha y la hora de la toma en una **única línea** tanto en la cabecera del ID-Toma como en cada Orden_Toma. Esta disposición optimiza el espacio vertical y permite una lectura cronológica más fluida durante la revisión de expedientes.
+- **`mappings.ts`**: Eliminado el campo **Edad** de las categorías visuales (`ANAMNESIS Y EXPLORACIÓN`, etc.) en todos los modelos (ALG, MIR, OBS). Se ha erradicado esta redundancia ya que la edad ya se visualiza de forma permanente en la cabecera demográfica de la aplicación.
+- **`HCEView.tsx`**: Refinada la lógica de auditoría de datos. Se han añadido **Edad, CIPA, Sexo, CP y Ámbito** a la lista de exclusión global para que no aparezcan erróneamente en el apartado "Campos no mapeados (debug)" si el usuario decide no incluirlos en las categorías visuales explícitas.
+- **`App.tsx`**: Incrementada la versión a **V4.2.2** para reflejar las mejoras en la ergonomía de navegación temporal.
+
 ## [2026-04-30]
 ### Modernización de Modelos y Simplificación de Interfaz (V4.2.1)
 - **`mappings.ts`**: Actualizados los modelos de formulario a una terna estándar: **HCE-ALG**, **HCE-MIR** y **HCE-OBS**. Se han unificado los IDs y nombres para reflejar la especialización del sistema.

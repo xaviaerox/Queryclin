@@ -196,13 +196,21 @@ function TomaTimeline({
             
             return (
               <div key={t.idToma} className="flex flex-col border-b border-slate-100 last:border-0">
-                <div className="bg-[#FFF9E5] px-3 py-1.5 text-[14px] font-black text-slate-800 border-b border-slate-200 flex items-center gap-1">
-                  <Hash size={12} className="text-slate-400" />
-                  {t.idToma}
+                <div className="bg-[#FFF9E5] px-3 py-1.5 text-[13px] font-black text-slate-800 border-b border-slate-200 flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1">
+                    <Hash size={11} className="text-slate-500" />
+                    {t.idToma}
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500 tabular-nums">
+                    <span>{extractFecha(t.latest.data)}</span>
+                    <span className="opacity-30">|</span>
+                    <span>{extractHora(t.latest.data)}</span>
+                  </div>
                 </div>
                 {sortedRegs.map((r, rIdx) => {
                   const isActive = tIdx === activeIndex && rIdx === activeVersionIndex;
                   const fecha = extractFecha(r.data);
+                  const hora = extractHora(r.data);
                   const orden = r.ordenToma;
 
                   return (
@@ -214,9 +222,10 @@ function TomaTimeline({
                       <span className={`px-3 py-2 w-10 font-black text-center border-r ${isActive ? 'border-blue-400/30' : 'border-slate-100 text-slate-400'}`}>
                         {orden}
                       </span>
-                      <span className="px-3 py-2 flex-1 font-bold text-right tabular-nums">
-                        {fecha}
-                      </span>
+                      <div className="px-3 py-2 flex-1 flex items-center justify-end gap-1.5 tabular-nums overflow-hidden">
+                        <span className="font-bold truncate">{fecha}</span>
+                        <span className={`text-[9px] font-medium ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>{hora}</span>
+                      </div>
                     </button>
                   );
                 })}
@@ -396,7 +405,11 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
     const mappedKeys = new Set(Object.values(formMapping.visualCategories).flat());
     const unmappedFields: { key: string, value: string }[] = [];
     Object.entries(activeVersion.data).forEach(([key, value]) => {
-       if (key === '_is_duplicate' || key === 'NHC' || key === 'N.H.C' || key === 'Id_Toma' || key === 'Orden_Toma' || key === 'EC_Fecha_Toma') return;
+       const uk = key.toUpperCase();
+       if (key === '_is_duplicate' || 
+           ['NHC', 'N.H.C', 'ID_TOMA', 'ORDEN_TOMA', 'EC_FECHA_TOMA', 'EDAD', 'EDAD TOMA', 'CIPA', 'SEXO', 'EC_SEXO', 'AMBITO', 'ÁMBITO', 'CP', 'C.P.', 'FECHA DE NACIMIENTO', 'F_NACIMIENTO'].includes(uk)
+       ) return;
+       
        if (!mappedKeys.has(key) && value !== undefined && value !== null && String(value).trim() !== '') {
          unmappedFields.push({ key, value: String(value) });
        }

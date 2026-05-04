@@ -77,11 +77,16 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **U5. Asistente de Carga (3 Pasos)**: Simplificación de la UX para personal no técnico.
 - [x] **U6. Navegación por Teclado**: Soporte para flechas direccionales en la revisión de expedientes.
 
-## 🟡 FASE 12: Estructura Determinista y Legibilidad (ACTUAL ✅)
+## 🟡 FASE 12: Estructura Determinista y Legibilidad (V4.2.1 ✅)
 - [x] **A14. Orden Estricto de Mapping**: Forzado de la estructura visual según el modelo oficial ( mappings.ts).
 - [x] **A15. Formateo Inteligente**: Conversión automática de espacios múltiples en saltos de línea legibles.
 - [x] **A16. Subgrupo de Constantes Vitales**: Implementación de tabla inmutable para parámetros biométricos (IMC, Peso, etc).
 - [x] **Logro**: El sistema alcanza un nivel de madurez visual y técnica industrial, listo para producción.
+
+## 🔵 FASE 13: Trazabilidad Temporal en Navegación (V4.2.2 ✅)
+- [x] **U7. Trazabilidad en Timeline**: Integración de fechas en cabeceras de Toma y horas en Orden_Toma.
+- [x] **A17. Eliminación de Redundancia Demográfica**: Retirado el campo "Edad" de las categorías clínicas (Anamnesis) al estar ya presente en la cabecera.
+- [x] **Logro**: Navegación cronológica intuitiva y limpieza visual de la historia clínica.
 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)

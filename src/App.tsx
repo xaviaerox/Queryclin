@@ -35,8 +35,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.2.1';
-const BUILD_DATE = '30/04/2026 10:37';
+const VERSION = '4.2.2';
+const BUILD_DATE = '04/05/2026 10:05';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
