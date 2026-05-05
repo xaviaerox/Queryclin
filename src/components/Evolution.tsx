@@ -65,8 +65,8 @@ export default function Evolution({ onBack }: EvolutionProps) {
     },
     {
       date: '05 de Mayo, 2026 (Actual)',
-      title: 'V4.2.3: Trazabilidad y Estabilidad Temporal',
-      description: 'Implementación de precisión cronológica en la navegación (fechas/horas en tomas), soporte avanzado para Excel con rescate de fórmulas y sincronización documental estricta.',
+      title: 'V4.2.5: Refinamiento de Búsqueda Contextual',
+      description: 'Implementación de filtrado bidireccional estricto con resaltado selectivo por categorías, garantizando la integridad del informe completo mientras se mantiene el foco en el hallazgo relevante.',
       icon: <Zap className="text-blue-500" />,
       color: 'blue'
     }
@@ -134,7 +134,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
       <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-        Hoja de Ruta 2026 - Queryclin V4.2.3
+        Hoja de Ruta 2026 - Queryclin V4.2.5
       </div>
     </div>
   );

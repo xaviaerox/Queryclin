@@ -10,14 +10,49 @@ interface HomeProps {
   compact?: boolean;
 }
 
+type RecentSearch = {
+  query: string;
+  timestamp: number;
+  resultCount?: number;
+};
+
+function formatTimeAgo(timestamp: number) {
+  const diff = Date.now() - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'Ahora';
+  if (minutes < 60) return `Hace ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `Hace ${days}d`;
+}
+
+function formatResultCount(count?: number) {
+  if (count === undefined) return '—';
+  if (count >= 1000) return (count / 1000).toFixed(1) + 'k';
+  return count.toString();
+}
+
+function getBadgeClass(count?: number) {
+  if (count === undefined) return 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] opacity-50';
+  if (count === 0) return 'bg-gray-200 text-gray-600';
+  return 'bg-[var(--accent-clinical)] text-white shadow-sm';
+}
+
 export default function Home({ hasData, onUpload, onSearch, getSuggestions, compact = false }: HomeProps) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
   const [service, setService] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
-    return JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
+      return stored.map((s: any) => typeof s === 'string' ? { query: s, timestamp: Date.now() } : s).slice(0, 6);
+    } catch {
+      return [];
+    }
   });
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -27,20 +62,16 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
     fileType: 'auto'
   });
 
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query, {
       dateRange: dateStart || dateEnd ? [dateStart, dateEnd] : undefined,
-      service: service || undefined
+      service: service || undefined,
+      categories: categories.length > 0 ? categories : undefined
     });
-    if (query.trim()) {
-      const newRecent = [query, ...recentSearches.filter(s => s !== query)].slice(0, 5);
-      setRecentSearches(newRecent);
-      localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
-    }
   };
 
 
@@ -112,8 +143,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file && selectedFormId) {
-                     onUpload(file, selectedFormId, { ...ingestionConfig, delimiter: '|' });
-                     if (fileInputRef.current) fileInputRef.current.value = '';
+                    onUpload(file, selectedFormId, { ...ingestionConfig, delimiter: '|' });
+                    if (fileInputRef.current) fileInputRef.current.value = '';
                   }
                 }}
               />
@@ -127,19 +158,19 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
               </button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-[var(--border-clinical)]">
             <div className="space-y-2">
               <ShieldCheck className="mx-auto text-[var(--text-secondary)]" size={20} />
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Aislamiento<br/>Local-First</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Aislamiento<br />Local-First</p>
             </div>
             <div className="space-y-2">
               <Database className="mx-auto text-[var(--text-secondary)]" size={20} />
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Motor en<br/>RAM</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Motor en<br />RAM</p>
             </div>
             <div className="space-y-2">
               <Zap className="mx-auto text-[var(--text-secondary)]" size={20} />
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Booleano<br/>Avanzado</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Booleano<br />Avanzado</p>
             </div>
           </div>
         </div>
@@ -182,7 +213,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
             }}
             onKeyDown={(e) => {
               if (!showSuggestions) return;
-              
+
               if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setActiveSuggestionIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
@@ -224,11 +255,10 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                         setShowSuggestions(false);
                       }}
                       onMouseEnter={() => setActiveSuggestionIndex(idx)}
-                      className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between group ${
-                        idx === activeSuggestionIndex 
-                          ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)]' 
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between group ${idx === activeSuggestionIndex
+                          ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)]'
                           : 'hover:bg-[var(--accent-clinical)]/5 hover:text-[var(--accent-clinical)]'
-                      }`}
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <span className="font-bold text-[var(--text-primary)]">
@@ -251,10 +281,11 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-xl transition-all ${showFilters ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-clinical)]'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all border ${showFilters || dateStart || dateEnd || categories.length > 0 ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border-[var(--accent-clinical)]/30' : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:bg-[var(--border-clinical)]/50'}`}
               title="Filtros avanzados"
             >
-              <Filter size={20} />
+              <Filter size={16} />
+              <span>Filtros {(dateStart || dateEnd || categories.length > 0) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{categories.length + (dateStart || dateEnd ? 1 : 0)}</span>}</span>
             </button>
             <button
               type="submit"
@@ -266,28 +297,76 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
         </div>
 
         {showFilters && (
-          <div className="absolute top-full left-0 right-0 mt-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-2xl z-20 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div>
-              <label className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                <Calendar size={14} /> Rango de Fechas
-              </label>
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                   <input
-                    type="date"
-                    value={dateStart}
-                    onChange={(e) => setDateStart(e.target.value)}
-                    className="w-full px-4 py-3 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
-                  />
+          <div className="mt-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="text-[12px] font-black uppercase tracking-widest text-[var(--text-primary)]">Filtros Activos</h4>
+              {(dateStart || dateEnd || categories.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => { setDateStart(''); setDateEnd(''); setCategories([]); }}
+                  className="text-[11px] font-bold text-[var(--accent-clinical)] hover:underline"
+                >
+                  Limpiar Filtros
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {/* Fecha */}
+              <div>
+                <label className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+                  <Calendar size={14} /> Rango de Fechas
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="date"
+                      value={dateStart}
+                      onChange={(e) => setDateStart(e.target.value)}
+                      className="w-full px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
+                    />
+                  </div>
+                  <span className="text-[var(--text-secondary)] font-bold text-xs">HASTA</span>
+                  <div className="flex-1">
+                    <input
+                      type="date"
+                      value={dateEnd}
+                      onChange={(e) => setDateEnd(e.target.value)}
+                      className="w-full px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
+                    />
+                  </div>
                 </div>
-                <span className="text-[var(--text-secondary)] font-bold">HASTA</span>
-                <div className="flex-1">
-                  <input
-                    type="date"
-                    value={dateEnd}
-                    onChange={(e) => setDateEnd(e.target.value)}
-                    className="w-full px-4 py-3 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
-                  />
+              </div>
+
+              {/* Categorías */}
+              <div className="pt-4 border-t border-[var(--border-clinical)]">
+                <label className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
+                  <Stethoscope size={14} /> Categorías Clínicas
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "General", "Antecedentes",
+                    "Anamnesis y Exploración", "Diagnostico y Tto", "Resultados Pruebas",
+                    "Proceso Hosp/CEX", "Otros"
+                  ].map(cat => {
+                    const isActive = categories.includes(cat);
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          if (isActive) setCategories(categories.filter(c => c !== cat));
+                          else setCategories([...categories, cat]);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${isActive
+                            ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)] shadow-sm'
+                            : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:border-[var(--text-secondary)]'
+                          }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -307,17 +386,19 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
               {recentSearches.length > 0 ? recentSearches.map((s, idx) => (
                 <button
                   key={idx}
-                  onClick={() => { setQuery(s); onSearch(s); }}
-                  className="group relative flex items-center justify-between p-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl hover:border-[var(--accent-clinical)] hover:shadow-md transition-all text-left overflow-hidden"
+                  onClick={() => { setQuery(s.query); onSearch(s.query); }}
+                  className="group flex flex-col p-3 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-lg hover:border-[var(--accent-clinical)] hover:shadow-md transition-all text-left overflow-hidden relative min-h-[72px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-clinical)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="flex items-center gap-3 relative z-10">
-                    <div className="w-8 h-8 rounded-lg bg-[var(--bg-clinical)] flex items-center justify-center text-[var(--text-secondary)] group-hover:text-[var(--accent-clinical)] transition-colors">
-                      <Search size={14} />
-                    </div>
-                    <span className="text-[14px] font-bold text-[var(--text-primary)] truncate max-w-[150px]">{s}</span>
+                  <span className="text-[13px] font-bold text-[var(--text-primary)] truncate w-full mb-2 relative z-10">"{s.query}"</span>
+                  <div className="flex items-center justify-between w-full mt-auto relative z-10">
+                    <span className="text-[10px] font-bold text-[var(--text-secondary)] opacity-70 flex items-center gap-1">
+                      {formatTimeAgo(s.timestamp)}
+                    </span>
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${getBadgeClass(s.resultCount)}`}>
+                      {formatResultCount(s.resultCount)} {s.resultCount !== undefined ? 'res' : ''}
+                    </span>
                   </div>
-                  <Zap size={14} className="text-[var(--text-secondary)] opacity-0 group-hover:opacity-40 transition-all transform translate-x-2 group-hover:translate-x-0" />
                 </button>
               )) : (
                 <div className="col-span-full p-12 border border-dashed border-[var(--border-clinical)] rounded-2xl text-center bg-[var(--surface-clinical)]/30">

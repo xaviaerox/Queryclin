@@ -14,6 +14,7 @@ interface HCEViewProps {
   onBack: () => void;
   onNavigate: (index: number) => void;
   formId: string;
+  activeFilters?: { categories?: string[] };
 }
 
 // ─── Avatar de Paciente ───────────────────────────────────────────────────────
@@ -41,12 +42,12 @@ function DemoChip({ label, value }: { key?: any; label: string; value: string })
 }
 
 // ─── Campo Clínico Individual ──────────────────────────────────────────────────
-function ClinicalField({ label, value, query, highlight }: { key?: any; label: string; value: string; query: string; highlight?: boolean }) {
+function ClinicalField({ label, value, query, highlight, shouldHighlight = true }: { key?: any; label: string; value: string; query: string; highlight?: boolean; shouldHighlight?: boolean }) {
   const isLong = value.length > 80;
   
-  // Mejora de legibilidad: 4 o más espacios -> Salto de línea doble (párrafo)
+  // Mejora de legibilidad: 3 o más espacios -> Salto de línea
   const formattedValue = useMemo(() => {
-    return value.replace(/ {4,}/g, '\n\n').trim();
+    return value.replace(/ {3,}/g, '\n').trim();
   }, [value]);
 
   const isBoolean = ['SI','NO','SÍ','TRUE','FALSE','POSITIVO','NEGATIVO'].includes(value.trim().toUpperCase());
@@ -66,11 +67,11 @@ function ClinicalField({ label, value, query, highlight }: { key?: any; label: s
         </span>
       ) : isLong ? (
         <p className="text-[15px] text-slate-900 dark:text-slate-100 leading-[1.75] whitespace-pre-wrap font-bold">
-          <HighlightedText text={formattedValue} query={query} />
+          {shouldHighlight ? <HighlightedText text={formattedValue} query={query} /> : formattedValue}
         </p>
       ) : (
         <span className="text-[16px] text-slate-900 dark:text-slate-100 font-black leading-snug whitespace-pre-wrap">
-          <HighlightedText text={formattedValue} query={query} />
+          {shouldHighlight ? <HighlightedText text={formattedValue} query={query} /> : formattedValue}
         </span>
       )}
     </div>
@@ -78,7 +79,7 @@ function ClinicalField({ label, value, query, highlight }: { key?: any; label: s
 }
 
 // ─── Bloque de Constantes Clínicas (Inmutable) ────────────────────────────────
-function ClinicalConstants({ data, query, formId }: { data: Record<string, string>, query: string, formId?: string }) {
+function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { data: Record<string, string>, query: string, formId?: string, shouldHighlight?: boolean }) {
   const getV = (keys: string[]) => {
     for (const k of keys) {
       const val = data[k];
@@ -93,7 +94,7 @@ function ClinicalConstants({ data, query, formId }: { data: Record<string, strin
         {label}
       </div>
       <div className={`bg-[#F1F8E9] px-2 py-1 text-[11px] font-black text-slate-800 flex items-center justify-center text-center`} style={{ minWidth: valW }}>
-        <HighlightedText text={getV(keys)} query={query} />
+        {shouldHighlight ? <HighlightedText text={getV(keys)} query={query} /> : getV(keys)}
       </div>
     </div>
   );
@@ -333,7 +334,7 @@ function TomaTimeline({
 }
 
 // ─── Componente Principal HCEView ──────────────────────────────────────────────
-export default function HCEView({ results, currentIndex, query, onBack, onNavigate, formId }: HCEViewProps) {
+export default function HCEView({ results, currentIndex, query, onBack, onNavigate, formId, activeFilters }: HCEViewProps) {
   const currentResult = results[currentIndex];
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -450,19 +451,30 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
   const renderedSections: { title: string, fields: { key: string, value: string }[] }[] = [];
   
   if (activeVersion) {
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
     Object.entries(formMapping.visualCategories).forEach(([catName, allowedKeys]) => {
       if (formId === 'hce_alg' && (catName === 'CABECERA' || catName === 'CONTROL')) return;
+
+
 
       const categoryFields: { key: string, value: string }[] = [];
       allowedKeys.forEach(key => {
         const value = activeVersion.data[key];
         if (value !== undefined && value !== null && String(value).trim() !== '') {
-          categoryFields.push({ key, value: String(value) });
+          const strVal = String(value);
+          categoryFields.push({ key, value: strVal });
         }
       });
       
+      const isCatSelected = !activeFilters?.categories || activeFilters.categories.length === 0 || activeFilters.categories.some(cat => {
+        const cleanCat = normalize(cat).replace(/^\d{2}-/, '').trim();
+        if (cleanCat === 'general' && (normalize(catName) === 'cabecera' || normalize(catName) === 'control')) return true;
+        return normalize(catName) === cleanCat || normalize(catName).includes(cleanCat) || cleanCat.includes(normalize(catName));
+      });
+
       if (categoryFields.length > 0) {
-        renderedSections.push({ title: catName, fields: categoryFields });
+        renderedSections.push({ title: catName, fields: categoryFields, isSelected: isCatSelected });
       }
     });
 
@@ -695,10 +707,11 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
                               value={f.value} 
                               query={query} 
                               highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))} 
+                              shouldHighlight={section.isSelected}
                             />
                             {/* Insertar tabla de constantes justo después de Exploración Física */}
                             {isAfterExploracion && (
-                              <ClinicalConstants data={activeVersion.data} query={query} formId={formId} />
+                              <ClinicalConstants data={activeVersion.data} query={query} formId={formId} shouldHighlight={section.isSelected} />
                             )}
                           </div>
                         );
@@ -706,7 +719,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
 
                       {/* Caso de seguridad: si Anamnesis existe pero no se renderizó la tabla porque no hubo "Exploración Física" */}
                       {isAnamnesis && !section.fields.some(f => f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA')) && (
-                        <ClinicalConstants data={activeVersion.data} query={query} formId={formId} />
+                        <ClinicalConstants data={activeVersion.data} query={query} formId={formId} shouldHighlight={section.isSelected} />
                       )}
                     </div>
                   </div>

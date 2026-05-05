@@ -86,8 +86,15 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 ## 🔵 FASE 13: Trazabilidad Temporal en Navegación (V4.2.3 ✅)
 - [x] **U7. Trazabilidad en Timeline**: Integración de fechas en cabeceras de Toma y horas en Orden_Toma.
 - [x] **A17. Eliminación de Redundancia Demográfica**: Retirado el campo "Edad" de las categorías clínicas (Anamnesis) al estar ya presente en la cabecera.
-- [x] **E16. Estabilización de Motor de Fechas**: Soporte nativo para MS-Excel (`cellDates: true`) y corrección del filtro cronológico (`getAllRecords`) con padding +24h.
+- [x] **E16. Estabilización de Motor de Fechas**: Soporte nativo para MS-Excel (`cellDates: true`) and corrección del filtro cronológico (`getAllRecords`) con padding +24h.
 - [x] **Logro**: Navegación cronológica intuitiva y motor de búsqueda de fechas 100% fiable.
+
+## 🟢 FASE 14: Filtros Contextuales y UX Avanzada (V4.2.5 ✅)
+- [x] **F21. Filtrado Bidireccional**: Sincronización de búsqueda por términos y categorías con exclusión estricta de hallazgos fuera de contexto.
+- [x] **U18. Resaltado Selectivo**: Sistema de highlighting dinámico que solo actúa sobre las secciones filtradas en el visor de informe completo.
+- [x] **U19. Rediseño Panel de Historial**: Implementación de grid simétrico (3x2) y Search Cards con métricas de resultados (`resultCount`).
+- [x] **A18. Mejora de Narrativa Clínica**: Nueva regla de parseo de 3+ espacios seguidos como salto de línea para optimizar la lectura de informes.
+- [x] **Logro**: Máxima precisión en la recuperación de información con visualización clínica íntegra y sin ruido visual.
 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)

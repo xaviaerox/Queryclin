@@ -35,8 +35,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.2.3';
-const BUILD_DATE = '05/05/2026 09:20';
+const VERSION = '4.2.5';
+const BUILD_DATE = '05/05/2026 12:45';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -50,6 +50,7 @@ export default function App() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [patientCount, setPatientCount] = useState<number>(0);
   const [activeFormId, setActiveFormId] = useState<string>('');
+  const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[] } | undefined>();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -230,9 +231,98 @@ export default function App() {
     }
   };
 
-  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string }) => {
+  const applyFilters = async (results: SearchResult[], filters: { categories?: string[] }, q: string) => {
+    if (!filters.categories || filters.categories.length === 0) return results;
+
+    const mapping = FORMS.find(f => f.id === activeFormId);
+    if (!mapping) return results;
+    
+    // Normalize string for searching, same as query engine
+    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const queryTokens = q.trim() ? normalize(q).split(/\s+/).filter(t => t.length > 2) : [];
+
+    const filteredResults: SearchResult[] = [];
+
+    for (const res of results) {
+      const patientData = await db.getFromStore(db.stores.patients, res.nhc);
+      if (!patientData) {
+        filteredResults.push(res);
+        continue;
+      }
+
+      const validRegistros = res.matchedRegistros.filter(reg => {
+        const toma = patientData.tomas[reg.idToma];
+        const registroData = toma?.registros.find((r: any) => r.ordenToma === reg.ordenToma)?.data;
+        if (!registroData) return false;
+
+        let matchesCategory = false;
+        for (const cat of filters.categories!) {
+          const cleanCat = normalize(cat).replace(/^\d{2}-/, '').trim();
+          const isGeneral = cleanCat === 'general' || cleanCat.includes('cabecera');
+          
+          // Identify target visual categories in mapping
+          const targetVisualCats = Object.keys(mapping.visualCategories).filter(k => {
+            const kn = normalize(k);
+            if (isGeneral && (kn === 'cabecera' || kn === 'control')) return true;
+            return kn === cleanCat || kn.includes(cleanCat) || cleanCat.includes(kn);
+          });
+
+          for (const visualCatKey of targetVisualCats) {
+            const fieldsInCat = mapping.visualCategories[visualCatKey];
+            for (const field of fieldsInCat) {
+              const val = registroData[field];
+              if (val && val.toString().trim() !== '') {
+                if (queryTokens.length > 0) {
+                  const valNorm = normalize(val.toString());
+                  if (queryTokens.some(token => valNorm.includes(token))) {
+                    matchesCategory = true;
+                    break;
+                  }
+                } else {
+                  matchesCategory = true;
+                  break;
+                }
+              }
+            }
+            if (matchesCategory) break;
+          }
+          if (matchesCategory) break;
+        }
+        return matchesCategory;
+      });
+
+      if (validRegistros.length > 0) {
+        filteredResults.push({
+          ...res,
+          matchedRegistros: validRegistros,
+          matchingTomasCount: new Set(validRegistros.map(r => r.idToma)).size
+        });
+      }
+    }
+    
+    return filteredResults.sort((a, b) => b.totalScore - a.totalScore);
+  };
+
+  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[] }) => {
     setQuery(q);
-    const results = await searchEngine.search(q, filters);
+    setActiveFilters(filters);
+    let results = await searchEngine.search(q, filters);
+    
+    if (filters?.categories && filters.categories.length > 0) {
+      results = await applyFilters(results, filters, q);
+    }
+    
+    if (q.trim()) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
+        const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, timestamp: Date.now(), resultCount: undefined } : s);
+        const newRecent = [{ query: q, timestamp: Date.now(), resultCount: results.length }, ...parsed.filter((s: any) => s.query !== q)].slice(0, 6);
+        localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
+      } catch (e) {
+        console.error("Failed to update recent searches:", e);
+      }
+    }
+    
     setSearchResults(results);
     setView('results');
   };
@@ -432,14 +522,17 @@ export default function App() {
               />
             </div>
           )}
-          {view === 'hce' && selectedIndex !== -1 && (
-            <HCEView 
+          {view === 'hce' && (
+            <HCEView
               results={searchResults}
               currentIndex={selectedIndex}
-              onBack={() => setView('results')}
               query={query}
-              onNavigate={(idx: number) => setSelectedIndex(idx)}
               formId={activeFormId}
+              activeFilters={activeFilters}
+              onNavigate={(idx) => {
+                setSelectedIndex(idx);
+              }}
+              onBack={() => setView('results')}
             />
           )}
           {view === 'help' && (

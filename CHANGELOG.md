@@ -1,5 +1,16 @@
 Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
 
+## [2026-05-05]
+### Refinamiento de Búsqueda Contextual y UX Avanzada (V4.2.5)
+- **`App.tsx`**: 
+  - Corregido fallo de falsos positivos en la categoría "General": ahora el motor valida estrictamente que la palabra clave exista en los campos de Cabecera/Control antes de retornar el resultado.
+  - Optimizada la lógica `applyFilters` para manejar múltiples categorías simultáneas con mayor robustez funcional.
+- **`HCEView.tsx`**:
+  - Implementado **Resaltado Selectivo**: el sistema ahora solo resalta términos de búsqueda en las categorías que coinciden con los filtros activos. Esto permite mostrar el informe completo (manteniendo la integridad de los datos) mientras se guía visualmente al clínico hacia el motivo exacto de la coincidencia.
+  - Corregido error de sintaxis JSX en el componente `ClinicalField` que impedía el renderizado de bloques de texto largo.
+  - Sincronizada la tabla de **Constantes Clínicas** con el sistema de resaltado selectivo.
+- **Sincronización de Versión**: Incremento global a **V4.2.5** en `package.json`, `App.tsx`, `Evolution.tsx`, `README.md`, `RULES.md` y `TASKS.md`.
+
 ## [2026-05-04]
 ### Estabilización de Motor de Fechas y Búsqueda (V4.2.3)
 - **`App.tsx`**: Resolución definitiva de fechas y errores en Excel (.xlsx):

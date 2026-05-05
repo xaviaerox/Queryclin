@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.2.3)
+# Queryclin — HCE Intelligence Dashboard (V4.2.5)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -94,10 +94,16 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Subgrupo de Constantes**: Implementación de tablas inmutables para parámetros biométricos.
 - **Formateo Inteligente**: Conversión automática de espacios múltiples en párrafos legibles.
 
-### Fase 13: Trazabilidad Temporal y Estabilidad (V4.2.3 - ACTUAL ✅)
+### Fase 13: Trazabilidad Temporal y Estabilidad (V4.2.3 ✅)
 - **Precisión Cronológica**: Integración de fechas y horas en la navegación por tomas y órdenes clínicos.
 - **Resiliencia Excel**: Motor de rescate de fórmulas para evitar errores `#NAME?` en ingesta masiva.
 - **Sincronización Global**: Unificación de versiones en UI, Roadmap y documentación técnica.
+
+### Fase 14: Filtros Contextuales y UX Avanzada (V4.2.5 — ACTUAL 🚀)
+- **Búsqueda Selectiva**: Motor de filtrado bidireccional que sincroniza términos de búsqueda con categorías clínicas específicas.
+- **Resaltado Inteligente**: Implementación de resaltado selectivo (solo en categorías filtradas) para evitar ruido visual en informes completos.
+- **Rediseño de Historial**: Grid simétrico de búsquedas recientes con métricas cuantitativas de resultados.
+- **Optimización de Narrativa**: Interpretación de patrones de espaciado (3+ espacios) como saltos de línea para mejorar legibilidad.
 
 
 ---
