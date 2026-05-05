@@ -64,11 +64,11 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'emerald'
     },
     {
-      date: '30 de Abril, 2026 (Actual)',
-      title: 'V4.2.1: Modernización y Soporte Excel',
-      description: 'Ingesta nativa de archivos .xlsx, modelos de formulario deterministas (HCE-ALG) y rediseño integral de la UX con buscador ubicuo en cabecera.',
-      icon: <Zap className="text-amber-500" />,
-      color: 'amber'
+      date: '05 de Mayo, 2026 (Actual)',
+      title: 'V4.2.3: Trazabilidad y Estabilidad Temporal',
+      description: 'Implementación de precisión cronológica en la navegación (fechas/horas en tomas), soporte avanzado para Excel con rescate de fórmulas y sincronización documental estricta.',
+      icon: <Zap className="text-blue-500" />,
+      color: 'blue'
     }
   ];
 
@@ -134,7 +134,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
       <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-        Hoja de Ruta 2026 - Queryclin V4.2.1
+        Hoja de Ruta 2026 - Queryclin V4.2.3
       </div>
     </div>
   );

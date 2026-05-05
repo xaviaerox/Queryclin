@@ -29,8 +29,9 @@ Este documento contiene las directrices fundamentales e inviolables para el desa
 - **Regla:** Se prohíbe renombrar, traducir o normalizar destructivamente los campos originales del CSV. El sistema debe ser un reflejo exacto de la fuente de datos.
 - **Lenguaje:** La comunicación debe ser siempre sobria, profesional y técnica.
 
-## 7. Principio de Escala y Resiliencia
-- **Regla:** Dado el volumen de datos objetivo (100k registros), se priorizará siempre el procesamiento asíncrono y la persistencia fragmentada en IndexedDB. Toda excepción en el renderizado debe ser capturada por el `ErrorBoundary`.
+## 8. Sincronización de Versión y Trazabilidad
+- **Regla:** Tras cada modificación que implique un despliegue o push, se DEBE actualizar sincrónicamente la versión y fecha/hora en: `App.tsx` (Badge Principal), `Evolution.tsx` (Timeline y Footer), `README.md` (Header y Roadmap) y `DIARIO_APRENDIZAJE.md`.
+- **Desorden:** Se prohíbe terminantemente la discrepancia de versiones entre los distintos puntos de información del proyecto.
 
 ---
-*Gobernanza Queryclin - V2.5.2*
+*Gobernanza Queryclin - V4.2.3*

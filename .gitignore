@@ -1,24 +1,57 @@
+# Dependencies
 node_modules/
-build/
+.pnp
+.pnp.js
+
+# Build and Output
 dist/
+build/
+out/
 coverage/
-.DS_Store
-*.log
+.temp/
+
+# Environment and Secrets
 .env*
 !.env.example
 
-# Local data and scratch
+# OS Specific
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# AI Tooling & Internal Logs (Privacy)
+.gemini/
+.antigravity/
+.cursorrules
+
+# Local Development & Documentation (Local-only)
 local_workspace/
 scratch/
 scratch_parser/
 DIARIO_APRENDIZAJE.md
+BATTLE_LOG.md
 docs/
-tests/
 scripts/
+tests/
 
-# Test results (playwright) and large generated test data files
-test-results/
-tests/data/*.csv
+# Clinical Data Protection (Maximum Privacy)
+# This prevents accidental uploads of sensitive clinical exports
+*.csv
+*.xlsx
+*.xls
+*.txt
+*.dat
+*.db
+*.sqlite
 STRESS_TEST_DATA.csv
 HC_Pruebas.txt
-tests/data/*.txt
+test-results/

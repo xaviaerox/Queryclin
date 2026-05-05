@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.2.1)
+# Queryclin — HCE Intelligence Dashboard (V4.2.3)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -89,13 +89,15 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Clinical Synonym Mapper**: Diccionario integrado de 23 patologías de alta prevalencia para expansión automática de consultas (ej. `HTA` → `Hipertensión`).
 - **Expansión de Bigramas**: Detección de frases clínicas compuestas en la búsqueda del usuario.
 
-### Fase 12: Estructura Determinista y Legibilidad (V4.2.1 - ACTUAL ✅)
-- **Orden Clínico Estricto**: Visualización determinista de campos siguiendo el mapping oficial, garantizando memoria visual.
-- **Subgrupo de Constantes**: Implementación de tablas inmutables para parámetros biométricos (IMC, constantes vitales).
-- **Formateo Inteligente**: Conversión automática de espacios múltiples en párrafos legibles para informes densos.
-- **Navegación Ergonómica**: Soporte completo para navegación por teclado (flechas) entre expedientes.
-- **Buscador Ubicuo**: Motor de búsqueda integrado en cabecera para acceso global instantáneo.
-- **Soporte XLSX**: Ingesta nativa de hojas de cálculo con detección automática de modelos.
+### Fase 12: Estructura Determinista y Legibilidad (V4.2.1 ✅)
+- **Orden Clínico Estricto**: Visualización determinista de campos siguiendo el mapping oficial.
+- **Subgrupo de Constantes**: Implementación de tablas inmutables para parámetros biométricos.
+- **Formateo Inteligente**: Conversión automática de espacios múltiples en párrafos legibles.
+
+### Fase 13: Trazabilidad Temporal y Estabilidad (V4.2.3 - ACTUAL ✅)
+- **Precisión Cronológica**: Integración de fechas y horas en la navegación por tomas y órdenes clínicos.
+- **Resiliencia Excel**: Motor de rescate de fórmulas para evitar errores `#NAME?` en ingesta masiva.
+- **Sincronización Global**: Unificación de versiones en UI, Roadmap y documentación técnica.
 
 
 ---
