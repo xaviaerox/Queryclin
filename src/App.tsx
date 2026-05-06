@@ -36,8 +36,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.3.3';
-const BUILD_DATE = '06/05/2026 11:15';
+const VERSION = '4.3.4';
+const BUILD_DATE = '06/05/2026 11:45';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -333,7 +333,16 @@ export default function App() {
       try {
         const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
         const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, filters: undefined, timestamp: Date.now(), resultCount: undefined } : s);
-        const newRecent = [{ query: q, filters, timestamp: Date.now(), resultCount: results.length }, ...parsed.filter((s: any) => s.query !== q)].slice(0, 6);
+        
+        // Nueva lógica: Solo sobreescribir si coincide QUERY Y FILTROS
+        const currentSearch = { query: q, filters, timestamp: Date.now(), resultCount: results.length };
+        const filtered = parsed.filter((s: any) => {
+          const sameQuery = s.query === q;
+          const sameFilters = JSON.stringify(s.filters) === JSON.stringify(filters);
+          return !(sameQuery && sameFilters);
+        });
+
+        const newRecent = [currentSearch, ...filtered].slice(0, 6);
         localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
       } catch (e) {
         console.error("Failed to update recent searches:", e);

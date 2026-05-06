@@ -1,4 +1,10 @@
 ## [2026-05-06]
+### Mejora de Persistencia de Búsquedas (V4.3.4)
+- **`App.tsx`**:
+  - Corregida la lógica de **Búsquedas Recientes**: ahora el sistema diferencia entre búsquedas que usan el mismo término pero tienen filtros distintos (categorías, fechas, etc.), evitando la sobreescritura accidental y permitiendo recuperar contextos específicos de investigación.
+- **Sincronización de Versión**: Incremento global a **V4.3.4**.
+
+## [2026-05-06]
 ### Refinamiento de Anamnesis HCE-MIR (V4.3.3)
 - **`mappings.ts`**:
   - Mapeado el campo **"Situación Basal (Otros)"** dentro de la categoría **ANAMNESIS Y EXPLORACION**.
