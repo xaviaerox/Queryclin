@@ -547,7 +547,7 @@ export default function HCEView({
   const ordenActivo = activeVersion?.ordenToma ?? 1;
 
   return (
-    <div className="flex flex-col w-full pb-40">
+    <div className="flex flex-col w-full pt-8 pb-40">
       <div className="flex gap-8 items-start justify-center">
         <aside className="w-52 shrink-0 hidden lg:block">
           <TomaTimeline
