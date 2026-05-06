@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.2.5)
+# Queryclin — HCE Intelligence Dashboard (V4.3.0)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -99,11 +99,23 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Resiliencia Excel**: Motor de rescate de fórmulas para evitar errores `#NAME?` en ingesta masiva.
 - **Sincronización Global**: Unificación de versiones en UI, Roadmap y documentación técnica.
 
-### Fase 14: Filtros Contextuales y UX Avanzada (V4.2.5 — ACTUAL 🚀)
+### Fase 14: Filtros Contextuales y UX Avanzada (V4.2.5 ✅)
 - **Búsqueda Selectiva**: Motor de filtrado bidireccional que sincroniza términos de búsqueda con categorías clínicas específicas.
 - **Resaltado Inteligente**: Implementación de resaltado selectivo (solo en categorías filtradas) para evitar ruido visual en informes completos.
-- **Rediseño de Historial**: Grid simétrico de búsquedas recientes con métricas cuantitativas de resultados.
-- **Optimización de Narrativa**: Interpretación de patrones de espaciado (3+ espacios) como saltos de línea para mejorar legibilidad.
+
+### Fase 15: Resaltado Ubicuo y UX Lateral (V4.2.6 ✅)
+- **Proyección de Búsqueda**: El sistema ahora proyecta el resaltado de búsqueda en el navegador lateral (sidebar).
+- **Indicadores Pulsantes**: Implementación de indicadores visuales (Amber Pulse) que alertan sobre la presencia de hallazgos relevantes en tomas no activas.
+
+### Fase 16: Persistencia de Filtros Históricos (V4.2.7 ✅)
+- **Historial Contextual**: Las búsquedas recientes ahora almacenan y restauran el estado completo de los filtros (Fechas, Servicios, Categorías).
+
+### Fase 17: Simplificación de Taxonomía (V4.2.8 ✅)
+- **Eliminación de Redundancia**: Retirada la categoría "General" de los filtros de búsqueda para optimizar la interfaz.
+
+### Fase 18: Filtrado Quirúrgico por Campos (V4.2.9 — ACTUAL 🚀)
+- **Sub-categorías Dinámicas**: Implementación de expansión de categorías para seleccionar campos individuales.
+- **Precisión Localizada**: El motor de búsqueda ahora puede discriminar hallazgos a nivel de campo específico del formulario clínico.
 
 
 ---

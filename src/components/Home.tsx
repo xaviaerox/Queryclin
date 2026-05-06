@@ -5,13 +5,20 @@ import { FORMS } from '../core/mappings';
 interface HomeProps {
   hasData: boolean;
   onUpload: (file: File, formId: string, config?: any) => void;
-  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string }) => void;
+  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }) => void;
   getSuggestions: (query: string) => string[];
   compact?: boolean;
+  activeFormId?: string;
 }
 
 type RecentSearch = {
   query: string;
+  filters?: { 
+    dateRange?: [string, string], 
+    service?: string, 
+    categories?: string[],
+    fields?: string[]
+  };
   timestamp: number;
   resultCount?: number;
 };
@@ -39,12 +46,14 @@ function getBadgeClass(count?: number) {
   return 'bg-[var(--accent-clinical)] text-white shadow-sm';
 }
 
-export default function Home({ hasData, onUpload, onSearch, getSuggestions, compact = false }: HomeProps) {
+export default function Home({ hasData, onUpload, onSearch, getSuggestions, compact = false, activeFormId }: HomeProps) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [service, setService] = useState('');
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
     try {
@@ -70,7 +79,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
     onSearch(query, {
       dateRange: dateStart || dateEnd ? [dateStart, dateEnd] : undefined,
       service: service || undefined,
-      categories: categories.length > 0 ? categories : undefined
+      categories: (Array.isArray(categories) && categories.length > 0) ? categories : undefined,
+      fields: (Array.isArray(selectedFields) && selectedFields.length > 0) ? selectedFields : undefined
     });
   };
 
@@ -281,11 +291,11 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all border ${showFilters || dateStart || dateEnd || categories.length > 0 ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border-[var(--accent-clinical)]/30' : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:bg-[var(--border-clinical)]/50'}`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold transition-all border ${showFilters || dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) ? 'bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border-[var(--accent-clinical)]/30' : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:bg-[var(--border-clinical)]/50'}`}
               title="Filtros avanzados"
             >
               <Filter size={16} />
-              <span>Filtros {(dateStart || dateEnd || categories.length > 0) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{categories.length + (dateStart || dateEnd ? 1 : 0)}</span>}</span>
+              <span>Filtros {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0)) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{(Array.isArray(categories) ? categories.length : 0) + (dateStart || dateEnd ? 1 : 0)}</span>}</span>
             </button>
             <button
               type="submit"
@@ -300,10 +310,16 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
           <div className="mt-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-[12px] font-black uppercase tracking-widest text-[var(--text-primary)]">Filtros Activos</h4>
-              {(dateStart || dateEnd || categories.length > 0) && (
+              {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || (Array.isArray(selectedFields) && selectedFields.length > 0)) && (
                 <button
                   type="button"
-                  onClick={() => { setDateStart(''); setDateEnd(''); setCategories([]); }}
+                  onClick={() => { 
+                    setDateStart(''); 
+                    setDateEnd(''); 
+                    setCategories([]); 
+                    setSelectedFields([]); 
+                    setExpandedCategory(null); 
+                  }}
                   className="text-[11px] font-bold text-[var(--accent-clinical)] hover:underline"
                 >
                   Limpiar Filtros
@@ -345,29 +361,120 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {[
-                    "General", "Antecedentes",
+                    "Antecedentes",
                     "Anamnesis y Exploración", "Diagnostico y Tto", "Resultados Pruebas",
                     "Proceso Hosp/CEX", "Otros"
                   ].map(cat => {
-                    const isActive = categories.includes(cat);
+                    const safeCats = (categories && Array.isArray(categories)) ? categories : [];
+                    const isActive = safeCats.indexOf(cat) !== -1;
+                    const isExpanded = expandedCategory === cat;
                     return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          if (isActive) setCategories(categories.filter(c => c !== cat));
-                          else setCategories([...categories, cat]);
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border ${isActive
-                            ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)] shadow-sm'
-                            : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:border-[var(--text-secondary)]'
-                          }`}
-                      >
-                        {cat}
-                      </button>
+                      <div key={cat} className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentCats = Array.isArray(categories) ? categories : [];
+                            if (isActive) {
+                              setCategories(currentCats.filter(c => c !== cat));
+                              if (isExpanded) setExpandedCategory(null);
+                            } else {
+                              setCategories([...currentCats, cat]);
+                              setExpandedCategory(cat);
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border flex items-center gap-2 ${isActive
+                              ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)] shadow-sm'
+                              : 'bg-[var(--bg-clinical)] text-[var(--text-secondary)] border-[var(--border-clinical)] hover:border-[var(--text-secondary)]'
+                            }`}
+                        >
+                          {cat}
+                        </button>
+                        {isActive && (
+                          <button
+                            type="button"
+                            onClick={() => setExpandedCategory(prev => prev === cat ? null : cat)}
+                            className={`p-1.5 rounded-lg border transition-all ${isExpanded ? 'bg-[var(--accent-clinical)] text-white border-[var(--accent-clinical)]' : 'bg-[var(--surface-clinical)] text-[var(--accent-clinical)] border-[var(--accent-clinical)]/20'}`}
+                            title="Configurar campos"
+                          >
+                            <div className={`w-3 h-3 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                              <Zap size={12} />
+                            </div>
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
+
+                {/* Sub-categorías (Campos) */}
+                {expandedCategory && activeFormId && (
+                  <div className="mt-4 p-4 bg-[var(--bg-clinical)]/50 rounded-xl border border-[var(--border-clinical)] animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-clinical)]">Campos de {expandedCategory}</span>
+                      <button 
+                        type="button"
+                        onClick={() => setExpandedCategory(null)}
+                        className="text-[10px] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {(() => {
+                        try {
+                          const mapping = (activeFormId && Array.isArray(FORMS)) ? FORMS.find(f => f.id === activeFormId) : null;
+                          if (!mapping || !mapping.visualCategories) return null;
+                          const normalize = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                          const cleanCat = normalize(expandedCategory || "");
+                          const targetVisualCats = Object.keys(mapping.visualCategories).filter(k => {
+                            const kn = normalize(k);
+                            return kn === cleanCat || kn.includes(cleanCat) || cleanCat.includes(kn);
+                          });
+                          const fields: string[] = [];
+                          targetVisualCats.forEach(k => {
+                            const catFields = mapping.visualCategories[k];
+                            if (Array.isArray(catFields)) {
+                              catFields.forEach(cf => {
+                                if (cf && fields.indexOf(cf) === -1) fields.push(cf);
+                              });
+                            }
+                          });
+                          
+                          if (fields.length === 0) return (
+                            <div className="col-span-full text-center py-4 text-[10px] text-[var(--text-secondary)] italic">
+                              No se encontraron campos específicos.
+                            </div>
+                          );
+
+                          return fields.map((field, fidx) => {
+                            const safeSelectedFields = Array.isArray(selectedFields) ? selectedFields : [];
+                            const isFieldSelected = safeSelectedFields.indexOf(field) !== -1;
+                            return (
+                              <label key={`f-${fidx}`} className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--accent-clinical)]/5 cursor-pointer transition-colors group">
+                                <input 
+                                  type="checkbox"
+                                  checked={isFieldSelected}
+                                  onChange={() => {
+                                    const currentFields = Array.isArray(selectedFields) ? selectedFields : [];
+                                    if (isFieldSelected) setSelectedFields(currentFields.filter(f => f !== field));
+                                    else setSelectedFields([...currentFields, field]);
+                                  }}
+                                  className="w-3.5 h-3.5 rounded border-[var(--border-clinical)] text-[var(--accent-clinical)] focus:ring-[var(--accent-clinical)]"
+                                />
+                                <span className={`text-[11px] font-medium truncate ${isFieldSelected ? 'text-[var(--accent-clinical)] font-bold' : 'text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]'}`}>
+                                  {field}
+                                </span>
+                              </label>
+                            );
+                          });
+                        } catch (err) {
+                          console.error("Error rendering sub-categories:", err);
+                          return null;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -386,7 +493,26 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
               {recentSearches.length > 0 ? recentSearches.map((s, idx) => (
                 <button
                   key={idx}
-                  onClick={() => { setQuery(s.query); onSearch(s.query); }}
+                  onClick={() => { 
+                    setQuery(s.query); 
+                    if (s.filters) {
+                      setDateStart(s.filters.dateRange?.[0] || '');
+                      setDateEnd(s.filters.dateRange?.[1] || '');
+                      setService(s.filters.service || '');
+                      setCategories(s.filters.categories || []);
+                      setSelectedFields(s.filters.fields || []);
+                      if (s.filters.dateRange || s.filters.service || s.filters.categories || s.filters.fields) {
+                        setShowFilters(true);
+                      }
+                    } else {
+                      setDateStart('');
+                      setDateEnd('');
+                      setService('');
+                      setCategories([]);
+                      setSelectedFields([]);
+                    }
+                    onSearch(s.query, s.filters); 
+                  }}
                   className="group flex flex-col p-3 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-lg hover:border-[var(--accent-clinical)] hover:shadow-md transition-all text-left overflow-hidden relative min-h-[72px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-clinical)]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>

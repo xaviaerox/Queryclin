@@ -34,4 +34,4 @@ Este documento contiene las directrices fundamentales e inviolables para el desa
 - **Desorden:** Se prohíbe terminantemente la discrepancia de versiones entre los distintos puntos de información del proyecto.
 
 ---
-*Gobernanza Queryclin - V4.2.5*
+*Gobernanza Queryclin - V4.2.9*

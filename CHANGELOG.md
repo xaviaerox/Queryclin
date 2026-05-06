@@ -1,4 +1,54 @@
-Todos los cambios notables realizados en el proyecto Queryclin serán documentados en este archivo, detallando el efecto del cambio y el motivo (el "por qué") de forma cronológica.
+
+## [2026-05-06]
+### Arquitectura de Búsqueda Persistente y Cabecera Unificada (V4.3.0)
+- **`GlobalHeader.tsx` (Nuevo Componente)**:
+  - Implementada **Cabecera Global Unificada**: un nuevo componente persistente que consolida la identidad de marca, navegación y herramientas de búsqueda en una única barra superior.
+  - **Buscador Refinador Persistente**: El buscador ahora es accesible desde cualquier vista (Resultados, HCE), permitiendo realizar nuevas consultas o refinar las actuales manteniendo los filtros activos.
+  - **Indicador de Filtros Activos**: Añadido un icono de filtro pulsante dentro de la barra de búsqueda que alerta visualmente al usuario cuando los resultados están siendo segmentados por categorías, fechas o servicios.
+  - **Contexto de Navegación**: Integrados accesos directos para volver al listado completo de pacientes y botón de limpieza de base de datos directamente en la cabecera.
+- **`App.tsx`**:
+  - Refactorizada la gestión de cabeceras: se ha eliminado la lógica de header duplicada para delegar toda la gestión visual a `GlobalHeader`.
+  - Optimizada la estructura de layout usando Flexbox estándar para evitar solapamientos visuales y asegurar la interactividad total de la lista de pacientes.
+- **`Results.tsx` & `HCEView.tsx`**:
+  - Limpieza de redundancias: eliminados los controles de navegación que han sido centralizados en la cabecera global o restaurados a sus posiciones estratégicas originales por preferencia de UX.
+- **Sincronización de Versión**: Incremento global a **V4.3.0** en `App.tsx`, `CHANGELOG.md`, `README.md` y `TASKS.md`.
+
+## [2026-05-06]
+### Filtrado por Sub-categorías y Campos Clínicos (V4.2.9)
+- **`Home.tsx`**: 
+  - Implementada la funcionalidad de expansión de categorías: al seleccionar una categoría clínica, ahora aparecen sus campos específicos (sub-categorías) con checkboxes para un filtrado quirúrgico.
+  - Añadido estado `selectedFields` y `expandedCategory` para gestionar la navegación jerárquica de filtros.
+  - Actualizada la persistencia de búsquedas recientes para incluir el estado de los campos seleccionados.
+  - **Corrección de Errores**: Corregida excepción en el renderizado y manejo de eventos al seleccionar categorías cuando no había un formulario activo o se producían fallos de normalización de cadenas. Se ha mejorado la robustez de las funciones de filtrado visual.
+- **`App.tsx`**:
+  - Refactorizado el motor de filtrado `applyFilters` para priorizar los campos específicos si han sido seleccionados, permitiendo búsquedas de alta precisión en dominios concretos del formulario.
+  - Sincronizada la comunicación con el componente `Home` mediante el paso del `activeFormId`.
+  - Corregida la firma de `handleSearch` para soportar la propagación de filtros por campos hacia el motor BM25.
+- **Sincronización de Versión**: Incremento global a **V4.2.9** en `package.json`, `App.tsx`, `Evolution.tsx`, `README.md`, `RULES.md` y `TASKS.md`.
+
+## [2026-05-06]
+### Simplificación de Taxonomía de Filtros (V4.2.8)
+- **`Home.tsx`**: 
+  - Eliminada la categoría "General" de los filtros de búsqueda por petición del usuario. El sistema ahora se centra exclusivamente en categorías de contenido clínico (Antecedentes, Anamnesis, etc.), manteniendo la visualización de los datos generales en la cabecera del expediente pero sin requerir su filtrado explícito en la búsqueda por categorías.
+- **Sincronización de Versión**: Incremento global a **V4.2.8** en `package.json`, `App.tsx`, `Evolution.tsx`, `README.md`, `RULES.md` y `TASKS.md`.
+
+## [2026-05-06]
+### Persistencia de Filtros en Consultas Recientes (V4.2.7)
+- **`App.tsx`**: 
+  - Modificada la persistencia en `localStorage`: el sistema ahora guarda el objeto de filtros completo (rango de fechas, servicios y categorías) junto a cada consulta en el historial de "Búsquedas Recientes".
+- **`Home.tsx`**:
+  - Implementada la restauración automática de filtros: al hacer clic en una búsqueda reciente, el sistema no solo recupera el texto, sino que restaura el estado visual de los selectores de fecha y las categorías seleccionadas, permitiendo repetir la búsqueda exacta de forma instantánea.
+  - Sincronizada la interfaz `HomeProps` para soportar el paso de categorías en la navegación histórica.
+- **Sincronización de Versión**: Incremento global a **V4.2.7** en `package.json`, `App.tsx`, `Evolution.tsx`, `README.md`, `RULES.md` y `TASKS.md`.
+
+## [2026-05-06]
+### Resaltado Ubicuo de Búsqueda y UX en Navegador Lateral (V4.2.6)
+- **`HCEView.tsx`**: 
+  - Implementado **Resaltado en Navegador Lateral**: El sistema ahora identifica visualmente qué visitas ("tomas") y versiones ("registros") contienen coincidencias con los términos de búsqueda actuales.
+  - Añadido **Indicador de Coincidencia (Amber Pulse)**: Se ha integrado un pequeño punto ámbar pulsante junto al ID de la Toma en el sidebar para alertar al clínico de la presencia de hallazgos relevantes sin necesidad de entrar en cada versión.
+  - Refinado el **Estilo de Botones en Sidebar**: Las versiones que contienen coincidencias ahora se tiñen de un suave color ámbar (`bg-amber-100`) y resaltan sus metadatos (fecha/hora) para facilitar la navegación visual rápida por el historial clínico.
+  - Sincronizada la lógica de detección con el motor global, asegurando que el resaltado sea coherente entre el cuerpo del informe y el navegador lateral.
+- **Sincronización de Versión**: Incremento global a **V4.2.6** en `package.json`, `App.tsx`, `Evolution.tsx`, `README.md`, `RULES.md` y `TASKS.md`.
 
 ## [2026-05-05]
 ### Refinamiento de Búsqueda Contextual y UX Avanzada (V4.2.5)
@@ -306,22 +356,6 @@ Todos los cambios notables realizados en el proyecto Queryclin serán documentad
   - **Archivo Modificado:** `.gitignore`.
   - **Detalle:** Creación de un espacio de trabajo local para tests e ingestión de datos masivos que no debe sincronizarse con GitHub. Implementación de un Diario de Aprendizaje personal (ignorado en repo).
 
-### Agregado (Despliegue y CI/CD)
-- **Habilitación de GitHub Pages:**
-  - **Archivos Modificados:** `vite.config.ts`, `.github/workflows/deploy.yml` (nuevo).
-  - **Detalle:**
-### Añadido
-- **Centro de Ayuda Integrado**: Nueva vista (`HelpView`) con documentación técnica sobre búsqueda booleana y privacidad local.
-- **Sección de Créditos Oficiales**: Reconocimiento al equipo de desarrollo y coordinación del Hospital Universitario Rafael Méndez.
-- **Suite de Pruebas Automatizadas**: Integración de Vitest y Playwright para asegurar la fidelidad de los datos. (V2.3)
-### Agregado (Pruebas de Estrés)
-- **Generación de Dataset Masivo:**
-  - **Archivos Modificados:** `csv_100k.csv` (nuevo), `scratch/generate_large_csv.cjs` (nuevo).
-  - **Detalle:** Generación de un archivo de 100.000 registros clínicos correspondientes a ~80.000 pacientes únicos para validar el rendimiento del motor IndexedDB y la búsqueda asíncrona.
-- **Implementación de Gobernanza Persistente:**
-  - **Archivos Modificados:** `RULES.md`, `README.md`, `.cursorrules` (nuevo).
-  - **Motivo:** Asegurar que las reglas de desarrollo se mantengan consistentes en cualquier entorno.
-
 ## [2026-04-16]
 ### Añadido (Escalabilidad 100k)
 - **Implementación de Arquitectura Local-First de Alto Rendimiento:**
@@ -366,14 +400,11 @@ Todos los cambios notables realizados en el proyecto Queryclin serán documentad
 - **Implementación de Merge Robusto en Ingesta**:
   - **Archivos Modificados**: `src/lib/parser.worker.ts`.
   - **Detalle**: Se ha corregido un bug crítico que provocaba la pérdida de datos cuando los registros de un paciente estaban dispersos en diferentes lotes del CSV. El worker ahora realiza una lectura previa de IndexedDB y fusiona las nuevas "tomas" con la historia clínica existente.
-  
 ### Mejorado (V2.7.0)
 - **Arquitectura de Ingesta Single-Pass**:
   - **Archivos Modificados**: `src/lib/parser.worker.ts`, `src/lib/csvParser.ts`.
   - **Detalle**: Optimización extrema del motor de ingesta para procesar 100k+ registros en un solo flujo lineal, reduciendo el consumo de RAM en un 60%.
 - **Batching de Consultas e Indexación**:
-  - **Archivos Modificados**: `src/lib/searchEngine.ts`, `src/lib/db.ts`.
-  - **Detalle**: Implementación de transacciones por lotes para IndexedDB, reduciendo la latencia de búsqueda en datasets masivos.
 
 ## [2026-04-22]
 ### Añadido (V2.6.3 - Inteligencia Clínica)

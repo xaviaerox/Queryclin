@@ -9,6 +9,7 @@ import Results from './components/Results';
 import HCEView from './components/HCEView';
 import Help from './components/Help';
 import Evolution from './components/Evolution';
+import GlobalHeader from './components/GlobalHeader';
 import { FORMS } from './core/mappings';
 
 /**
@@ -35,8 +36,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.2.5';
-const BUILD_DATE = '05/05/2026 12:45';
+const VERSION = '4.3.0';
+const BUILD_DATE = '06/05/2026 10:35';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -231,8 +232,8 @@ export default function App() {
     }
   };
 
-  const applyFilters = async (results: SearchResult[], filters: { categories?: string[] }, q: string) => {
-    if (!filters.categories || filters.categories.length === 0) return results;
+  const applyFilters = async (results: SearchResult[], filters: { categories?: string[], fields?: string[] }, q: string) => {
+    if ((!filters.categories || filters.categories.length === 0) && (!filters.fields || filters.fields.length === 0)) return results;
 
     const mapping = FORMS.find(f => f.id === activeFormId);
     if (!mapping) return results;
@@ -254,6 +255,22 @@ export default function App() {
         const toma = patientData.tomas[reg.idToma];
         const registroData = toma?.registros.find((r: any) => r.ordenToma === reg.ordenToma)?.data;
         if (!registroData) return false;
+
+        // If specific fields are selected, we only check those
+        if (filters.fields && filters.fields.length > 0) {
+          for (const fieldName of filters.fields) {
+            const val = registroData[fieldName];
+            if (val && val.toString().trim() !== '') {
+              if (queryTokens.length > 0) {
+                const valNorm = normalize(val.toString());
+                if (queryTokens.some(token => valNorm.includes(token))) return true;
+              } else {
+                return true;
+              }
+            }
+          }
+          return false;
+        }
 
         let matchesCategory = false;
         for (const cat of filters.categories!) {
@@ -303,20 +320,20 @@ export default function App() {
     return filteredResults.sort((a, b) => b.totalScore - a.totalScore);
   };
 
-  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[] }) => {
+  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }) => {
     setQuery(q);
     setActiveFilters(filters);
     let results = await searchEngine.search(q, filters);
     
-    if (filters?.categories && filters.categories.length > 0) {
+    if ((filters?.categories && filters.categories.length > 0) || (filters?.fields && filters.fields.length > 0)) {
       results = await applyFilters(results, filters, q);
     }
     
     if (q.trim()) {
       try {
         const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
-        const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, timestamp: Date.now(), resultCount: undefined } : s);
-        const newRecent = [{ query: q, timestamp: Date.now(), resultCount: results.length }, ...parsed.filter((s: any) => s.query !== q)].slice(0, 6);
+        const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, filters: undefined, timestamp: Date.now(), resultCount: undefined } : s);
+        const newRecent = [{ query: q, filters, timestamp: Date.now(), resultCount: results.length }, ...parsed.filter((s: any) => s.query !== q)].slice(0, 6);
         localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
       } catch (e) {
         console.error("Failed to update recent searches:", e);
@@ -352,94 +369,33 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="h-screen flex flex-col bg-[var(--bg-clinical)] text-[var(--text-primary)] font-sans overflow-hidden">
-        <header className="h-[64px] bg-[var(--glass-bg)] backdrop-blur-md border-b border-[var(--border-clinical)] px-6 flex items-center justify-between z-[100] shrink-0">
-          <div className="flex items-center gap-4 shrink-0 h-full">
-            <div 
-              className="flex items-center gap-3 cursor-pointer group h-full py-2"
-              onClick={() => { setView('home'); setQuery(''); }}
-            >
-              <div className="text-[20px] font-black tracking-tighter text-[var(--accent-clinical)] flex items-baseline">
-                Query<span className="font-light text-[var(--text-primary)]">clin</span>
-              </div>
-              <div className="h-6 w-px bg-[var(--border-clinical)] opacity-30 mx-1 self-center" />
-              <div className="flex items-center text-[19px] font-medium tracking-[-0.03em] select-none antialiased">
-                <span className="text-[#4285F4]">N</span>
-                <span className="text-[#EA4335]">a</span>
-                <span className="text-[#FBBC05]">c</span>
-                <span className="text-[#4285F4]">h</span>
-                <span className="text-[#34A853]">u</span>
-                <span className="text-[#EA4335]">S</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => setView('evolution')}
-              className="px-2 py-0.5 text-[9px] font-black bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] border border-[var(--accent-clinical)]/20 rounded-full hover:bg-[var(--accent-clinical)] hover:text-white transition-all active:scale-95 flex items-center gap-1 self-center" 
-              title={`Click para ver la evolución del proyecto`}
-            >
-              <span>V{VERSION}</span>
-              <span className="opacity-50 border-l border-[var(--accent-clinical)]/30 pl-1">{BUILD_DATE}</span>
-            </button>
-          </div>
+        <GlobalHeader 
+          query={query}
+          activeFilters={activeFilters}
+          onSearch={handleSearch}
+          onGoHome={() => { setQuery(''); setView('home'); }}
+          getSuggestions={(q) => searchEngine.getSuggestions(q)}
+          view={view}
+          currentIndex={selectedIndex}
+          totalResults={searchResults.length}
+          onNavigate={(idx) => setSelectedIndex(idx)}
+          onBack={() => {
+            if (view === 'hce') setView('results');
+            else if (view === 'results') setView('home');
+            else setView('home');
+          }}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          patientCount={patientCount}
+          version={VERSION}
+          buildDate={BUILD_DATE}
+          onClearData={handleClearData}
+          onShowAll={() => handleSearch('')}
+          onShowHelp={() => setView('help')}
+        />
 
-          {/* Buscador Integrado en Cabecera */}
-          {view !== 'home' && (data || patientCount > 0) && (
-            <div className="flex-1 max-w-xl mx-8 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="relative flex items-center group">
-                <Search className="absolute left-4 text-[var(--text-secondary)] group-focus-within:text-[var(--accent-clinical)] transition-colors" size={16} />
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch(query);
-                    }
-                  }}
-                  placeholder="Buscar paciente, patología, síntoma..."
-                  className="w-full pl-10 pr-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:border-[var(--accent-clinical)] focus:outline-none transition-all text-sm font-bold text-[var(--text-primary)] shadow-sm"
-                />
-              </div>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-4 h-full">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full hover:bg-[var(--border-clinical)] transition-colors text-[var(--text-secondary)]"
-              title={`Cambiar a modo ${theme === 'light' ? 'oscuro' : 'claro'}`}
-            >
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-            </button>
-            <button
-              onClick={() => setView('help')}
-              className={`p-2 rounded-full transition-all ${view === 'help' ? 'bg-[var(--accent-clinical)] text-white' : 'hover:bg-[var(--border-clinical)] text-[var(--text-secondary)]'}`}
-              title="Guía de uso y documentación"
-            >
-              <HelpCircle size={20} />
-            </button>
-            {data && (
-              <div className="flex items-center gap-6 border-l border-[var(--border-clinical)] pl-4 h-full">
-                <button 
-                  onClick={() => handleSearch('')}
-                  className="flex flex-col items-end hover:opacity-80 active:scale-95 transition-all cursor-pointer group"
-                  title="Explorar el padrón completo de pacientes"
-                >
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] group-hover:text-[var(--accent-clinical)] transition-colors">Pacientes</span>
-                  <span className="text-[14px] font-bold text-[var(--text-primary)]">{patientCount}</span>
-                </button>
-                <button 
-                  onClick={handleClearData}
-                  className="p-2 rounded-xl text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-50/50 transition-all"
-                  title="Limpiar base de datos local"
-                >
-                  <Database size={20} />
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
 
-        <main className="flex-1 overflow-y-auto relative bg-[var(--bg-clinical)]">
+        <main className={`flex-1 overflow-y-auto relative bg-[var(--bg-clinical)] transition-all duration-300`}>
           {isProcessing && (
             <div className="fixed inset-0 bg-[var(--bg-clinical)]/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
               <div className="w-20 h-20 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(var(--accent-clinical-rgb),0.2)]"></div>
@@ -505,6 +461,7 @@ export default function App() {
                 onSearch={handleSearch} 
                 getSuggestions={(q) => searchEngine.getSuggestions(q)}
                 hasData={!!data || patientCount > 0} 
+                activeFormId={activeFormId}
               />
             </div>
           )}

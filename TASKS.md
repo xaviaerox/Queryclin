@@ -96,6 +96,33 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A18. Mejora de Narrativa Clínica**: Nueva regla de parseo de 3+ espacios seguidos como salto de línea para optimizar la lectura de informes.
 - [x] **Logro**: Máxima precisión en la recuperación de información con visualización clínica íntegra y sin ruido visual.
 
+## 🟢 FASE 15: Resaltado Ubicuo y UX Lateral (V4.2.6 ✅)
+- [x] **U20. Resaltado en Navegador Lateral**: Implementación de lógica de detección de coincidencias en el sidebar.
+- [x] **U21. Indicadores de Alerta (Amber Pulse)**: Sistema visual de notificación de hallazgos en tomas y versiones inactivas.
+- [x] **U22. UX Adaptativa Sidebar**: Resaltado bicolor y metadatos con color de acento para coincidencias.
+- [x] **Logro**: Navegación contextual completa; el clínico identifica hallazgos relevantes en todo el historial del paciente sin necesidad de exploración manual secuencial.
+
+## 🟢 FASE 16: Persistencia de Filtros Históricos (V4.2.7 ✅)
+- [x] **E17. Memoria de Filtros**: Inclusión de metadatos de filtrado en el objeto de persistencia de búsquedas recientes.
+- [x] **U23. Restauración de Estado**: Sincronización de los componentes de filtro en Home al recuperar una búsqueda del historial.
+- [x] **Logro**: Experiencia de usuario "Sin Fricción" al alternar entre múltiples líneas de investigación clínica.
+
+## 🟢 FASE 17: Simplificación de Taxonomía (V4.2.8 ✅)
+- [x] **U24. Depuración de Filtros**: Eliminada la categoría "General" del selector de filtros en Home.
+- [x] **Logro**: Interfaz de búsqueda más limpia y enfocada exclusivamente en dominios de información clínica.
+
+## 🟢 FASE 18: Filtrado Quirúrgico por Campos (V4.2.9 ✅)
+- [x] **U25. Expansión de Categorías**: Implementada UI jerárquica para mostrar campos (sub-categorías) al seleccionar un dominio clínico.
+- [x] **A19. Motor de Filtrado por Campo**: Refactorizado `applyFilters` para soportar discriminación por nombres de columna exactos.
+- [x] **Logro**: Máximo nivel de granularidad en la recuperación de información; el clínico puede buscar términos exclusivamente en campos críticos como "Resultado analítica" o "Juicio Diagnóstico".
+
+## 🟢 FASE 19: Arquitectura de Búsqueda Persistente (V4.3.0 ✅)
+- [x] **U26. Cabecera Global Unificada**: Creación de `GlobalHeader.tsx` para centralizar identidad y herramientas de búsqueda.
+- [x] **U27. Buscador Refinador**: Implementación de lógica de búsqueda persistente que mantiene y respeta los filtros activos entre vistas.
+- [x] **U28. Indicadores de Contexto de Filtro**: Sistema visual (icono pulsante) para alertar sobre la segmentación activa en la búsqueda.
+- [x] **U29. Centralización de Comandos**: Integración de botones de "Mostrar Todo", "Borrar Datos" y "Ayuda" en la cabecera persistente.
+- [x] **Logro**: Transformación de la búsqueda en una experiencia de exploración continua y contextual; el clínico mantiene el control total de sus filtros sin importar su ubicación en el expediente.
+
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)
 - [ ] **E11. Motor Semántico Híbrido**: Integración de embeddings locales con Transformers.js.

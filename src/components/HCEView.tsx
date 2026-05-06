@@ -229,13 +229,27 @@ function TomaTimeline({
   activeVersionIndex,
   onSelect,
   isHCEALG = false,
+  query = '',
 }: {
   sortedTomas: Toma[];
   activeIndex: number;
   activeVersionIndex: number;
   onSelect: (tomaIdx: number, versionIdx: number) => void;
   isHCEALG?: boolean;
+  query?: string;
 }) {
+  const queryTokens = useMemo(() => 
+    query.toLowerCase().split(/\s+/).filter(t => t.length >= 3),
+    [query]
+  );
+
+  const hasMatch = (data: Record<string, string>) => {
+    if (queryTokens.length === 0) return false;
+    return Object.values(data).some(val => {
+      const s = String(val).toLowerCase();
+      return queryTokens.some(t => s.includes(t));
+    });
+  };
   return (
     <div className="flex flex-col gap-0 sticky top-[180px] max-h-[75vh] overflow-y-auto hide-scrollbar rounded-xl border border-slate-200 shadow-sm bg-white">
       {isHCEALG ? (
@@ -258,6 +272,9 @@ function TomaTimeline({
                   <div className="flex items-center gap-1">
                     <Hash size={11} className="text-slate-500" />
                     {t.idToma}
+                    {t.registros.some(r => hasMatch(r.data)) && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-1" title="Contiene coincidencias" />
+                    )}
                   </div>
                   <div className="flex items-center gap-1 text-[9px] font-bold text-slate-500 tabular-nums">
                     <span>{extractFecha(t.latest.data)}</span>
@@ -267,6 +284,7 @@ function TomaTimeline({
                 </div>
                 {sortedRegs.map((r, rIdx) => {
                   const isActive = tIdx === activeIndex && rIdx === activeVersionIndex;
+                  const isMatch = hasMatch(r.data);
                   const fecha = extractFecha(r.data);
                   const hora = extractHora(r.data);
                   const orden = r.ordenToma;
@@ -275,14 +293,26 @@ function TomaTimeline({
                     <button
                       key={`${t.idToma}-${orden}`}
                       onClick={() => onSelect(tIdx, rIdx)}
-                      className={`flex items-center text-[11px] transition-all border-b border-slate-50 last:border-0 ${isActive ? 'bg-[#0074D9] text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                      className={`flex items-center text-[11px] transition-all border-b border-slate-50 last:border-0 ${
+                        isActive 
+                          ? 'bg-[#0074D9] text-white' 
+                          : isMatch 
+                            ? 'bg-amber-100/50 text-slate-700 hover:bg-amber-100' 
+                            : 'bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
                     >
-                      <span className={`px-3 py-2 w-10 font-black text-center border-r ${isActive ? 'border-blue-400/30' : 'border-slate-100 text-slate-400'}`}>
+                      <span className={`px-3 py-2 w-10 font-black text-center border-r ${
+                        isActive 
+                          ? 'border-blue-400/30' 
+                          : isMatch 
+                            ? 'border-amber-200 text-amber-600 bg-amber-200/20' 
+                            : 'border-slate-100 text-slate-400'
+                      }`}>
                         {orden}
                       </span>
                       <div className="px-3 py-2 flex-1 flex items-center justify-end gap-1.5 tabular-nums overflow-hidden">
-                        <span className="font-bold truncate">{fecha}</span>
-                        <span className={`text-[9px] font-medium ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>{hora}</span>
+                        <span className={`font-bold truncate ${!isActive && isMatch ? 'text-amber-700' : ''}`}>{fecha}</span>
+                        <span className={`text-[9px] font-medium ${isActive ? 'text-blue-100' : isMatch ? 'text-amber-500' : 'text-slate-400'}`}>{hora}</span>
                       </div>
                     </button>
                   );
@@ -292,6 +322,7 @@ function TomaTimeline({
           }
 
           const isActive = tIdx === activeIndex;
+          const isMatch = hasMatch(t.latest?.data || {});
           const isLatest = tIdx === 0;
           const fecha = extractFecha(t.latest?.data || {});
           const hora = extractHora(t.latest?.data || {});
@@ -301,12 +332,27 @@ function TomaTimeline({
             <button
               key={t.idToma}
               onClick={() => onSelect(tIdx, 0)}
-              className={`group flex flex-col items-start gap-1.5 py-4 px-4 -ml-[2px] border-l-2 transition-all text-left rounded-r-xl ${isActive ? 'border-[var(--accent-clinical)] bg-[var(--accent-clinical)]/8' : 'border-transparent hover:border-[var(--accent-clinical)]/50 hover:bg-[var(--accent-clinical)]/4'}`}
+              className={`group flex flex-col items-start gap-1.5 py-4 px-4 -ml-[2px] border-l-2 transition-all text-left rounded-r-xl ${
+                isActive 
+                  ? 'border-[var(--accent-clinical)] bg-[var(--accent-clinical)]/8' 
+                  : isMatch
+                    ? 'border-amber-400 bg-amber-500/5 hover:bg-amber-500/10'
+                    : 'border-transparent hover:border-[var(--accent-clinical)]/50 hover:bg-[var(--accent-clinical)]/4'
+              }`}
             >
               <div className="flex items-center gap-2 w-full">
-                <span className={`text-[11px] font-black flex items-center gap-1 ${isActive ? 'text-[var(--accent-clinical)]' : 'text-[var(--text-secondary)]'}`}>
+                <span className={`text-[11px] font-black flex items-center gap-1 ${
+                  isActive 
+                    ? 'text-[var(--accent-clinical)]' 
+                    : isMatch
+                      ? 'text-amber-600'
+                      : 'text-[var(--text-secondary)]'
+                }`}>
                   <Hash size={9} />
                   {t.idToma}
+                  {!isActive && isMatch && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-0.5" />
+                  )}
                 </span>
                 {isLatest && (
                   <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500 text-white px-1.5 py-0.5 rounded-full leading-none">
@@ -314,11 +360,11 @@ function TomaTimeline({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-primary)]">
-                <Calendar size={10} className={isActive ? 'text-[var(--accent-clinical)]' : 'text-[var(--text-secondary)] opacity-60'} />
+              <div className={`flex items-center gap-1.5 text-[11px] font-bold ${isActive ? 'text-[var(--accent-clinical)]' : isMatch ? 'text-amber-700' : 'text-[var(--text-primary)]'}`}>
+                <Calendar size={10} className={isActive ? 'text-[var(--accent-clinical)]' : isMatch ? 'text-amber-500' : 'text-[var(--text-secondary)] opacity-60'} />
                 <span>{fecha}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-secondary)] opacity-70">
+              <div className={`flex items-center gap-1.5 text-[10px] font-bold ${isActive ? 'text-[var(--accent-clinical)]/70' : isMatch ? 'text-amber-600/70' : 'text-[var(--text-secondary)] opacity-70'}`}>
                 <Clock size={9} />
                 <span>{hora}</span>
               </div>
@@ -545,6 +591,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
             activeIndex={activeTomaIndex}
             activeVersionIndex={activeVersionIndex}
             isHCEALG={formId === 'hce_alg' || formId === 'hce_mir'}
+            query={query}
             onSelect={(tIdx, vIdx) => { 
               setActiveTomaIndex(tIdx); 
               setActiveVersionIndex(vIdx); 
