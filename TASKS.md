@@ -123,14 +123,14 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **U29. Centralización de Comandos**: Integración de botones de "Mostrar Todo", "Borrar Datos" y "Ayuda" en la cabecera persistente.
 - [x] **Logro**: Transformación de la búsqueda en una experiencia de exploración continua y contextual; el clínico mantiene el control total de sus filtros sin importar su ubicación en el expediente.
 
-## 🟢 FASE 20: Refinamiento de Mappings HCE-MIR (V4.3.5 ✅)
+## 🟢 FASE 20: Refinamiento de Mappings HCE-MIR (V4.3.6 ✅)
 - [x] **A20. Mapping "Resultado Analítica"**: Integrada visualización de analíticas en la categoría de Resultados Pruebas para HCE-MIR.
 - [x] **A21. Normalización de Aliases HCE-MIR**: Implementado soporte para variantes de nombres con colon y diferentes mayúsculas para campos críticos.
 - [x] **A22. Mapping Oxihemoglobina (O2 Hb)**: Vinculado el campo de saturación de oxígeno al bloque de constantes MIR.
 - [x] **A23. Mapping Situación Basal (Otros)**: Posicionamiento estricto de la situación basal en la sección de Anamnesis.
 - [x] **A24. Persistencia Discriminada**: Corregida la sobreescritura de búsquedas recientes con mismo término pero distintos filtros.
-- [x] **A25. Depuración de Ruido Visual**: Eliminados 9 campos redundantes de las vistas HCE-MIR y Debug.
-- [x] **Logro**: Interfaz clínica más limpia y enfocada; reducción del 15% en el volumen de datos secundarios no relevantes por pantalla.
+- [x] **A25. Depuración de Ruido Visual**: Eliminados 13 campos redundantes de las vistas HCE-MIR y Debug.
+- [x] **Logro**: Depuración total de la sección Debug; ya no se muestran metadatos técnicos de base de datos como Contadores o Ids de Proceso.
 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)

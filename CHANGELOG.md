@@ -1,4 +1,11 @@
 ## [2026-05-06]
+### Refinamiento Estricto de Exclusiones (V4.3.6)
+- **`HCEView.tsx`**:
+  - Corregida la lógica de exclusión de la sección de **Debug**: se han normalizado los nombres de los campos (sustituyendo guiones por espacios) para asegurar que coincidan con la lógica interna de limpieza.
+  - Añadidos a la lista negra global: `EC PROCESO`, `EC USUARIO CREADOR`, `CONTADOR` y `DEMOG DOMICILIO`.
+- **Sincronización de Versión**: Incremento global a **V4.3.6**.
+
+## [2026-05-06]
 ### Depuración de Campos Redundantes (V4.3.5)
 - **`mappings.ts`**:
   - Eliminados campos innecesarios de la categoría **OTROS** en HCE-MIR (`Contador`, `EC_Ciudad_Paciente`, `EC_Proceso`, `EC_Usuario_Creador`, `Unidad de Enfermería`) para reducir el ruido visual.
