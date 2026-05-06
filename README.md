@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.3.9)
+# Queryclin — HCE Intelligence Dashboard (V4.4.0)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -121,13 +121,11 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Cabecera Global Unificada**: Centralización de identidad y herramientas de búsqueda en una barra superior persistente.
 - **Buscador Refinador**: Navegación fluida entre expedientes manteniendo el contexto de filtros activos.
 
-### Fase 20: Refinamiento de Mappings HCE-MIR (V4.3.9 — ACTUAL 🚀)
-- **Integración de Resultado Analítica**: Mapeo determinista de campos de laboratorio para HCE-MIR.
-- **Resolución de Aliases Críticos**: Normalización de nombres de campo con soporte para puntuación y capitalización legacy.
-- **Mapeo de Constantes Vitales**: Inclusión de Oxihemoglobina (O2 Hb) y Detalles HTA/DM/DISL en el bloque de constantes.
-- **Estructura de Anamnesis**: Categorización de "Situación Basal (Otros)" en la narrativa clínica.
+### Fase 21: Ergonomía de Navegación Profunda (V4.4.0 — ACTUAL 🚀)
+- **Cabecera Sticky en Visor HCE**: Los controles de navegación y paginación ahora acompañan al usuario durante el scroll.
+- **Refinamiento de Mappings**: Consolidación total de campos "Detalles" y constantes vitales en HCE-MIR.
 - **Persistencia Inteligente**: Diferenciación de búsquedas recientes por filtros aplicados.
-- **Limpieza de Interfaz**: Depuración estricta de metadatos técnicos y normalización de puntuación en claves.
+- **Higiene Visual**: Eliminación estricta de metadatos técnicos en secciones Otros y Debug.
 
 
 ---

@@ -1,4 +1,12 @@
 ## [2026-05-06]
+### Cabecera de Navegación Persistente (V4.4.0)
+- **`HCEView.tsx`**:
+  - Implementada una **cabecera sticky** para los controles de navegación del expediente ("Volver al listado" y paginación).
+  - La cabecera ahora acompaña al usuario durante el scroll de informes extensos, utilizando un efecto de **glassmorphism** (backdrop-blur) para integrarse con el diseño premium.
+  - Asegurada la visibilidad y accesibilidad de los controles en informes de gran longitud.
+- **Sincronización de Versión**: Incremento global a **V4.4.0**.
+
+## [2026-05-06]
 ### Robustez en Mapeo de Detalles y Constantes (V4.3.9)
 - **`HCEView.tsx`**:
   - Refactorizado el bloque de **Constantes MIR** para incluir una red de aliases mucho más amplia. Ahora todos los campos de enfermedades crónicas (Diabetes, HTA, Dislipemia) buscan activamente sus variantes de "Detalles" tanto en formato abreviado como extendido.

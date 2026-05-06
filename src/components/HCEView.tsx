@@ -567,22 +567,25 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
 
   return (
     <div className="flex flex-col w-full pb-40">
-      <div className="flex items-center justify-between mb-8 shrink-0">
-        <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-bold transition-colors">
-          <ArrowLeft size={20} />
-          <span>Volver al Listado</span>
-        </button>
-        <div className="flex items-center gap-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] px-4 py-2 rounded-2xl shadow-sm">
-          <span className="text-[12px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
-            Expediente {currentIndex + 1} de {results.length}
-          </span>
-          <div className="flex gap-1 border-l border-[var(--border-clinical)] pl-3">
-            <button disabled={!hasPrev} onClick={() => { onNavigate(currentIndex - 1); }} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
-              <ChevronLeft size={20} />
-            </button>
-            <button disabled={!hasNext} onClick={() => { onNavigate(currentIndex + 1); }} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
-              <ChevronRight size={20} />
-            </button>
+      {/* Header de Navegación Sticky */}
+      <div className="sticky top-0 z-30 bg-[var(--bg-clinical)]/80 backdrop-blur-md py-4 mb-8 border-b border-[var(--border-clinical)]/50 -mx-4 px-4">
+        <div className="flex items-center justify-between shrink-0 max-w-5xl mx-auto w-full">
+          <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-bold transition-colors">
+            <ArrowLeft size={20} />
+            <span>Volver al Listado</span>
+          </button>
+          <div className="flex items-center gap-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] px-4 py-2 rounded-2xl shadow-sm">
+            <span className="text-[12px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+              Expediente {currentIndex + 1} de {results.length}
+            </span>
+            <div className="flex gap-1 border-l border-[var(--border-clinical)] pl-3">
+              <button disabled={!hasPrev} onClick={() => { onNavigate(currentIndex - 1); }} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
+                <ChevronLeft size={20} />
+              </button>
+              <button disabled={!hasNext} onClick={() => { onNavigate(currentIndex + 1); }} className="p-1.5 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all">
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
