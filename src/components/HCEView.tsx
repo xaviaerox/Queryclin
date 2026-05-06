@@ -540,6 +540,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
       ...Object.keys(formMapping.headerAliases || {}).map(cleanKeyStr),
       ...Object.values(formMapping.headerAliases || {}).flat().map(cleanKeyStr),
       'NHC', 'N.H.C', 'ID_TOMA', 'ORDEN_TOMA', 'EC_FECHA_TOMA', 'FECHA_TOMA', 'FECHA', 'HORA', 'USUARIO', 'IDENTIFICADOR TOMA', 'VERSION REGISTRO',
+      'FECHA OBSERVACION CLINICA', 'EC EDAD PACIENTE', 'EDAD TOMA', 'DEMOG-DOMICILIO',
       '_IS_DUPLICATE'
     ]);
 

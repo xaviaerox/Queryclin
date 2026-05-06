@@ -151,7 +151,7 @@ export const FORMS: FormMapping[] = [
         'Tratamiento crónico', 'Tratamiento recomendado'
       ],
       'OTROS': [
-        'Contador', 'EC_Ciudad_Paciente', 'EC_Estado_Civil', 'EC_Proceso', 'EC_Usuario_Creador', 'Pruebas solicitadas', 'Unidad de Enfermería'
+        'EC_Estado_Civil', 'Pruebas solicitadas'
       ]
     }
   },

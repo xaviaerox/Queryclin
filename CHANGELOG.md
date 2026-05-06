@@ -1,4 +1,12 @@
 ## [2026-05-06]
+### Depuración de Campos Redundantes (V4.3.5)
+- **`mappings.ts`**:
+  - Eliminados campos innecesarios de la categoría **OTROS** en HCE-MIR (`Contador`, `EC_Ciudad_Paciente`, `EC_Proceso`, `EC_Usuario_Creador`, `Unidad de Enfermería`) para reducir el ruido visual.
+- **`HCEView.tsx`**:
+  - Expandida la lista de exclusión para la sección de **Debug** (Campos no mapeados). Se han ocultado campos que ya aparecen en otras partes del informe o que carecen de relevancia clínica directa (`Fecha Observacion Clinica`, `EC EDAD PACIENTE`, `EDAD TOMA`, `DEMOG-Domicilio`).
+- **Sincronización de Versión**: Incremento global a **V4.3.5**.
+
+## [2026-05-06]
 ### Mejora de Persistencia de Búsquedas (V4.3.4)
 - **`App.tsx`**:
   - Corregida la lógica de **Búsquedas Recientes**: ahora el sistema diferencia entre búsquedas que usan el mismo término pero tienen filtros distintos (categorías, fechas, etc.), evitando la sobreescritura accidental y permitiendo recuperar contextos específicos de investigación.
