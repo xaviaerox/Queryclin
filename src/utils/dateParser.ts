@@ -110,3 +110,25 @@ export const parseClinicalDate = (dateStrRaw: any): number | null => {
   return null;
 };
 
+export function extractFecha(data: Record<string, string>): string {
+  const raw = data['EC_Fecha_Toma'] || data['FECHA_TOMA'] || data['FECHA'] || '';
+  if (!raw) return '--';
+  const ts = parseClinicalDate(raw);
+  if (!ts) return raw.includes(' ') ? raw.split(' ')[0] : raw;
+  
+  const d = new Date(ts);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export function extractHora(data: Record<string, string>): string {
+  const raw = data['EC_Fecha_Toma'] || data['FECHA_TOMA'] || data['FECHA'] || '';
+  const hStr = data['HORA_TOMA'] || data['EC_Hora_Toma'] || data['HORA'] || '';
+  
+  if (hStr && hStr.includes(':')) return hStr.slice(0, 5);
+  if (String(raw).includes(' ')) return String(raw).split(' ')[1]?.slice(0, 5) || '--:--';
+  return '--:--';
+}
+

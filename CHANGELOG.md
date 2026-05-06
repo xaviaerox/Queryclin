@@ -1,4 +1,19 @@
 ## [2026-05-06]
+### Interfaz Contextual Unificada (V4.5.0)
+- **`GlobalHeader.tsx`**:
+  - Rediseño de alta fidelidad para la navegación de expedientes.
+  - El botón "Volver" se sitúa en el extremo izquierdo, sustituyendo a la marca del software en modo lectura.
+  - Integrada la **Fecha y Hora de la Versión Activa** en la cabecera junto al botón de retorno.
+  - El buscador se alinea ahora con el ancho del contenido del informe clínico (`max-w-4xl`).
+  - El navegador de expedientes ("Expediente X de Y") se desplaza al extremo derecho junto a las utilidades globales.
+- **Arquitectura de Estado**:
+  - Elevación de estado de navegación (`activeTomaIndex`, `activeVersionIndex`) a `App.tsx`.
+  - Sincronización en tiempo real entre el timeline lateral y la cabecera global.
+- **Utilidades**:
+  - Centralizadas funciones de extracción de fecha/hora en `dateParser.ts`.
+- **Sincronización de Versión**: Salto mayor a **V4.5.0**.
+
+## [2026-05-06]
 ### Cabecera Global Unificada (V4.4.5)
 - **`GlobalHeader.tsx`**:
   - Rediseño integral de la cabecera para la vista de informes (HCE).

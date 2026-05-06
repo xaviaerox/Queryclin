@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { HCEData } from './core/types';
 import { searchEngine, SearchResult } from './lib/searchEngine';
 import { db } from './storage/indexedDB';
+import { parseClinicalDate, extractFecha, extractHora } from './utils/dateParser';
 import Home from './components/Home';
 import Results from './components/Results';
 import HCEView from './components/HCEView';
@@ -36,8 +37,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.4.5';
-const BUILD_DATE = '06/05/2026 13:05';
+const VERSION = '4.5.0';
+const BUILD_DATE = '06/05/2026 13:15';
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -46,6 +47,8 @@ export default function App() {
   const [data, setData] = useState<HCEData | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+  const [selectedTomaIndex, setSelectedTomaIndex] = useState(0);
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
@@ -375,6 +378,40 @@ export default function App() {
     }
   };
 
+  // Efecto para cargar el paciente activo para la cabecera
+  const [activePatient, setActivePatient] = useState<any>(null);
+  useEffect(() => {
+    if (view === 'hce' && searchResults[selectedIndex]) {
+      db.getFromStore(db.stores.patients, searchResults[selectedIndex].nhc).then(p => {
+        setActivePatient(p);
+      });
+    } else {
+      setActivePatient(null);
+    }
+  }, [selectedIndex, view, searchResults]);
+
+  // Cálculo de Fecha/Hora activa para el GlobalHeader
+  const activeDateInfo = useMemo(() => {
+    if (!activePatient || !activePatient.tomas) return { date: '--', time: '--' };
+    const tomas = Object.values(activePatient.tomas).sort((a: any, b: any) => {
+      const getT = (t: any) => {
+        const d = parseClinicalDate(t.latest.data['EC_Fecha_Toma'] || t.latest.data['FECHA_TOMA'] || '');
+        return d || 0;
+      };
+      return getT(b) - getT(a);
+    });
+    const toma = tomas[selectedTomaIndex] as any;
+    if (!toma) return { date: '--', time: '--' };
+    const sortedVersions = [...toma.registros].sort((a: any, b: any) => b.ordenToma - a.ordenToma);
+    const version = sortedVersions[selectedVersionIndex];
+    if (!version) return { date: '--', time: '--' };
+    
+    return {
+      date: extractFecha(version.data),
+      time: extractHora(version.data)
+    };
+  }, [activePatient, selectedTomaIndex, selectedVersionIndex]);
+
   return (
     <ErrorBoundary>
       <div className="h-screen flex flex-col bg-[var(--bg-clinical)] text-[var(--text-primary)] font-sans overflow-hidden">
@@ -387,12 +424,18 @@ export default function App() {
           view={view}
           currentIndex={selectedIndex}
           totalResults={searchResults.length}
-          onNavigate={(idx) => setSelectedIndex(idx)}
+          onNavigate={(idx) => {
+             setSelectedIndex(idx);
+             setSelectedTomaIndex(0);
+             setSelectedVersionIndex(0);
+          }}
           onBack={() => {
             if (view === 'hce') setView('results');
             else if (view === 'results') setView('home');
             else setView('home');
           }}
+          activeDate={activeDateInfo.date}
+          activeTime={activeDateInfo.time}
           theme={theme}
           toggleTheme={toggleTheme}
           patientCount={patientCount}
@@ -451,14 +494,12 @@ export default function App() {
                   ))}
                 </div>
 
-                <div className="mt-8 flex justify-end">
-                  <button 
-                    onClick={() => setDebugLogs([])}
-                    className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95"
-                  >
-                    Entendido, cerrar
-                  </button>
-                </div>
+                <button 
+                  onClick={() => setDebugLogs([])}
+                  className="mt-6 w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95"
+                >
+                  Entendido
+                </button>
               </div>
             </div>
           )}
@@ -495,8 +536,16 @@ export default function App() {
               query={query}
               formId={activeFormId}
               activeFilters={activeFilters}
+              activeTomaIndex={selectedTomaIndex}
+              activeVersionIndex={selectedVersionIndex}
+              onTomaNavigate={(tIdx, vIdx) => {
+                setSelectedTomaIndex(tIdx);
+                setSelectedVersionIndex(vIdx);
+              }}
               onNavigate={(idx) => {
                 setSelectedIndex(idx);
+                setSelectedTomaIndex(0);
+                setSelectedVersionIndex(0);
               }}
               onBack={() => setView('results')}
             />

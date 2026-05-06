@@ -123,7 +123,7 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **U29. Centralización de Comandos**: Integración de botones de "Mostrar Todo", "Borrar Datos" y "Ayuda" en la cabecera persistente.
 - [x] **Logro**: Transformación de la búsqueda en una experiencia de exploración continua y contextual; el clínico mantiene el control total de sus filtros sin importar su ubicación en el expediente.
 
-## 🟢 FASE 21: Ergonomía de Navegación Profunda (V4.4.5 ✅)
+## 🟢 FASE 21: Ergonomía de Navegación Profunda (V4.5.0 ✅)
 - [x] **A20. Mapping "Resultado Analítica"**: Integrada visualización de analíticas en la categoría de Resultados Pruebas para HCE-MIR.
 - [x] **A21. Normalización de Aliases HCE-MIR**: Implementado soporte para variantes de nombres con colon y diferentes mayúsculas para campos críticos.
 - [x] **A22. Mapping Oxihemoglobina (O2 Hb)**: Vinculado el campo de saturación de oxígeno al bloque de constantes MIR.
@@ -131,8 +131,8 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A24. Persistencia Discriminada**: Corregida la sobreescritura de búsquedas recientes con mismo término pero distintos filtros.
 - [x] **A25. Depuración de Ruido Visual**: Eliminados 17 campos redundantes de las vistas HCE-MIR y Debug.
 - [x] **A26. Mapping Detalles HTA/DM/DISL**: Implementada búsqueda agresiva de variantes de "Detalles" para patologías crónicas en el bloque de constantes.
-- [x] **A27. Cabecera Global Unificada**: Integración de navegación HCE y paginación en el GlobalHeader.
-- [x] **Logro**: Máxima eficiencia espacial; la interfaz de lectura del informe queda totalmente despejada mientras los controles de búsqueda y navegación permanecen accesibles en la cabecera global.
+- [x] **A27. Interfaz Contextual Unificada**: Rediseño del GlobalHeader con alineación de buscador al informe y metadatos de versión.
+- [x] **Logro**: La interfaz alcanza un nivel de madurez profesional; la navegación es 100% contextual y el área de trabajo clínica está optimizada para la lectura de datos sin distracciones.
 
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)

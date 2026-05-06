@@ -5,7 +5,7 @@ import HighlightedText from './HighlightedText';
 import { db } from '../storage/indexedDB';
 import { Patient, Toma, getGender } from '../core/types';
 import { FORMS } from '../core/mappings';
-import { parseClinicalDate } from '../utils/dateParser';
+import { parseClinicalDate, extractFecha, extractHora } from '../utils/dateParser';
 
 interface HCEViewProps {
   results: SearchResult[];
@@ -15,6 +15,9 @@ interface HCEViewProps {
   onNavigate: (index: number) => void;
   formId: string;
   activeFilters?: { categories?: string[] };
+  activeTomaIndex: number;
+  activeVersionIndex: number;
+  onTomaNavigate: (tIdx: number, vIdx: number) => void;
 }
 
 // ─── Avatar de Paciente ───────────────────────────────────────────────────────
@@ -200,28 +203,6 @@ function HeaderField({ label, value, highlight = false }: { label: string; value
   );
 }
 
-// ─── Helpers de Fecha/Hora ─────────────────────────────────────────────────────
-function extractFecha(data: Record<string, string>): string {
-  const raw = data['EC_Fecha_Toma'] || data['FECHA_TOMA'] || '';
-  if (!raw) return '--';
-  const ts = parseClinicalDate(raw);
-  if (!ts) return raw.includes(' ') ? raw.split(' ')[0] : raw;
-  
-  const d = new Date(ts);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-function extractHora(data: Record<string, string>): string {
-  const raw = data['EC_Fecha_Toma'] || '';
-  const hStr = data['HORA_TOMA'] || data['EC_Hora_Toma'] || '';
-  
-  if (hStr && hStr.includes(':')) return hStr.slice(0, 5);
-  if (raw.includes(' ')) return raw.split(' ')[1]?.slice(0, 5) || '--:--';
-  return '--:--';
-}
 
 // ─── Timeline Lateral de Tomas ─────────────────────────────────────────────────
 function TomaTimeline({
@@ -381,20 +362,20 @@ function TomaTimeline({
 }
 
 // ─── Componente Principal HCEView ──────────────────────────────────────────────
-export default function HCEView({ results, currentIndex, query, onBack, onNavigate, formId, activeFilters }: HCEViewProps) {
+export default function HCEView({ 
+  results, currentIndex, query, onBack, onNavigate, formId, activeFilters,
+  activeTomaIndex, activeVersionIndex, onTomaNavigate
+}: HCEViewProps) {
   const currentResult = results[currentIndex];
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTomaIndex, setActiveTomaIndex] = useState(0);
-  const [activeVersionIndex, setActiveVersionIndex] = useState(0);
   
   const formMapping = useMemo(() => FORMS.find(f => f.id === formId) || FORMS[0], [formId]);
 
   useEffect(() => {
     if (!currentResult) return;
     let active = true;
-    setActiveTomaIndex(0);
-    setActiveVersionIndex(0);
+    onTomaNavigate(0, 0);
     const fetchPatient = async () => {
       setLoading(true);
       try {
@@ -576,8 +557,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
             isHCEALG={formId === 'hce_alg' || formId === 'hce_mir'}
             query={query}
             onSelect={(tIdx, vIdx) => { 
-              setActiveTomaIndex(tIdx); 
-              setActiveVersionIndex(vIdx); 
+              onTomaNavigate(tIdx, vIdx); 
               window.scrollTo({ top: 0, behavior: 'smooth' }); 
             }}
           />
@@ -702,7 +682,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
                   </span>
                   <button
                     disabled={!hasNextToma}
-                    onClick={() => { setActiveTomaIndex(i => i + 1); setActiveVersionIndex(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    onClick={() => { onTomaNavigate(activeTomaIndex + 1, 0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-clinical)] rounded-lg disabled:opacity-20 transition-all"
                   >
                     Siguiente <ChevronRight size={14} />
