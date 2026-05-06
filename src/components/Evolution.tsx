@@ -71,23 +71,9 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'blue'
     },
     {
-      date: '06 de Mayo, 2026',
-      title: 'V4.2.6: Resaltado Ubicuo y UX Lateral',
-      description: 'El sistema ahora proyecta el resaltado de búsqueda en el navegador lateral (sidebar), permitiendo identificar visualmente qué tomas y versiones contienen coincidencias antes de abrirlas.',
-      icon: <Activity className="text-amber-500" />,
-      color: 'amber'
-    },
-    {
-      date: '06 de Mayo, 2026',
-      title: 'V4.2.7: Persistencia de Filtros Históricos',
-      description: 'El historial de búsquedas recientes ahora captura y restaura el estado completo de los filtros, permitiendo al clínico alternar entre diferentes contextos de análisis sin perder la configuración de fechas o categorías.',
-      icon: <Zap className="text-emerald-500" />,
-      color: 'emerald'
-    },
-    {
       date: '06 de Mayo, 2026 (Actual)',
-      title: 'V4.2.9: Filtrado Quirúrgico por Campos',
-      description: 'Implementación de sub-categorías dinámicas. El clínico ahora puede expandir cada categoría para seleccionar campos específicos, permitiendo búsquedas de ultra-precisión en el historial médico.',
+      title: 'V4.3.8: Refinamiento de Mappings e Integridad',
+      description: 'Consolidación total de los formularios HCE-MIR. Se eliminan campos huérfanos y metadatos técnicos para una interfaz limpia. El sistema ahora diferencia búsquedas idénticas con filtros distintos, garantizando la persistencia total de contextos de investigación clínica.',
       icon: <Microscope className="text-orange-500" />,
       color: 'orange'
     }
@@ -155,7 +141,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
       <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-        Hoja de Ruta 2026 - Queryclin V4.2.9
+        Hoja de Ruta 2026 - Queryclin V4.3.8
       </div>
     </div>
   );

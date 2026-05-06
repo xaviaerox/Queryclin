@@ -1,4 +1,13 @@
 ## [2026-05-06]
+### Robustez en Mapeo de Detalles y Constantes (V4.3.9)
+- **`HCEView.tsx`**:
+  - Refactorizado el bloque de **Constantes MIR** para incluir una red de aliases mucho más amplia. Ahora todos los campos de enfermedades crónicas (Diabetes, HTA, Dislipemia) buscan activamente sus variantes de "Detalles" tanto en formato abreviado como extendido.
+  - Añadido soporte para variantes con/sin tildes y con/sin dos puntos técnicos.
+- **`mappings.ts`**:
+  - Expandido `headerAliases` para asegurar que el motor de búsqueda también reconozca estas variantes de "Detalles" y enfermedades crónicas, mejorando la indexación de expedientes con nomenclatura inconsistente.
+- **Sincronización de Versión**: Incremento global a **V4.3.9**.
+
+## [2026-05-06]
 ### Robustez en Exclusión de Campos (V4.3.8)
 - **`HCEView.tsx`**:
   - Implementada una limpieza de claves más agresiva en `cleanKeyStr` que ahora elimina signos de puntuación (como dos puntos `:` y puntos y coma `;`). Esto asegura que campos como `Peso:` o `EC Proceso:` se identifiquen correctamente contra las reglas de exclusión, independientemente de si el archivo de origen incluye puntuación técnica.

@@ -108,38 +108,38 @@ function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { da
         <div className="flex flex-wrap items-start gap-4">
           <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
             <Field label="IMC:" keys={['IMC:', 'IMC']} minW="110px" valW="80px" />
-            <Field label="Valoración IMC:" keys={['Valoración IMC']} minW="110px" valW="80px" />
-            <Field label="Diabetes Mellitus:" keys={['Diabetes Mellitus']} minW="110px" valW="80px" />
-            <Field label="Detalles DM:" keys={['Detalles DM']} minW="110px" valW="80px" />
-            <Field label="O2 Hb:" keys={['O2 Hb']} minW="110px" valW="80px" />
-            <Field label="Hábito Enólico:" keys={['Hábito Enólico']} minW="110px" valW="80px" />
-            <Field label="Hábitos Tóxicos:" keys={['Hábitos Tóxicos']} minW="110px" valW="80px" />
+            <Field label="Valoración IMC:" keys={['Valoración IMC', 'Valoracion IMC', 'Valoración IMC:']} minW="110px" valW="80px" />
+            <Field label="Diabetes Mellitus:" keys={['Diabetes Mellitus', 'Diabetes mellitus', 'Diabetes Mellitus:']} minW="110px" valW="80px" />
+            <Field label="Detalles DM:" keys={['Detalles DM', 'Detalles Diabetes Mellitus', 'Detalles Diabetes mellitus', 'Detalles DM:', 'Detalles Diabetes Mellitus:']} minW="110px" valW="80px" />
+            <Field label="O2 Hb:" keys={['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Saturación O2']} minW="110px" valW="80px" />
+            <Field label="Hábito Enólico:" keys={['Hábito Enólico', 'Habito Enolico', 'Hábito Enólico:', 'Alcohol']} minW="110px" valW="80px" />
+            <Field label="Hábitos Tóxicos:" keys={['Hábitos Tóxicos', 'Habitos Toxicos', 'Hábitos Tóxicos:']} minW="110px" valW="80px" />
           </div>
           <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
             <Field label="Peso:" keys={['Peso:', 'Peso']} minW="120px" valW="80px" />
-            <Field label="Sup. Corporal:" keys={['Superficie Corporal']} minW="120px" valW="80px" />
-            <Field label="FC:" keys={['FC']} minW="120px" valW="80px" />
-            <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA']} minW="120px" valW="80px" />
-            <Field label="Detalles HTA:" keys={['Detalles Hipertensión Arterial', 'Detalles HTA']} minW="120px" valW="80px" />
-            <Field label="Años Fumando:" keys={['Años fumando']} minW="120px" valW="80px" />
-            <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día']} minW="120px" valW="80px" />
-            <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico']} minW="120px" valW="80px" />
+            <Field label="Sup. Corporal:" keys={['Superficie Corporal', 'Superficie corporal', 'Superficie Corporal:']} minW="120px" valW="80px" />
+            <Field label="FC:" keys={['FC', 'Frecuencia Cardíaca', 'FC:']} minW="120px" valW="80px" />
+            <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA', 'HTA:', 'Hipertensión Arterial']} minW="120px" valW="80px" />
+            <Field label="Detalles HTA:" keys={['Detalles Hipertensión Arterial', 'Detalles HTA', 'Detalles Hipertensión Arterial:', 'Detalles HTA:']} minW="120px" valW="80px" />
+            <Field label="Años Fumando:" keys={['Años fumando', 'Años fumando:', 'Años Fumando']} minW="120px" valW="80px" />
+            <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día', 'Cigarrillos al dia:', 'Cigarrillos/día']} minW="120px" valW="80px" />
+            <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico', 'Habito Tabaquico', 'Hábito Tabáquico:']} minW="120px" valW="80px" />
           </div>
           <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-            <Field label="Grupo Sanguíneo:" keys={['Grupo Sanguíneo', 'Grupo sanguineo y RH']} minW="120px" valW="80px" />
-            <Field label="Transfusiones:" keys={['Transfusiones']} minW="120px" valW="80px" />
-            <Field label="Perímetro abd.:" keys={['Perímetro abdominal']} minW="120px" valW="80px" />
-            <Field label="Años dejó fumar:" keys={['Años desde que dejo de fumar', 'Años desde que dejó de fumar']} minW="120px" valW="80px" />
-            <Field label="Dislipemia:" keys={['Dislipemia']} minW="120px" valW="80px" />
-            <Field label="Detalle Dislip.:" keys={['Detalles Dislipemia']} minW="120px" valW="80px" />
-            <Field label="Paquetes año:" keys={['Paquetes año']} minW="120px" valW="80px" />
+            <Field label="Grupo Sanguíneo:" keys={['Grupo Sanguíneo', 'Grupo sanguineo y RH', 'Grupo Sanguíneo:', 'G. Sanguíneo']} minW="120px" valW="80px" />
+            <Field label="Transfusiones:" keys={['Transfusiones', 'Transfusiones:', 'Antecedentes Transfusionales']} minW="120px" valW="80px" />
+            <Field label="Perímetro abd.:" keys={['Perímetro abdominal', 'Perimetro abdominal', 'Perímetro abdominal:']} minW="120px" valW="80px" />
+            <Field label="Años dejó fumar:" keys={['Años desde que dejo de fumar', 'Años desde que dejó de fumar', 'Años desde que dejo de fumar:']} minW="120px" valW="80px" />
+            <Field label="Dislipemia:" keys={['Dislipemia', 'Dislipemia:', 'Dislipidemia']} minW="120px" valW="80px" />
+            <Field label="Detalle Dislip.:" keys={['Detalles Dislipemia', 'Detalles Dislipidemia', 'Detalles Dislipemia:', 'Detalles Dislipidemia:']} minW="120px" valW="80px" />
+            <Field label="Paquetes año:" keys={['Paquetes año', 'Paquetes año:', 'Paquetes/año']} minW="120px" valW="80px" />
           </div>
           <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
             <Field label="Talla:" keys={['Talla:', 'Talla']} minW="80px" valW="70px" />
-            <Field label="Tmp:" keys={['Tmp', 'T', 'Temperatura']} minW="80px" valW="70px" />
-            <Field label="PAD:" keys={['PAD']} minW="80px" valW="70px" />
-            <Field label="PAS:" keys={['PAS']} minW="80px" valW="70px" />
-            <Field label="NYHA:" keys={['Grado NYHA', 'NYHA']} minW="80px" valW="70px" />
+            <Field label="Tmp:" keys={['Tmp', 'T', 'Temperatura', 'Tmp:', 'Temperatura:']} minW="80px" valW="70px" />
+            <Field label="PAD:" keys={['PAD', 'PAD:']} minW="80px" valW="70px" />
+            <Field label="PAS:" keys={['PAS', 'PAS:']} minW="80px" valW="70px" />
+            <Field label="NYHA:" keys={['Grado NYHA', 'NYHA', 'Grado NYHA:']} minW="80px" valW="70px" />
           </div>
         </div>
       </div>

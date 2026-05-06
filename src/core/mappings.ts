@@ -113,7 +113,13 @@ export const FORMS: FormMapping[] = [
       'EC_Ciudad_Paciente': ['EC_Ciudad_Paciente', 'ciudad', 'CIUDAD'],
       'Tratamiento Previo': ['Tratamiento Previo', 'Tratamiento previo', 'Tratamiento Previo:', 'Tratamiento previo:'],
       'Resultado Analítica': ['Resultado Analítica', 'Resultado analítica', 'Resultado Analítica:', 'Resultado analítica:'],
-      'O2 Hb': ['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Oxihemoglobina'],
+      'O2 Hb': ['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Oxihemoglobina', 'Saturación O2', 'Saturación O2:'],
+      'Diabetes Mellitus': ['Diabetes Mellitus', 'Diabetes mellitus', 'Diabetes Mellitus:', 'Diabetes mellitus:'],
+      'Detalles DM': ['Detalles DM', 'Detalles Diabetes Mellitus', 'Detalles Diabetes mellitus', 'Detalles DM:', 'Detalles Diabetes Mellitus:'],
+      'HTA (Hipertensión Arterial)': ['HTA (Hipertensión Arterial)', 'HTA', 'Hipertensión Arterial', 'HTA:', 'Hipertensión Arterial:'],
+      'Detalles Hipertensión Arterial': ['Detalles Hipertensión Arterial', 'Detalles HTA', 'Detalles Hipertensión Arterial:', 'Detalles HTA:'],
+      'Dislipemia': ['Dislipemia', 'Dislipemia:', 'Dislipidemia', 'Dislipidemia:'],
+      'Detalles Dislipemia': ['Detalles Dislipemia', 'Detalles Dislipidemia', 'Detalles Dislipemia:', 'Detalles Dislipidemia:'],
       'Situación Basal (Otros)': ['Situación Basal (Otros)', 'Situación Basal', 'Situación basal', 'Situación Basal:', 'Situación basal (otros)']
     },
     demographics: {
