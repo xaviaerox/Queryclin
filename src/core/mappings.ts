@@ -135,7 +135,7 @@ export const FORMS: FormMapping[] = [
         'Enfermedad Actual', 'Exploración Física', 'Observaciones', 'Situación Basal (Otros)', 'Situación Basal', 'Otras Exploraciones',
         // --- BLOQUE CRÍTICO: CONSTANTES ---
         'IMC:', 'Valoración IMC', 'Diabetes Mellitus', 'Detalles DM', 'O2 Hb', 'Hábito Enólico', 'Hábitos Tóxicos',
-        'Peso:', 'Superficie Corporal', 'FC', 'HTA (Hipertensión Arterial)', 'Años desde que dejo de fumar', 'Cigarrillos al dia', 'Hábito Tabáquico',
+        'Peso:', 'Superficie Corporal', 'FC', 'HTA (Hipertensión Arterial)', 'Detalles Hipertensión Arterial', 'Años desde que dejo de fumar', 'Cigarrillos al dia', 'Hábito Tabáquico',
         'Grupo Sanguíneo', 'Transfusiones', 'Perímetro abdominal', 'Dislipemia', 'Detalles Dislipemia', 'Paquetes año',
         'Talla:', 'Tmp', 'PAD', 'PAS', 'Grado NYHA'
       ],

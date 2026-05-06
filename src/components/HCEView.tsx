@@ -120,6 +120,7 @@ function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { da
             <Field label="Sup. Corporal:" keys={['Superficie Corporal']} minW="120px" valW="80px" />
             <Field label="FC:" keys={['FC']} minW="120px" valW="80px" />
             <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA']} minW="120px" valW="80px" />
+            <Field label="Detalles HTA:" keys={['Detalles Hipertensión Arterial', 'Detalles HTA']} minW="120px" valW="80px" />
             <Field label="Años Fumando:" keys={['Años fumando']} minW="120px" valW="80px" />
             <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día']} minW="120px" valW="80px" />
             <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico']} minW="120px" valW="80px" />
@@ -525,7 +526,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
     });
 
     const cleanKeyStr = (s: string) => String(s)
-      .replace(/[\u00A0\u200B-\u200D\uFEFF'"]/g, ' ')
+      .replace(/[\u00A0\u200B-\u200D\uFEFF'":;]/g, ' ')
       .replace(/[_-]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
@@ -541,6 +542,7 @@ export default function HCEView({ results, currentIndex, query, onBack, onNaviga
       ...Object.values(formMapping.headerAliases || {}).flat().map(cleanKeyStr),
       'NHC', 'N.H.C', 'ID_TOMA', 'ORDEN_TOMA', 'EC_FECHA_TOMA', 'FECHA_TOMA', 'FECHA', 'HORA', 'USUARIO', 'IDENTIFICADOR TOMA', 'VERSION REGISTRO',
       'FECHA OBSERVACION CLINICA', 'EC EDAD PACIENTE', 'EDAD TOMA', 'DEMOG DOMICILIO', 'CONTADOR', 'EC PROCESO', 'EC USUARIO CREADOR',
+      'EC CIUDAD PACIENTE', 'EC ESTADO CIVIL', 'UNIDAD DE ENFERMERIA', 'UNIDAD ENFERMERIA',
       '_IS_DUPLICATE'
     ]);
 

@@ -1,4 +1,19 @@
 ## [2026-05-06]
+### Robustez en Exclusión de Campos (V4.3.8)
+- **`HCEView.tsx`**:
+  - Implementada una limpieza de claves más agresiva en `cleanKeyStr` que ahora elimina signos de puntuación (como dos puntos `:` y puntos y coma `;`). Esto asegura que campos como `Peso:` o `EC Proceso:` se identifiquen correctamente contra las reglas de exclusión, independientemente de si el archivo de origen incluye puntuación técnica.
+  - Añadidas variantes adicionales de metadatos de ciudad, estado civil y unidades de enfermería a la lista de exclusión global.
+- **Sincronización de Versión**: Incremento global a **V4.3.8**.
+
+## [2026-05-06]
+### Integración de Detalles HTA (V4.3.7)
+- **`mappings.ts`**:
+  - Mapeado el campo **"Detalles Hipertensión Arterial"** dentro de la categoría **ANAMNESIS Y EXPLORACION** para HCE-MIR.
+- **`HCEView.tsx`**:
+  - Añadido el campo visual **"Detalles HTA:"** al bloque de constantes MIR, posicionado inmediatamente después del campo HTA principal para facilitar la lectura correlacionada.
+- **Sincronización de Versión**: Incremento global a **V4.3.7**.
+
+## [2026-05-06]
 ### Refinamiento Estricto de Exclusiones (V4.3.6)
 - **`HCEView.tsx`**:
   - Corregida la lógica de exclusión de la sección de **Debug**: se han normalizado los nombres de los campos (sustituyendo guiones por espacios) para asegurar que coincidan con la lógica interna de limpieza.
