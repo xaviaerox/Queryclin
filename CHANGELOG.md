@@ -1,4 +1,14 @@
 ## [2026-05-06]
+### Cabecera Global Unificada (V4.4.5)
+- **`GlobalHeader.tsx`**:
+  - Rediseño integral de la cabecera para la vista de informes (HCE).
+  - Se han integrado los controles de navegación ("Volver" y paginación de expedientes) directamente en la cabecera global.
+  - El buscador se posiciona ahora de forma centralizada entre el botón de retorno y el navegador de expedientes, creando una experiencia de usuario más coherente y fluida.
+- **`HCEView.tsx`**:
+  - Eliminado el header local redundante, maximizando el área de lectura del informe clínico.
+- **Sincronización de Versión**: Incremento global a **V4.4.5**.
+
+## [2026-05-06]
 ### Cabecera de Navegación Persistente (V4.4.0)
 - **`HCEView.tsx`**:
   - Implementada una **cabecera sticky** para los controles de navegación del expediente ("Volver al listado" y paginación).

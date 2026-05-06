@@ -76,8 +76,19 @@ export default function GlobalHeader({
         </div>
       </div>
 
+      {/* HCE Contextual: Volver (Left of Search) */}
+      {view === 'hce' && onBack && (
+        <button 
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-clinical)] transition-all group shrink-0 animate-in slide-in-from-left-4 duration-300"
+        >
+          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+          <span className="text-[11px] font-black uppercase tracking-widest hidden sm:inline">Volver</span>
+        </button>
+      )}
+
       {/* Search Bar (Centered) - Only visible when NOT in Home */}
-      <div className="flex-1 max-w-2xl relative mx-auto">
+      <div className="flex-1 max-w-xl relative">
         {view !== 'home' && (
           <>
             <form onSubmit={handleSubmit} className="relative group animate-in fade-in slide-in-from-top-2 duration-300">
@@ -89,7 +100,7 @@ export default function GlobalHeader({
                   setSuggestions(getSuggestions(e.target.value));
                   setShowSuggestions(true);
                 }}
-                placeholder="Buscar paciente, patología, síntoma..."
+                placeholder="Buscar en el expediente..."
                 className={`w-full bg-[var(--bg-clinical)] border ${hasFilters ? 'border-[var(--accent-clinical)] ring-2 ring-[var(--accent-clinical)]/10' : 'border-[var(--border-clinical)]'} rounded-xl py-2.5 pl-10 pr-12 text-sm font-bold text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] transition-all shadow-sm`}
               />
               <Search size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${hasFilters ? 'text-[var(--accent-clinical)]' : 'text-[var(--text-secondary)] opacity-50'}`} />
@@ -130,6 +141,31 @@ export default function GlobalHeader({
           </>
         )}
       </div>
+
+      {/* HCE Contextual: Paginador (Right of Search) */}
+      {view === 'hce' && currentIndex !== undefined && totalResults !== undefined && onNavigate && (
+        <div className="flex items-center gap-3 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] px-3 py-1.5 rounded-xl shadow-sm shrink-0 animate-in slide-in-from-right-4 duration-300">
+          <span className="text-[10px] font-black uppercase tracking-tighter text-[var(--text-secondary)] border-r border-[var(--border-clinical)] pr-3">
+            {currentIndex + 1} de {totalResults}
+          </span>
+          <div className="flex gap-1">
+            <button 
+              disabled={currentIndex === 0} 
+              onClick={() => onNavigate(currentIndex - 1)} 
+              className="p-1 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button 
+              disabled={currentIndex === totalResults - 1} 
+              onClick={() => onNavigate(currentIndex + 1)} 
+              className="p-1 hover:bg-[var(--bg-clinical)] rounded-lg disabled:opacity-20 transition-all"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats & Tools */}
       <div className="flex items-center gap-4 shrink-0">
