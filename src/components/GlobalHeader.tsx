@@ -52,46 +52,58 @@ export default function GlobalHeader({
 
   return (
     <header className="h-16 bg-[var(--surface-clinical)] border-b border-[var(--border-clinical)] flex items-center px-6 gap-6 shadow-sm backdrop-blur-md bg-opacity-95 shrink-0 z-50">
-      {/* IZQUIERDA: Marca o Botón Volver + Info Versión */}
-      <div className="flex items-center gap-4 shrink-0 min-w-[280px]">
-        {view === 'hce' && onBack ? (
-          <div className="flex items-center gap-4 animate-in slide-in-from-left-4 duration-300">
-            <button 
-              onClick={onBack}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-clinical)] transition-all group"
-            >
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              <span className="text-[11px] font-black uppercase tracking-widest">Volver</span>
-            </button>
-            
-            {activeDate && (
-              <div className="flex items-center gap-3 border-l border-[var(--border-clinical)] pl-4 py-1">
-                <div className="flex flex-col leading-none">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">Versión activa</span>
-                  <div className="flex items-center gap-2 text-[var(--text-primary)]">
-                    <span className="text-[12px] font-black">{activeDate}</span>
-                    <span className="text-[12px] font-medium opacity-40">{activeTime}</span>
-                  </div>
-                </div>
-              </div>
-            )}
+      {/* IZQUIERDA: Marca, NachuS y Versión (Siempre visible) */}
+      <div className="flex items-center gap-6 shrink-0">
+        <div onClick={onGoHome} className="flex items-center gap-3 cursor-pointer group">
+          <div className="w-10 h-10 bg-[var(--accent-clinical)] rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
+            <Search size={24} strokeWidth={3} />
           </div>
-        ) : (
-          <div onClick={onGoHome} className="flex items-center gap-3 cursor-pointer group">
-            <div className="w-10 h-10 bg-[var(--accent-clinical)] rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
-              <Search size={24} strokeWidth={3} />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-[18px] font-black tracking-tighter text-[var(--text-primary)] uppercase">Queryclin</span>
-              <div className="flex items-center gap-1.5 text-[9px] font-bold text-[var(--accent-clinical)] tracking-widest">
-                <span>V{version}</span>
-                <span className="opacity-30">|</span>
-                <span>{buildDate}</span>
-              </div>
-            </div>
+          <div className="flex flex-col leading-none">
+            <span className="text-[18px] font-black tracking-tighter text-[var(--text-primary)] uppercase">Queryclin</span>
           </div>
-        )}
+        </div>
+
+        <div className="hidden xl:flex items-center text-[19px] font-medium tracking-[-0.03em] select-none antialiased ml-2">
+          <span className="text-[#4285F4]">N</span>
+          <span className="text-[#EA4335]">a</span>
+          <span className="text-[#FBBC05]">c</span>
+          <span className="text-[#4285F4]">h</span>
+          <span className="text-[#34A853]">u</span>
+          <span className="text-[#EA4335]">S</span>
+        </div>
+        
+        <div 
+          className="hidden lg:flex items-center gap-2 px-3 py-1 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-full border border-[var(--accent-clinical)]/20 cursor-help transition-all hover:bg-[var(--accent-clinical)]/20"
+          title={`Fecha de compilación: ${buildDate}`}
+        >
+          <span className="text-[10px] font-black tracking-widest">V{version}</span>
+          <span className="w-[1px] h-3 bg-[var(--accent-clinical)]/30"></span>
+          <span className="text-[9px] font-bold opacity-70">{buildDate}</span>
+        </div>
       </div>
+
+      {/* CONTEXTUAL: Botón Volver e Info de Toma (Solo en HCE) */}
+      {view === 'hce' && onBack && (
+        <div className="flex items-center gap-4 animate-in slide-in-from-left-4 duration-300 border-l border-[var(--border-clinical)] pl-6">
+          <button 
+            onClick={onBack}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--accent-clinical)] transition-all group"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="text-[11px] font-black uppercase tracking-widest">Volver</span>
+          </button>
+          
+          {activeDate && (
+            <div className="flex flex-col leading-none">
+              <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">Versión activa</span>
+              <div className="flex items-center gap-2 text-[var(--text-primary)]">
+                <span className="text-[12px] font-black">{activeDate}</span>
+                <span className="text-[12px] font-medium opacity-40">{activeTime}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CENTRO: Buscador (Alineado con el contenido del informe) */}
       <div className="flex-1 flex justify-center px-4">
