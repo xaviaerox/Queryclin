@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.3.0)
+# Queryclin — HCE Intelligence Dashboard (V4.3.3)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -113,9 +113,19 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 ### Fase 17: Simplificación de Taxonomía (V4.2.8 ✅)
 - **Eliminación de Redundancia**: Retirada la categoría "General" de los filtros de búsqueda para optimizar la interfaz.
 
-### Fase 18: Filtrado Quirúrgico por Campos (V4.2.9 — ACTUAL 🚀)
+### Fase 18: Filtrado Quirúrgico por Campos (V4.2.9 ✅)
 - **Sub-categorías Dinámicas**: Implementación de expansión de categorías para seleccionar campos individuales.
 - **Precisión Localizada**: El motor de búsqueda ahora puede discriminar hallazgos a nivel de campo específico del formulario clínico.
+
+### Fase 19: Arquitectura de Búsqueda Persistente (V4.3.0 ✅)
+- **Cabecera Global Unificada**: Centralización de identidad y herramientas de búsqueda en una barra superior persistente.
+- **Buscador Refinador**: Navegación fluida entre expedientes manteniendo el contexto de filtros activos.
+
+### Fase 20: Refinamiento de Mappings HCE-MIR (V4.3.3 — ACTUAL 🚀)
+- **Integración de Resultado Analítica**: Mapeo determinista de campos de laboratorio para HCE-MIR.
+- **Resolución de Aliases Críticos**: Normalización de nombres de campo con soporte para puntuación y capitalización legacy.
+- **Mapeo de Constantes Vitales**: Inclusión de Oxihemoglobina (O2 Hb) en el bloque de constantes inmutables.
+- **Estructura de Anamnesis**: Categorización de "Situación Basal (Otros)" en la narrativa clínica.
 
 
 ---

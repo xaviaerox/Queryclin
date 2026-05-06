@@ -1,3 +1,30 @@
+## [2026-05-06]
+### Refinamiento de Anamnesis HCE-MIR (V4.3.3)
+- **`mappings.ts`**:
+  - Mapeado el campo **"Situación Basal (Otros)"** dentro de la categoría **ANAMNESIS Y EXPLORACION**.
+  - Ajustado el orden visual para que aparezca tras "Observaciones" y antes de "Otras Exploraciones".
+  - Añadidos aliases para capturar variantes del nombre.
+- **Sincronización de Versión**: Incremento global a **V4.3.3**.
+
+## [2026-05-06]
+### Refinamiento de Constantes HCE-MIR (V4.3.2)
+- **`mappings.ts`**:
+  - Mapeado el campo **"Oxihemoglobina (O2 Hb)"** al identificador canónico **O2 Hb**.
+  - Añadidos aliases para asegurar que las variaciones del nombre en el origen se capturen correctamente.
+- **`HCEView.tsx`**:
+  - Verificada la representación visual en el bloque de constantes como **O2 Hb:**.
+- **Sincronización de Versión**: Incremento global a **V4.3.2**.
+
+## [2026-05-06]
+### Refinamiento de Mappings HCE-MIR (V4.3.1)
+- **`mappings.ts`**:
+  - Implementada la integración de **"Resultado Analítica"** dentro del formulario HCE-MIR. El campo ahora se categoriza correctamente bajo la sección **RESULTADOS PRUEBAS**, evitando que aparezca como dato huérfano en la sección de debug.
+  - Añadido soporte extendido de **Aliases para HCE-MIR**:
+    - `'Tratamiento Previo'`: Ahora reconoce variantes con y sin colon (`:`), asegurando que el histórico de medicación se visualice siempre en la sección de **ANTECEDENTES**.
+    - `'Resultado Analítica'`: Implementada resolución de nombres para variaciones de capitalización y puntuación.
+- **`HCEView.tsx`**:
+  - Sincronizada la lógica de filtrado y visualización para asegurar que los nuevos campos mapeados se beneficien del sistema de resaltado y navegación contextual.
+- **Sincronización de Versión**: Incremento global a **V4.3.1** en `App.tsx`, `CHANGELOG.md`, `README.md` y `TASKS.md`.
 
 ## [2026-05-06]
 ### Arquitectura de Búsqueda Persistente y Cabecera Unificada (V4.3.0)

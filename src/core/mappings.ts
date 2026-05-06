@@ -110,7 +110,11 @@ export const FORMS: FormMapping[] = [
       'DEMOG-Código postal': ['DEMOG-Código postal', 'cp', 'CP', 'C.P.'],
       'Edad': ['Edad', 'edad', 'EDAD'],
       'Ámbito': ['Ámbito', 'ambito', 'Ambito'],
-      'EC_Ciudad_Paciente': ['EC_Ciudad_Paciente', 'ciudad', 'CIUDAD']
+      'EC_Ciudad_Paciente': ['EC_Ciudad_Paciente', 'ciudad', 'CIUDAD'],
+      'Tratamiento Previo': ['Tratamiento Previo', 'Tratamiento previo', 'Tratamiento Previo:', 'Tratamiento previo:'],
+      'Resultado Analítica': ['Resultado Analítica', 'Resultado analítica', 'Resultado Analítica:', 'Resultado analítica:'],
+      'O2 Hb': ['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Oxihemoglobina'],
+      'Situación Basal (Otros)': ['Situación Basal (Otros)', 'Situación Basal', 'Situación basal', 'Situación Basal:', 'Situación basal (otros)']
     },
     demographics: {
       cipa: 'Cipa',
@@ -128,7 +132,7 @@ export const FORMS: FormMapping[] = [
         'Antecedentes Quirúrgicos Generales', 'Tratamiento Previo'
       ],
       'ANAMNESIS Y EXPLORACION': [
-        'Enfermedad Actual', 'Exploración Física', 'Observaciones', 'Situación Basal', 'Otras Exploraciones',
+        'Enfermedad Actual', 'Exploración Física', 'Observaciones', 'Situación Basal (Otros)', 'Situación Basal', 'Otras Exploraciones',
         // --- BLOQUE CRÍTICO: CONSTANTES ---
         'IMC:', 'Valoración IMC', 'Diabetes Mellitus', 'Detalles DM', 'O2 Hb', 'Hábito Enólico', 'Hábitos Tóxicos',
         'Peso:', 'Superficie Corporal', 'FC', 'HTA (Hipertensión Arterial)', 'Años desde que dejo de fumar', 'Cigarrillos al dia', 'Hábito Tabáquico',
@@ -139,7 +143,7 @@ export const FORMS: FormMapping[] = [
         'Diagnóstico', 'Evolución (CEX)', 'Próxima revisión', 'Recomendaciones', 'Tratamiento'
       ],
       'RESULTADOS PRUEBAS': [
-        'Otras Pruebas Realizadas', 'Recetas Prescritas', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
+        'Otras Pruebas Realizadas', 'Recetas Prescritas', 'Resultado Analítica', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
       ],
       'PROCESO HOSP/CEX': [
         'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 'Motivo de Consulta', 
