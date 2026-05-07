@@ -45,28 +45,40 @@ function DemoChip({ label, value }: { key?: any; label: string; value: string })
 }
 
 // ─── Campo Clínico Individual ──────────────────────────────────────────────────
-function ClinicalField({ label, value, query, highlight, shouldHighlight = true }: { key?: any; label: string; value: string; query: string; highlight?: boolean; shouldHighlight?: boolean }) {
-  const isLong = value.length > 80;
+function ClinicalField({ label, value, query, highlight, shouldHighlight = true }: { key?: any; label: string; value: string | string[]; query: string; highlight?: boolean; shouldHighlight?: boolean }) {
+  const isMultivalue = Array.isArray(value);
+  const displayValue = isMultivalue ? '' : String(value);
+  const isLong = !isMultivalue && displayValue.length > 80;
   
   // Mejora de legibilidad: 3 o más espacios -> Salto de línea
   const formattedValue = useMemo(() => {
-    return value.replace(/ {3,}/g, '\n').trim();
-  }, [value]);
+    if (isMultivalue) return '';
+    return displayValue.replace(/ {3,}/g, '\n').trim();
+  }, [displayValue, isMultivalue]);
 
-  const isBoolean = ['SI','NO','SÍ','TRUE','FALSE','POSITIVO','NEGATIVO'].includes(value.trim().toUpperCase());
+  const isBoolean = !isMultivalue && ['SI','NO','SÍ','TRUE','FALSE','POSITIVO','NEGATIVO'].includes(displayValue.trim().toUpperCase());
 
   return (
     <div className={`flex flex-col gap-1.5 border-b border-[var(--border-clinical)]/60 last:border-0 pb-4 last:pb-0 ${highlight ? 'bg-[var(--accent-clinical)]/5 rounded-xl p-3 -mx-3 ring-1 ring-[var(--accent-clinical)]/20' : ''}`}>
       <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--accent-clinical)] leading-none mb-1">
-        {label.replace(/_/g, ' ')}
+        {label}
       </span>
-      {isBoolean ? (
+      {isMultivalue ? (
+        <ul className="flex flex-col gap-1 mt-1">
+          {(value as string[]).map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-[15px] text-slate-900 dark:text-slate-100 font-bold leading-snug">
+              <span className="text-[var(--accent-clinical)] mt-1">•</span>
+              {shouldHighlight ? <HighlightedText text={item} query={query} /> : item}
+            </li>
+          ))}
+        </ul>
+      ) : isBoolean ? (
         <span className={`inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-lg text-[12px] font-black uppercase tracking-wide ${
-          ['SI','SÍ','TRUE','POSITIVO'].includes(value.trim().toUpperCase())
+          ['SI','SÍ','TRUE','POSITIVO'].includes(displayValue.trim().toUpperCase())
             ? 'bg-emerald-600 text-white shadow-sm'
             : 'bg-red-600 text-white shadow-sm'
         }`}>
-          {value}
+          {displayValue}
         </span>
       ) : isLong ? (
         <p className="text-[15px] text-slate-900 dark:text-slate-100 leading-[1.75] whitespace-pre-wrap font-bold">
@@ -102,79 +114,55 @@ function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { da
     </div>
   );
 
-  if (formId === 'hce_mir') {
-    return (
-      <div className="my-6 select-none">
-        <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 inline-block mb-[1px] shadow-sm">
-          Constantes MIR:
-        </div>
-        <div className="flex flex-wrap items-start gap-4">
-          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-            <Field label="IMC:" keys={['IMC:', 'IMC']} minW="110px" valW="80px" />
-            <Field label="Valoración IMC:" keys={['Valoración IMC', 'Valoracion IMC', 'Valoración IMC:']} minW="110px" valW="80px" />
-            <Field label="Diabetes Mellitus:" keys={['Diabetes Mellitus', 'Diabetes mellitus', 'Diabetes Mellitus:']} minW="110px" valW="80px" />
-            <Field label="Detalles DM:" keys={['Detalles DM', 'Detalles Diabetes Mellitus', 'Detalles Diabetes mellitus', 'Detalles DM:', 'Detalles Diabetes Mellitus:']} minW="110px" valW="80px" />
-            <Field label="O2 Hb:" keys={['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Saturación O2']} minW="110px" valW="80px" />
-            <Field label="Hábito Enólico:" keys={['Hábito Enólico', 'Habito Enolico', 'Hábito Enólico:', 'Alcohol']} minW="110px" valW="80px" />
-            <Field label="Hábitos Tóxicos:" keys={['Hábitos Tóxicos', 'Habitos Toxicos', 'Hábitos Tóxicos:']} minW="110px" valW="80px" />
-          </div>
-          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-            <Field label="Peso:" keys={['Peso:', 'Peso']} minW="120px" valW="80px" />
-            <Field label="Sup. Corporal:" keys={['Superficie Corporal', 'Superficie corporal', 'Superficie Corporal:']} minW="120px" valW="80px" />
-            <Field label="FC:" keys={['FC', 'Frecuencia Cardíaca', 'FC:']} minW="120px" valW="80px" />
-            <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA', 'HTA:', 'Hipertensión Arterial']} minW="120px" valW="80px" />
-            <Field label="Detalles HTA:" keys={['Detalles Hipertensión Arterial', 'Detalles HTA', 'Detalles Hipertensión Arterial:', 'Detalles HTA:']} minW="120px" valW="80px" />
-            <Field label="Años Fumando:" keys={['Años fumando', 'Años fumando:', 'Años Fumando']} minW="120px" valW="80px" />
-            <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día', 'Cigarrillos al dia:', 'Cigarrillos/día']} minW="120px" valW="80px" />
-            <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico', 'Habito Tabaquico', 'Hábito Tabáquico:']} minW="120px" valW="80px" />
-          </div>
-          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-            <Field label="Grupo Sanguíneo:" keys={['Grupo Sanguíneo', 'Grupo sanguineo y RH', 'Grupo Sanguíneo:', 'G. Sanguíneo']} minW="120px" valW="80px" />
-            <Field label="Transfusiones:" keys={['Transfusiones', 'Transfusiones:', 'Antecedentes Transfusionales']} minW="120px" valW="80px" />
-            <Field label="Perímetro abd.:" keys={['Perímetro abdominal', 'Perimetro abdominal', 'Perímetro abdominal:']} minW="120px" valW="80px" />
-            <Field label="Años dejó fumar:" keys={['Años desde que dejo de fumar', 'Años desde que dejó de fumar', 'Años desde que dejo de fumar:']} minW="120px" valW="80px" />
-            <Field label="Dislipemia:" keys={['Dislipemia', 'Dislipemia:', 'Dislipidemia']} minW="120px" valW="80px" />
-            <Field label="Detalle Dislip.:" keys={['Detalles Dislipemia', 'Detalles Dislipidemia', 'Detalles Dislipemia:', 'Detalles Dislipidemia:']} minW="120px" valW="80px" />
-            <Field label="Paquetes año:" keys={['Paquetes año', 'Paquetes año:', 'Paquetes/año']} minW="120px" valW="80px" />
-          </div>
-          <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-            <Field label="Talla:" keys={['Talla:', 'Talla']} minW="80px" valW="70px" />
-            <Field label="Tmp:" keys={['Tmp', 'T', 'Temperatura', 'Tmp:', 'Temperatura:']} minW="80px" valW="70px" />
-            <Field label="PAD:" keys={['PAD', 'PAD:']} minW="80px" valW="70px" />
-            <Field label="PAS:" keys={['PAS', 'PAS:']} minW="80px" valW="70px" />
-            <Field label="NYHA:" keys={['Grado NYHA', 'NYHA', 'Grado NYHA:']} minW="80px" valW="70px" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const displayFormId = (formId || '').split('_')[1]?.toUpperCase() || '';
 
   return (
     <div className="my-6 select-none">
       <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 inline-block mb-[1px] shadow-sm">
-        Constantes:
+        Constantes {displayFormId}:
       </div>
       <div className="flex flex-wrap items-start gap-4">
-        {/* Bloque 1 */}
-        <div className="border border-slate-400 shadow-sm overflow-hidden">
-          <Field label="IMC:" keys={['IMC:', 'IMC']} />
-          <Field label="Valoracion IMC:" keys={['Valoración IMC', 'Valoración IMC:']} />
-        </div>
-        {/* Bloque 2 */}
-        <div className="border border-slate-400 shadow-sm overflow-hidden">
-          <Field label="Peso:" keys={['Peso:', 'Peso']} />
-          <Field label="Superficie Corp:" keys={['Superficie Corporal', 'Superficie Corp:']} />
-        </div>
-        {/* Bloque 3 - Compuesto */}
+        {/* Columna 1 */}
         <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex border-b border-slate-300 last:border-b-0">
-             <Field label="Grupo Sanguineo:" keys={['Grupo sanguineo y RH', 'Grupo Sanguineo:']} minW="130px" valW="100px" />
-             <Field label="Talla:" keys={['Talla:', 'Talla']} minW="60px" valW="60px" />
-          </div>
-          <div className="flex border-b border-slate-300 last:border-b-0">
-             <Field label="Transfusiones:" keys={['Transfusiones', 'Transfusiones:']} minW="130px" valW="100px" />
-             <Field label="Tmp" keys={['T', 'Temperatura', 'Tmp']} minW="60px" valW="60px" />
-          </div>
+          <Field label="IMC:" keys={['IMC:', 'IMC']} minW="110px" valW="80px" />
+          <Field label="Valoración IMC:" keys={['Valoración IMC', 'Valoracion IMC', 'Valoración IMC:']} minW="110px" valW="80px" />
+          <Field label="Diabetes Mellitus:" keys={['Diabetes Mellitus', 'Diabetes mellitus', 'Diabetes Mellitus:']} minW="110px" valW="80px" />
+          <Field label="Detalles DM:" keys={['Detalles DM', 'Detalles Diabetes Mellitus', 'Detalles Diabetes mellitus', 'Detalles DM:', 'Detalles Diabetes Mellitus:']} minW="110px" valW="80px" />
+          <Field label="O2 Hb:" keys={['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Saturación O2']} minW="110px" valW="80px" />
+          <Field label="Hábito Enólico:" keys={['Hábito Enólico', 'Habito Enolico', 'Hábito Enólico:', 'Alcohol', 'Habito Enólico']} minW="110px" valW="80px" />
+          <Field label="Hábitos Tóxicos:" keys={['Hábitos Tóxicos', 'Habitos Toxicos', 'Hábitos Tóxicos:', 'Habitos tóxicos']} minW="110px" valW="80px" />
+        </div>
+        {/* Columna 2 */}
+        <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+          <Field label="Peso:" keys={['Peso:', 'Peso']} minW="120px" valW="80px" />
+          <Field label="Sup. Corporal:" keys={['Superficie Corporal', 'Superficie corporal', 'Superficie Corporal:', 'Sup. Corporal:']} minW="120px" valW="80px" />
+          <Field label="FC:" keys={['FC', 'Frecuencia Cardíaca', 'FC:']} minW="120px" valW="80px" />
+          <Field label="HTA:" keys={['HTA (Hipertensión Arterial)', 'HTA', 'HTA:', 'Hipertensión Arterial']} minW="120px" valW="80px" />
+          <Field label="Detalles HTA:" keys={['Detalles Hipertensión Arterial', 'Detalles HTA', 'Detalles Hipertensión Arterial:', 'Detalles HTA:', 'Tipo de HTA']} minW="120px" valW="80px" />
+          <Field label="Años Fumando:" keys={['Años fumando', 'Años fumando:', 'Años Fumando']} minW="120px" valW="80px" />
+          <Field label="Cigarrillos Día:" keys={['Cigarrillos al dia', 'Cigarrillos al día', 'Cigarrillos al dia:', 'Cigarrillos/día', 'Cigarrillos al día:']} minW="120px" valW="80px" />
+          <Field label="Hábito Tabáquico:" keys={['Hábito Tabáquico', 'Habito Tabaquico', 'Hábito Tabáquico:', 'Habito Tabáquico']} minW="120px" valW="80px" />
+        </div>
+        {/* Columna 3 */}
+        <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+          <Field label="Grupo Sanguíneo:" keys={['Grupo Sanguíneo', 'Grupo sanguineo y RH', 'Grupo Sanguíneo:', 'G. Sanguíneo', 'Grupo Sanguíneo:', 'Grupo y RH:']} minW="120px" valW="80px" />
+          <Field label="Transfusiones:" keys={['Transfusiones', 'Transfusiones:', 'Antecedentes Transfusionales', 'Motivos Transfusiones']} minW="120px" valW="80px" />
+          <Field label="Perímetro abd.:" keys={['Perímetro abdominal', 'Perimetro abdominal', 'Perímetro abdominal:']} minW="120px" valW="80px" />
+          <Field label="Años dejó fumar:" keys={['Años desde que dejo de fumar', 'Años desde que dejó de fumar', 'Años desde que dejo de fumar:', 'Años desde que dejó de fumar:']} minW="120px" valW="80px" />
+          <Field label="Dislipemia:" keys={['Dislipemia', 'Dislipemia:', 'Dislipidemia']} minW="120px" valW="80px" />
+          <Field label="Detalle Dislip.:" keys={['Detalles Dislipemia', 'Detalles Dislipidemia', 'Detalles Dislipemia:', 'Detalles Dislipidemia:', 'Detalles Dislipemia:']} minW="120px" valW="80px" />
+          <Field label="Paquetes año:" keys={['Paquetes año', 'Paquetes año:', 'Paquetes/año']} minW="120px" valW="80px" />
+          {formId === 'hce_obs' && (
+            <Field label="Aumento Peso:" keys={['Aumento de peso desde el comienzo del embarazo', 'Peso 1ª Visita']} minW="120px" valW="80px" />
+          )}
+        </div>
+        {/* Columna 4 */}
+        <div className="border border-slate-400 shadow-sm overflow-hidden flex flex-col">
+          <Field label="Talla:" keys={['Talla:', 'Talla']} minW="80px" valW="70px" />
+          <Field label="Tmp:" keys={['Tmp', 'T', 'Temperatura', 'Tmp:', 'Temperatura:', 'T:']} minW="80px" valW="70px" />
+          <Field label="PAD:" keys={['PAD', 'PAD:']} minW="80px" valW="70px" />
+          <Field label="PAS:" keys={['PAS', 'PAS:']} minW="80px" valW="70px" />
+          <Field label="NYHA:" keys={['Grado NYHA', 'NYHA', 'Grado NYHA:']} minW="80px" valW="70px" />
         </div>
       </div>
     </div>
@@ -474,35 +462,85 @@ export default function HCEView({
 
   const demo = patient.demographics || {};
   const queryTokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+  const renderedSections: any[] = [];
   
   // Taxonomía estricta basada en el orden del formulario definido en mappings.ts
-  const renderedSections: { title: string, fields: { key: string, value: string }[] }[] = [];
-  
+  const normalize = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
   if (activeVersion) {
-    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
-    Object.entries(formMapping.visualCategories).forEach(([catName, allowedKeys]) => {
-      if (formId === 'hce_alg' && (catName === 'CABECERA' || catName === 'CONTROL')) return;
+    const cleanTitle = (s: string) => (s || "").replace(/^\d{2,}-\s*/, '').replace(/^\d{2,}\.\d{2,}-\s*/, '').replace(/^\d{2,}\s*-\s*/, '').trim();
 
+    // Agrupar subcategorías bajo categorías principales (ej: "01-ANTECEDENTES > PERS")
+    const categoriesMap: Record<string, { title: string, subcategories: { title: string | null, fields: any[] }[] }> = {};
+    const categoriesOrder: string[] = [];
 
+    Object.entries(formMapping.visualCategories).forEach(([catKey, allowedKeys]) => {
+      const parts = catKey.split('>').map(s => s.trim());
+      const mainCatKey = parts[0];
+      const subCatTitle = parts[1] || null;
 
-      const categoryFields: { key: string, value: string }[] = [];
+      const categoryFields: { key: string, value: string | string[] }[] = [];
+      const multivalueGroups: Record<string, string[]> = {};
+      const processedParents = new Set<string>();
+
       allowedKeys.forEach(key => {
         const value = activeVersion.data[key];
-        if (value !== undefined && value !== null && String(value).trim() !== '') {
-          const strVal = String(value);
-          categoryFields.push({ key, value: strVal });
+        if (value === undefined || value === null || String(value).trim() === '') return;
+
+        if (key.includes('$')) {
+          const [parent, child] = key.split('$');
+          if (!multivalueGroups[parent]) multivalueGroups[parent] = [];
+          const strVal = String(value).trim().toUpperCase();
+          const isPositive = ['SI', 'SÍ', 'TRUE', '1', 'POSITIVO', 'ACTIVO', 'DETECTADO'].includes(strVal);
+          const isNegative = ['NO', 'FALSE', '0', 'NEGATIVO', 'INACTIVO', 'NO DETECTADO'].includes(strVal);
+
+          if (isPositive) multivalueGroups[parent].push(child);
+          else if (!isNegative) multivalueGroups[parent].push(`${child}: ${value}`);
+
+          if (!processedParents.has(parent)) {
+            processedParents.add(parent);
+            categoryFields.push({ key: `__MV__${parent}`, value: [] });
+          }
+        } else {
+          categoryFields.push({ key, value: String(value) });
         }
       });
-      
-      const isCatSelected = !activeFilters?.categories || activeFilters.categories.length === 0 || activeFilters.categories.some(cat => {
-        const cleanCat = normalize(cat).replace(/^\d{2}-/, '').trim();
-        if (cleanCat === 'general' && (normalize(catName) === 'cabecera' || normalize(catName) === 'control')) return true;
-        return normalize(catName) === cleanCat || normalize(catName).includes(cleanCat) || cleanCat.includes(normalize(catName));
+
+      const finalFields = categoryFields.map(f => {
+        if (f.key.startsWith('__MV__')) {
+          const parent = f.key.replace('__MV__', '');
+          return { key: parent, value: multivalueGroups[parent] };
+        }
+        return f;
+      }).filter(f => !Array.isArray(f.value) || f.value.length > 0);
+
+      if (finalFields.length > 0) {
+        if (!categoriesMap[mainCatKey]) {
+          categoriesMap[mainCatKey] = { title: mainCatKey, subcategories: [] };
+          categoriesOrder.push(mainCatKey);
+        }
+        categoriesMap[mainCatKey].subcategories.push({ title: subCatTitle, fields: finalFields });
+      }
+    });
+
+    // Convertir mapa a lista de secciones renderizables
+    categoriesOrder.forEach(mainKey => {
+      const cat = categoriesMap[mainKey];
+      const isCatSelected = !activeFilters?.categories || activeFilters.categories.length === 0 || activeFilters.categories.some(filterCat => {
+        const cleanFilter = normalize(filterCat).replace(/^\d{2}-/, '').trim();
+        const cleanCat = normalize(cat.title).replace(/^\d{2}-/, '').trim();
+        return cleanCat === cleanFilter || cleanCat.includes(cleanFilter) || cleanFilter.includes(cleanCat);
       });
 
-      if (categoryFields.length > 0) {
-        renderedSections.push({ title: catName, fields: categoryFields, isSelected: isCatSelected });
+      if (isCatSelected) {
+        renderedSections.push({ 
+          title: cleanTitle(cat.title), 
+          isSelected: isCatSelected,
+          subcategories: cat.subcategories.map(sub => ({
+            ...sub,
+            title: sub.title ? cleanTitle(sub.title) : null
+          }))
+        } as any);
       }
     });
 
@@ -538,7 +576,7 @@ export default function HCEView({
     });
     
     if (unmappedFields.length > 0) {
-      renderedSections.push({ title: 'Campos no mapeados (debug)', fields: unmappedFields });
+      renderedSections.push({ title: 'Campos no mapeados (debug)', isSelected: true, subcategories: [{ title: null, fields: unmappedFields }] } as any);
     }
   }
 
@@ -554,7 +592,7 @@ export default function HCEView({
             sortedTomas={sortedTomas}
             activeIndex={activeTomaIndex}
             activeVersionIndex={activeVersionIndex}
-            isHCEALG={formId === 'hce_alg' || formId === 'hce_mir'}
+            isHCEALG={formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs'}
             query={query}
             onSelect={(tIdx, vIdx) => { 
               onTomaNavigate(tIdx, vIdx); 
@@ -564,7 +602,7 @@ export default function HCEView({
         </aside>
 
         <div className="flex-1 min-w-0 max-w-4xl">
-          {(formId === 'hce_alg' || formId === 'hce_mir') ? (
+          {(formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs') ? (
             <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl mb-6 shadow-sm overflow-hidden flex flex-col">
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 border-b border-[var(--border-clinical)] bg-[#FFF9E5]">
                 <div className="flex items-center gap-2 min-w-[140px]">
@@ -574,9 +612,9 @@ export default function HCEView({
                 <HeaderField label="CIPA" value={demo['cipa']} />
                 <HeaderField label="EC_Sexo" value={demo['sexo']} />
                 <HeaderField label="F_Nacimiento" value={demo['fechaNacimiento']} />
-                <HeaderField label="C.P" value={demo['cp']} />
               </div>
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 bg-white">
+                <HeaderField label="C.P" value={demo['cp']} />
                 <HeaderField label="Edad" value={activeVersion?.data['Edad'] || activeVersion?.data['EDAD']} />
                 <HeaderField label="AMBITO" value={activeVersion?.data['Ámbito'] || activeVersion?.data['AMBITO']} />
                 <HeaderField label="EC_Proceso2" value={activeVersion?.data['EC_Proceso2'] || activeVersion?.data['Proceso 2']} />
@@ -618,7 +656,7 @@ export default function HCEView({
 
           {activeToma ? (
             <>
-              <div className={`flex items-center justify-between mb-6 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${(formId === 'hce_alg' || formId === 'hce_mir') ? 'hidden' : ''}`}>
+              <div className={`flex items-center justify-between mb-6 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${(formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs') ? 'hidden' : ''}`}>
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60 mb-1">Toma</span>
@@ -631,13 +669,13 @@ export default function HCEView({
                   <div className="flex flex-col items-center">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60 mb-1">Versión / Orden</span>
                     <div className="flex items-center gap-2">
-                        <button disabled={!hasPrevVersion} onClick={() => setActiveVersionIndex(i => i - 1)} className="p-1 hover:bg-[var(--accent-clinical)]/10 rounded disabled:opacity-20 transition-all text-[var(--text-secondary)]">
+                        <button disabled={!hasPrevVersion} onClick={() => onTomaNavigate(activeTomaIndex, activeVersionIndex - 1)} className="p-1 hover:bg-[var(--accent-clinical)]/10 rounded disabled:opacity-20 transition-all text-[var(--text-secondary)]">
                             <ChevronLeft size={16} />
                         </button>
                         <span className={`text-[14px] font-black text-[var(--text-primary)] w-8 text-center px-2 rounded border ${activeVersion?.data?._is_duplicate ? 'bg-amber-500/20 border-amber-500 text-amber-500' : 'bg-[var(--bg-clinical)] border-[var(--border-clinical)]'}`}>
                             {ordenActivo}
                         </span>
-                        <button disabled={!hasNextVersion} onClick={() => setActiveVersionIndex(i => i + 1)} className="p-1 hover:bg-[var(--accent-clinical)]/10 rounded disabled:opacity-20 transition-all text-[var(--text-secondary)]">
+                        <button disabled={!hasNextVersion} onClick={() => onTomaNavigate(activeTomaIndex, activeVersionIndex + 1)} className="p-1 hover:bg-[var(--accent-clinical)]/10 rounded disabled:opacity-20 transition-all text-[var(--text-secondary)]">
                             <ChevronRight size={16} />
                         </button>
                     </div>
@@ -672,7 +710,7 @@ export default function HCEView({
                 <div className="flex items-center gap-2">
                   <button
                     disabled={!hasPrevToma}
-                    onClick={() => { setActiveTomaIndex(i => i - 1); setActiveVersionIndex(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    onClick={() => { onTomaNavigate(activeTomaIndex - 1, 0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-black text-[var(--text-secondary)] hover:text-[var(--accent-clinical)] rounded-lg disabled:opacity-20 transition-all"
                   >
                     <ChevronLeft size={14} /> Anterior
@@ -696,39 +734,60 @@ export default function HCEView({
                 return (
                   <div key={section.title} className={`bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-8 mb-8 shadow-md ${section.title === 'Campos no mapeados (debug)' ? 'bg-red-950/10 border-red-500/30' : ''}`}>
                     <SectionHeader label={section.title} />
-                    <div className="flex flex-col gap-6">
-                      {section.fields.map((f) => {
-                        const isAfterExploracion = isAnamnesis && (f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA') || f.key.toUpperCase().includes('EXPLORACION FISICA'));
-                        const isConstantsField = isAnamnesis && [
-                          'PESO:', 'TALLA:', 'IMC:', 'VALORACIÓN IMC', 'SUPERFICIE CORPORAL', 'T', 'GRUPO SANGUINEO Y RH', 'TRANSFUSIONES',
-                          'PESO', 'TALLA', 'SUPERFICIE CORP:', 'TMP', 'GRUPO SANGUINEO:', 'TRANSFUSIONES:',
-                          'DIABETES MELLITUS', 'DETALLES DM', 'O2 HB', 'HÁBITO ENÓLICO', 'HÁBITOS TÓXICOS', 'FC', 'HTA (HIPERTENSIÓN ARTERIAL)',
-                          'AÑOS DESDE QUE DEJO DE FUMAR', 'CIGARRILLOS AL DIA', 'HÁBITO TABÁQUICO', 'GRUPO SANGUÍNEO', 'PERÍMETRO ABDOMINAL',
-                          'DISLIPEMIA', 'DETALLES DISLIPEMIA', 'PAQUETES AÑO', 'PAD', 'PAS', 'GRADO NYHA'
-                        ].includes(f.key.toUpperCase());
+                    <div className="flex flex-col gap-10">
+                      {section.subcategories.map((sub: any, subIdx: number) => (
+                        <div key={sub.title || subIdx} className="flex flex-col gap-6">
+                          {sub.title && (
+                            <div className="flex items-center gap-3 ml-1 mb-[-4px]">
+                              <div className="h-[1px] w-4 bg-emerald-500/30" />
+                              <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.25em]">
+                                {sub.title}
+                              </span>
+                              <div className="h-[1px] flex-1 bg-gradient-to-r from-emerald-500/20 to-transparent" />
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-6">
+                            {sub.fields.map((f: any) => {
+                              const isAnamnesisSection = isAnamnesis;
+                              const isConstantsField = isAnamnesisSection && [
+                                'PESO:', 'TALLA:', 'IMC:', 'VALORACIÓN IMC', 'SUPERFICIE CORPORAL', 'T', 'GRUPO SANGUINEO Y RH', 'TRANSFUSIONES',
+                                'PESO', 'TALLA', 'SUPERFICIE CORP:', 'TMP', 'GRUPO SANGUINEO:', 'TRANSFUSIONES:',
+                                'DIABETES MELLITUS', 'DETALLES DM', 'O2 HB', 'HÁBITO ENÓLICO', 'HÁBITOS TÓXICOS', 'FC', 'HTA (HIPERTENSIÓN ARTERIAL)',
+                                'AÑOS DESDE QUE DEJO DE FUMAR', 'CIGARRILLOS AL DIA', 'HÁBITO TABÁQUICO', 'GRUPO SANGUÍNEO', 'PERÍMETRO ABDOMINAL',
+                                'DISLIPEMIA', 'DETALLES DISLIPEMIA', 'PAQUETES AÑO', 'PAD', 'PAS', 'GRADO NYHA',
+                                'AUMENTO DE PESO DESDE EL COMIENZO DEL EMBARAZO'
+                              ].includes(f.key.toUpperCase());
 
-                        // Si es un campo que va en la tabla de constantes, no lo renderizamos individualmente
-                        if (isConstantsField) return null;
+                              if (isConstantsField) return null;
 
-                        return (
-                          <div key={f.key}>
-                            <ClinicalField 
-                              label={f.key} 
-                              value={f.value} 
-                              query={query} 
-                              highlight={queryTokens.some(t => f.value.toLowerCase().includes(t))} 
-                              shouldHighlight={section.isSelected}
-                            />
-                            {/* Insertar tabla de constantes justo después de Exploración Física */}
-                            {isAfterExploracion && (
+                              const isAfterExploracion = isAnamnesisSection && !sub.title && (f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA') || f.key.toUpperCase().includes('EXPLORACION FISICA'));
+
+                              return (
+                                <div key={f.key}>
+                                  <ClinicalField 
+                                    label={f.key} 
+                                    value={f.value} 
+                                    query={query} 
+                                    highlight={queryTokens.some(t => String(f.value).toLowerCase().includes(t))} 
+                                    shouldHighlight={section.isSelected}
+                                  />
+                                  {isAfterExploracion && (
+                                    <ClinicalConstants data={activeVersion.data} query={query} formId={formId} shouldHighlight={section.isSelected} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {/* Renderizar constantes si es la subcategoría específica de OBS */}
+                            {isAnamnesis && sub.title?.toUpperCase() === 'CONSTANTES' && (
                               <ClinicalConstants data={activeVersion.data} query={query} formId={formId} shouldHighlight={section.isSelected} />
                             )}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
 
-                      {/* Caso de seguridad: si Anamnesis existe pero no se renderizó la tabla porque no hubo "Exploración Física" */}
-                      {isAnamnesis && !section.fields.some(f => f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA')) && (
+                      {/* Caso de seguridad: si es Anamnesis (MIR/ALG) pero no hubo subcategoría de constantes ni se renderizó por Exploración */}
+                      {isAnamnesis && !section.subcategories.some((sub: any) => sub.title?.toUpperCase() === 'CONSTANTES') && 
+                       !section.subcategories.some((sub: any) => sub.fields.some((f: any) => f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA'))) && (
                         <ClinicalConstants data={activeVersion.data} query={query} formId={formId} shouldHighlight={section.isSelected} />
                       )}
                     </div>

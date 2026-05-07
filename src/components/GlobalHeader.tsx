@@ -22,6 +22,7 @@ interface GlobalHeaderProps {
   onClearData: () => void;
   onShowAll: () => void;
   onShowHelp: () => void;
+  onShowEvolution: () => void;
 }
 
 export default function GlobalHeader({ 
@@ -29,7 +30,7 @@ export default function GlobalHeader({
   view, currentIndex, totalResults, onNavigate, onBack,
   activeDate, activeTime,
   theme, toggleTheme, patientCount, version, buildDate,
-  onClearData, onShowAll, onShowHelp
+  onClearData, onShowAll, onShowHelp, onShowEvolution
 }: GlobalHeaderProps) {
   const [localQuery, setLocalQuery] = useState(query);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -58,8 +59,9 @@ export default function GlobalHeader({
           <div className="w-10 h-10 bg-[var(--accent-clinical)] rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-105 transition-transform">
             <Search size={24} strokeWidth={3} />
           </div>
-          <div className="flex flex-col leading-none">
-            <span className="text-[18px] font-black tracking-tighter text-[var(--text-primary)] uppercase">Queryclin</span>
+          <div className="flex items-baseline leading-none">
+            <span className="text-[22px] font-black tracking-tighter text-[var(--accent-clinical)]">Query</span>
+            <span className="text-[22px] font-medium tracking-tighter text-[var(--text-primary)]">clin</span>
           </div>
         </div>
 
@@ -73,8 +75,9 @@ export default function GlobalHeader({
         </div>
         
         <div 
-          className="hidden lg:flex items-center gap-2 px-3 py-1 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-full border border-[var(--accent-clinical)]/20 cursor-help transition-all hover:bg-[var(--accent-clinical)]/20"
-          title={`Fecha de compilación: ${buildDate}`}
+          onClick={onShowEvolution}
+          className="hidden lg:flex items-center gap-2 px-3 py-1 bg-[var(--accent-clinical)]/10 text-[var(--accent-clinical)] rounded-full border border-[var(--accent-clinical)]/20 cursor-pointer transition-all hover:bg-[var(--accent-clinical)]/20 shadow-sm active:scale-95"
+          title={`Ver guía cronológica (Build: ${buildDate})`}
         >
           <span className="text-[10px] font-black tracking-widest">V{version}</span>
           <span className="w-[1px] h-3 bg-[var(--accent-clinical)]/30"></span>

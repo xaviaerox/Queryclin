@@ -32,9 +32,12 @@ self.onmessage = async (e: MessageEvent) => {
     const stream = streamCSV(csvText, delimiter);
 
     for (const record of stream) {
+      // Normalización determinista del registro (necesaria para validación y procesamiento)
+      const normalizedRecord = normalizeRecord(record, mapping);
+
       if (totalProcessed === 0) {
-        // Validar que las claves estructurales existan en la cabecera
-        const keys = Object.keys(record);
+        // Validar que las claves estructurales existan (considerando aliases)
+        const keys = Object.keys(normalizedRecord);
         const structuralKeys = [mapping.keys.nhc, mapping.keys.idToma, mapping.keys.ordenToma];
         const missingStruct = structuralKeys.filter(k => !keys.includes(k));
         
@@ -51,7 +54,28 @@ self.onmessage = async (e: MessageEvent) => {
           ...Object.values(mapping.visualCategories).flat()
         ];
         
-        const unmappedFields = keys.filter(k => !allMappedKeys.includes(k));
+        const unmappedFields = Object.keys(record).filter(k => {
+            // Un campo está "mapeado" si es una clave estructural, demográfica o de categoría,
+            // o si es un alias de alguna de ellas.
+            const isStructural = structuralKeys.includes(k);
+            const isFecha = mapping.keys.fechaToma === k;
+            const isDemo = Object.values(mapping.demographics || {}).includes(k);
+            const isVisual = Object.values(mapping.visualCategories).flat().includes(k);
+            
+            if (isStructural || isFecha || isDemo || isVisual) return false;
+
+            // Verificar si este key original es un alias de algo mapeado
+            if (mapping.headerAliases) {
+                return !Object.entries(mapping.headerAliases).some(([canonical, aliases]) => {
+                    const isMappedCanonical = allMappedKeys.includes(canonical);
+                    if (!isMappedCanonical) return false;
+                    return aliases.some(a => a.toLowerCase().trim() === k.toLowerCase().trim().replace(/:$/, ''));
+                });
+            }
+            
+            return true;
+        });
+
         if (unmappedFields.length > 0) {
             if (strictMode) {
                 self.postMessage({ type: 'debug_error', logs: [`Detectados campos en el CSV no definidos en el Mapping: ${unmappedFields.join(', ')}. Modo STRICT bloquea el almacenamiento silencioso.`] });
@@ -62,7 +86,7 @@ self.onmessage = async (e: MessageEvent) => {
         }
       }
 
-      const nhc = record[mapping.keys.nhc];
+      const nhc = normalizedRecord[mapping.keys.nhc];
       if (!nhc) {
           self.postMessage({ type: 'debug_error', logs: [`Falta estructura clave (NHC nulo/vacío) en la línea ${totalProcessed + 1}.`] });
           return; // Abort
@@ -123,28 +147,7 @@ async function processBatch(records: any[], currentTotal: number, mapping: FormM
   if (records.length === 0) return;
 
   // Normalización previa de cabeceras basada en aliases
-  const normalizedRecords = records.map(record => {
-    const normalized: any = {};
-    if (mapping.headerAliases) {
-      for (const [canonical, aliases] of Object.entries(mapping.headerAliases)) {
-        const foundKey = Object.keys(record).find(k => 
-          aliases.some(a => {
-            const cleanA = a.toLowerCase().trim();
-            const cleanK = k.toLowerCase().trim().replace(/:$/, '');
-            return cleanA === cleanK;
-          })
-        );
-        if (foundKey) normalized[canonical] = record[foundKey];
-      }
-    }
-    
-    for (const key of Object.keys(record)) {
-      if (!normalized[key]) {
-        normalized[key] = record[key];
-      }
-    }
-    return normalized;
-  });
+  const normalizedRecords = records.map(record => normalizeRecord(record, mapping));
 
   const batchNhcs = Array.from(new Set(
     normalizedRecords.map(r => r[mapping.keys.nhc]).filter(Boolean).map(String)
@@ -227,4 +230,30 @@ async function processBatch(records: any[], currentTotal: number, mapping: FormM
   
   // Limpieza agresiva de memoria
   for (const key in batchPatients) delete batchPatients[key];
+}
+
+/**
+ * Normaliza un registro CSV mapeando aliases a nombres canónicos
+ */
+function normalizeRecord(record: any, mapping: FormMapping): any {
+  const normalized: any = {};
+  if (mapping.headerAliases) {
+    for (const [canonical, aliases] of Object.entries(mapping.headerAliases)) {
+      const foundKey = Object.keys(record).find(k => 
+        aliases.some(a => {
+          const cleanA = a.toLowerCase().trim();
+          const cleanK = k.toLowerCase().trim().replace(/:$/, '');
+          return cleanA === cleanK;
+        })
+      );
+      if (foundKey) normalized[canonical] = record[foundKey];
+    }
+  }
+  
+  for (const key of Object.keys(record)) {
+    if (!(key in normalized)) {
+      normalized[key] = record[key];
+    }
+  }
+  return normalized;
 }

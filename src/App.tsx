@@ -12,6 +12,8 @@ import Help from './components/Help';
 import Evolution from './components/Evolution';
 import GlobalHeader from './components/GlobalHeader';
 import { FORMS } from './core/mappings';
+import pkg from '../package.json';
+
 
 /**
  * Error Boundary para mitigar fallos en tiempo de renderizado
@@ -37,8 +39,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const VERSION = '4.5.0';
-const BUILD_DATE = '06/05/2026 13:15';
+const VERSION = pkg.version;
+const BUILD_DATE = __BUILD_DATE__;
 
 type ViewState = 'home' | 'results' | 'hce' | 'help' | 'evolution';
 
@@ -444,6 +446,7 @@ export default function App() {
           onClearData={handleClearData}
           onShowAll={() => handleSearch('')}
           onShowHelp={() => setView('help')}
+          onShowEvolution={() => setView('evolution')}
         />
 
 
@@ -572,7 +575,8 @@ function decodeCP850(buffer: ArrayBuffer): string {
     160: 'á', 130: 'é', 161: 'í', 162: 'ó', 163: 'ú',
     164: 'ñ', 165: 'Ñ', 129: 'ü', 154: 'Ü',
     181: 'Á', 144: 'É', 214: 'Í', 224: 'Ó', 233: 'Ú',
-    173: '¡', 168: '¿', 245: '§', 241: '±'
+    173: '¡', 168: '¿', 245: '§', 241: '±',
+    166: 'ª', 167: 'º', 248: '°'
   };
 
   let result = '';

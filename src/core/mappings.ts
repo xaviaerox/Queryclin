@@ -165,89 +165,154 @@ export const FORMS: FormMapping[] = [
     id: 'hce_obs',
     name: 'HCE-OBS',
     keys: {
-      nhc: 'NHC',
+      nhc: 'N.H.C',
       idToma: 'Id_Toma',
       ordenToma: 'Orden_Toma',
       fechaToma: 'EC_Fecha_Toma',
     },
+    headerAliases: {
+      'N.H.C': ['NHC', 'N.H.C.', 'N.H.C'],
+      'Cipa': ['CIPA', 'cipa'],
+      'DEMOG-Código postal': ['CP', 'C.P.', 'DEMOG-Código postal'],
+      'EC_Sexo': ['Sexo', 'sexo'],
+      'Fecha de Nacimiento': ['Fecha de Nacimiento', 'F_Nacimiento'],
+      'EC_Proceso2': ['EC_Proceso2', 'Proceso 2'],
+      'Unidad de Enfermería': ['Unidad de Enfermería', 'UNIDAD'],
+      'Id_Toma': ['Id_Toma', 'Identificador Toma', 'ID_TOMA'],
+      'Orden_Toma': ['Orden_Toma', 'Version Registro', 'ORDEN_TOMA'],
+      'Dias de gestación': ['Dias de gestación', 'Días de gestación'],
+      'Semanas de gestación': ['Semanas de gestación', 'Semanas de gestacion'],
+      'Exploración general:': ['Exploración general:', 'Exploracion general:'],
+      'Peso 1ª Visita': ['Peso 1ª Visita', 'Peso 1a Visita', 'Peso 1 Visitia'],
+      'Htº': ['Htº', 'Ht°', 'Ht', 'Ht.', 'Hematocrito'],
+      'SCREENING ANEUPLODIAS': ['SCREENING ANEUPLODIAS', 'SCREENINIG ANEUPLODIAS'],
+      'Vitalidad (F.C.F.)': ['Vitalidad (F.C.F.)', 'Vitalidad (F.C. F.)', 'FCF', 'F.C.F.'],
+      'Juicio Diagnóstico Activo': ['Juicio Diagnóstico Activo', 'Jucio Diagnóstico Activo'],
+      'Juicio Diagnóstico Secundario': ['Juicio Diagnóstico Secundario', 'Jucio Diagnóstico Secundario']
+    },
     demographics: {
+      cipa: 'Cipa',
+      cp: 'DEMOG-Código postal',
       sexo: 'EC_Sexo',
       fechaNacimiento: 'Fecha de Nacimiento',
-      edad: 'Edad Toma',
-      cp: 'DEMOG-Código postal',
-      ciudad: 'EC_Ciudad_Paciente',
-      proceso: 'EC_Proceso',
+      nhc: 'N.H.C',
+      proceso2: 'EC_Proceso2',
+      unidadEnfermeria: 'Unidad de Enfermería',
+      reacciones: 'Reacciones Adversas a fármacos'
     },
     visualCategories: {
-      'Alergias y Motivo de consulta': [
-        'Reacciones Adversas a fármacos', 'Motivo de consulta:', 'Motivo de ingreso:', 'Finalidad de la toma:'
+      '01-ANTECEDENTES': [
+        'Ámbito', 'Edad', 'Edad Toma', 'Finalidad de la toma:', 'Reacciones Adversas a fármacos'
       ],
-      'Antecedentes': [
-        'Antecedentes Familiares Generales', 'Antecedentes Personales Generales',
-        'Antecedentes Quirúrgicos Generales', 'Años desde que dejo de fumar', 'Años desde que dejó de fumar', 'Años fumando',
-        'Alcohol durante el embarazo?', 'Cigarrillos al dia', 'Cigarrillos al día',
-        'Fumadora durante el embarazo?', 'Hábito Enólico', 'Hábito Tabáquico',
-        'Hábitos tóxicos', 'Habitos tóxicos gestación', 'Paquetes año',
-        'Procesos Ginecológicos Anteriores:'
+      '01-ANTECEDENTES > ANTECEDENTES PERSONALES': [
+        'Alcohol durante el embarazo?', 'Antecedentes Familiares Generales', 'Antecedentes Personales Generales',
+        'Antecedentes Quirúrgicos Generales', 'Detalles Dislipemia', 'Diabetes Gestacional', 'Diabetes Mellitus',
+        'Dislipemia', 'Fumadora durante el embarazo?', 'Grado NYHA', 'Grupo Sanguíneo:', 'Grupo y RH', 'Grupo y RH:',
+        'Hábito Enólico', 'Hábito Tabáquico', 'Hábitos tóxicos', 'Hábitos tóxicos gestación', 'HTA (Hipertensión Arterial)',
+        'Motivos Transfusiones', 'Procesos Ginecológicos Anteriores:', 'Situación basal', 'Situación Basal (Otros)',
+        'Tipo de HTA', 'Transfusiones', 'Tratamiento crónico'
       ],
-      'Anamnesis y exploraciones': [
-        'Abortos:', 'Actitud', 'Actividad', 'Altura Uterina', 'Anamnesis', 'Anexos:',
-        'Aumento de peso desde el comienzo del embarazo', 'Bishop:', 'Borramiento:',
-        'Cesáreas:', 'Consistencia:', 'Cuello', 'Datos prenatales a valorar por pediatra',
-        'Dilatación:', 'Douglas:', 'Días de gestación', 'Ectópicos:',
-        'Estado de la bolsa al ingreso', 'FPP', 'FPP (corregida por Eco)', 'FUR',
-        'Fecha - Hora bolsa rota', 'Frecuencia  de contracciones', 'Fórmula Menstrual',
-        'Fórmula Obstétrica', 'Gemelares:', 'Gestaciones:', 'Gestación Actual',
-        'Menarquia', 'Menograma Tipo Actual$Amenorrea primaria', 'Menograma Tipo Actual$Amenorrea secundaria',
+      '01-ANTECEDENTES > ANTECEDENTES OBS': [
+        'Abortos:', 'Cesáreas:', 'Ectópicos:', 'Fórmula Menstrual', 'Fórmula Obstétrica', 'Gemelares:', 'Gestaciones:',
+        'Menarquia', 'Observaciones', 'Partos:', 'Prematuros:'
+      ],
+      '02-ANAMNESIS Y EXPLORACION': [
+        'Anamnesis', 'Motivo de consulta:'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > DATACION DE LA GESTACIÓN': [
+        'Dias de gestación', 'FPP', 'FPP (corregida por Eco)', 'FUR',
+        'Menograma Tipo Actual$Amenorrea primaria', 'Menograma Tipo Actual$Amenorrea secundaria',
         'Menograma Tipo Actual$Ataxia menstrual / Baches amenorreicos', 'Menograma Tipo Actual$Braquimenorrea',
         'Menograma Tipo Actual$Dolicomenorrea Postmenstrual', 'Menograma Tipo Actual$Dolicomenorrea Premenstrual',
         'Menograma Tipo Actual$Eumenorrea', 'Menograma Tipo Actual$Hiperdolicomenorrea',
         'Menograma Tipo Actual$Hipermenorrea', 'Menograma Tipo Actual$Hipomenorrea',
         'Menograma Tipo Actual$Metrorragia', 'Menograma Tipo Actual$Opsomenorrea',
-        'Menograma Tipo Actual$Polimenorrea', 'Partos:', 'Prematuros:', 'Presentación',
-        'Semanas de gestación', 'Situación', 'Situación Basal (Otros)', 'Situación basal', 'Utero:',
-        'FC', 'FCF$(Variables)', 'FCF$Bradicarda basal grave', 'FCF$Bradicardia basal leve',
-        'FCF$Bradicardia basal moderada', 'FCF$Deceleraciones tipo I', 'FCF$Deceleraciones tipo II',
-        'FCF$Deceleraciones tipo III (Variables)', 'FCF$Deceleración prolongada (calderon)',
-        'FCF$I (Variables)', 'FCF$Patrón no reactivo', 'FCF$Patrón reactivo',
-        'FCF$Ritmo Comprimido', 'FCF$Ritmo Saltatorio', 'FCF$Ritmo Silente',
-        'FCF$Taquicardia grave', 'FCF$Taquicardia leve', 'FCF$Taquicardia moderada',
-        'Movimientos Fetales', 'Vitalidad (F.C. F.)', 'Perfil Biofísico',
-        'Plano presentación:', 'Posición', 'Posición:', 'Exploración general:',
-        'Talla:', 'Peso 1ª Visita', 'Peso:', 'IMC:', 'Intensidad Dinámica',
-        'Tipo de Dinámica', 'Tipo de Rotura de bolsa'
+        'Menograma Tipo Actual$Polimenorrea', 'Semanas de gestación'
       ],
-      'Exploraciones Complementarias solicitadas': [
-        'Pruebas solicitadas', 'Otras Pruebas realizadas'
+      '02-ANAMNESIS Y EXPLORACION > VISITA CONTROL DE GESTACIÓN': [
+        'Aumento de peso desde el comienzo del embarazo', 'Peso 1ª Visita', 'Peso:'
       ],
-      'Diagnostico y TTO': [
-        'Diagnóstico:', 'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 
-        'Tratamiento crónico', 'Tratamiento:', 'Recomendaciones:', 'Resumen de evolución Paciente',
-        'Especificar', 'Observaciones', 'Observaciones:', 'Procedimientos:', 'Otras',
-        'Detalles Dislipemia', 'Diabetes Gestacional', 'Diabetes Mellitus', 'Dislipemia',
-        'Edemas', 'Grado NYHA', 'HTA (Hipertensión Arterial)', 'Hemorroides',
-        'Mutilación de genitales', 'S. Circulatorio Periférico', 'Tipo de HTA',
-        'Motivos Transfusiones', 'Transfusiones', 'Valoración del Riesgo'
+      '02-ANAMNESIS Y EXPLORACION > CONSTANTES': [
+        'FC', 'IMC:', 'PAS', 'PAD', 'T', 'Talla:'
       ],
-      'Resultado y pruebas': [
-        '%INR', 'AGA Vaginal', 'Anormales', 'Bilirrubina Ind.', 'Bilirrubina Total',
-        'Cociente albumina  creatinina en muestra de orina aislada', 'Curva de Glucemia',
-        'Fe', 'Ferritina', 'Fibrinógeno', 'Fosfatasa alcalina', 'GOT', 'GTP', 'Gamma GT',
-        'Germen', 'Glucemia Basal', 'Grupo Sanguíneo:', 'Grupo y RH', 'Grupo y RH:',
-        'H', 'HB Glicosilada', 'Hb', 'Hbs  Ag', 'Htº', 'Leucocitos', 'Microalbuminuria',
-        'Nº de colonias, 10 elevado a', 'Otras Analíticas',
-        'PAD', 'PAS', 'PTTA', 'Plaquetas', 'Prueba Oxitocina',
-        'RPR', 'Riesgo por Screening 2º Trimestre:', 'Riesgo por Screening Combinado:',
-        'Rubeola', 'SCREENINIG ANEUPLODIAS', 'Saturación de transferrina', 'Sedimento',
-        'Sensibilidad Antibióticos', 'T', 'T. Protrombinas', 'TPHA', 'Test de Coombs Indirecto',
-        'Test de O,Sullivan', 'Toxoplasmosis', 'Transferrina', 'Título Test de Coombs',
-        'Urocultivo', 'VCM', 'VHC', 'VIH', 'Á. Úrico', 'Resumen Analítica',
-        'Perfil glucémico$Hiperglucemias leves', 'Perfil glucémico$Hiperglucemias moderada',
+      '02-ANAMNESIS Y EXPLORACION > EXPLORACION': [
+        'Exploración general:', 'Mutilación de genitales'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > EXPLORACION OBSTÉTRICA': [
+        'Altura Uterina', 'Edemas', 'Hemorroides', 'Movimientos Fetales', 'S. Circulatorio Periférico', 'Vitalidad (F.C.F.)'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > CONDICIONES OBSTÉTRICAS TACTO VAGINAL': [
+        'Anexos:', 'Cuello', 'Douglas:', 'Utero:'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > CARACTERISTICAS CERVIX': [
+        'Bishop:', 'Borramiento:', 'Consistencia:', 'Dilatación:', 'Plano presentación:', 'Posición:'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > AMNORREXIS': [
+        'Estado de la bolsa al ingreso', 'Fecha - Hora bolsa rota', 'Tipo de Rotura de bolsa'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > ESTETICA FETAL': [
+        'Actitud', 'Posición', 'Presentación', 'Situación'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > FACTORES DE RIESGO': [
+        'Gestación Actual', 'Observaciones', 'Valoración del Riesgo'
+      ],
+      '03-ANALITICAS': [
+        'H', 'Hb', 'Htº', 'Leucocitos', 'Plaquetas', 'Test de Coombs Indirecto', 'Título Test de Coombs', 'VCM'
+      ],
+      '03-ANALITICAS > HEMATOLOGIA': [
+        'H', 'Hb', 'Htº', 'Leucocitos', 'Plaquetas', 'Test de Coombs Indirecto', 'Título Test de Coombs', 'VCM'
+      ],
+      '03-ANALITICAS > AGA': [
+        'AGA Vaginal'
+      ],
+      '03-ANALITICAS > BIOQUIMICA': [
+        'Á.Úrico', 'Bilirrubina Ind.', 'Bilirrubina Total', 'Curva de Glucemia', 'Fe', 'Ferritina',
+        'Fosfatasa alcalina', 'Gamma GT', 'Glucemia Basal', 'GOT', 'GTP', 'HB Glicosilada',
+        'Perfil glucémico$Hiperglucemias leves', 'Perfil glucémico$Hiperglucemias moderadas',
         'Perfil glucémico$Hiperglucemias severa', 'Perfil glucémico$Hipoglucemias',
-        'Perfil glucémico$Normal', 'Perfil glucémico$Patológico'
+        'Perfil glucémico$Normal', 'Perfil glucémico$Patológico', 'Saturación de transferrina',
+        'Test de O,Sullivan', 'Trasnferrina'
       ],
-      'Paciente hospitalizado': [
-        'Tipo de Ingreso:', 'Motivo de Alta', 'Motivo de Alta (CEX):'
+      '03-ANALITICAS > COAGULACION': [
+        ' %INR', 'Actividad', 'Fibrinógeno', 'PTTA', 'T. Protrombinas'
+      ],
+      '03-ANALITICAS > ORINA': [
+        'Anormales', 'Cociente albumina creatinina en muestra de orina aislada', 'Germen',
+        'Microalbuminuria', 'Nº de colonias, 10 elevado a', 'Sedimento', 'Sensibilidad Antiibióticos', 'Urocultivo'
+      ],
+      '03-ANALITICAS > SEROLOGIAS': [
+        'Hbs Ag', 'Otras', 'RPR', 'Rubeola', 'Toxoplasmosis', 'TPHA', 'VHC', 'VIH'
+      ],
+      '03-ANALITICAS > SCREENING ANEUPLODIAS': [
+        'Observaciones:', 'Riesgo por Screening 2º Trimestre:', 'Riesgo por Screening Combinado:', 'SCREENING ANEUPLODIAS'
+      ],
+      '03-ANALITICAS > OTRAS ANALITICAS': [
+        'Otras Analíticas', 'Resumen Analítica'
+      ],
+      '04-PRUEBAS Y RESULTADOS': [
+        'FCF$(Variables)', 'FCF$Bradicarda basal grave', 'FCF$Bradicarda basal leve', 'FCF$Bradicarda basal moderada',
+        'FCF$Deceleración prolongada (calderon)', 'FCF$Deceleraciones tipo I', 'FCF$Deceleraciones tipo II',
+        'FCF$Decelearciones tipo III (Variables)', 'FCF$I (Variables)', 'FCF$Patrón no reactivo', 'FCF$Patrón reactivo',
+        'FCF$Ritmo Comprimido', 'FCF$Ritmo Saltatorio', 'FCF$Ritmo Silente', 'FCF$Taquicardia grave', 'FCF$Taquicardia leve',
+        'FCF$Taquicardia moderada', 'Frecuencia de contracciones', 'Intensidad Dinámica', 'Tipo de Dinámica'
+      ],
+      '04-PRUEBAS Y RESULTADOS > PRUEBA DE OXICTOCINA': [
+        'Prueba Oxitocina'
+      ],
+      '04-PRUEBAS Y RESULTADOS > PRUEBAS BIOFÍSICO': [
+        'Perfil Biofísico'
+      ],
+      '04-PRUEBAS Y RESULTADOS > OTRAS PRUEBAS': [
+        'Observaciones:', 'Otras Pruebas realizadas'
+      ],
+      '04-PRUEBAS Y RESULTADOS > PRUEBAS SOLICITADAS': [
+        'Pruebas solicitadas'
+      ],
+      '05-DIAGNOSTICO Y TTO': [
+        'Datos prenatales a valorar por pediatra', 'Diagnóstico:', 'Especificar', 'Motivo de Alta (CEX):', 'Recomendaciones:', 'Tratamiento:'
+      ],
+      '06-PROCESO HOSP/CEX': [
+        'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 'Motivo de ingreso:', 'Procedimientos:', 'Recomendaciones:', 'Resumen de evolución Paciente', 'Tipo de Ingreso:'
       ]
     }
   }

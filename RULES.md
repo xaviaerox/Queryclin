@@ -29,9 +29,10 @@ Este documento contiene las directrices fundamentales e inviolables para el desa
 - **Regla:** Se prohíbe renombrar, traducir o normalizar destructivamente los campos originales del CSV. El sistema debe ser un reflejo exacto de la fuente de datos.
 - **Lenguaje:** La comunicación debe ser siempre sobria, profesional y técnica.
 
-## 8. Sincronización de Versión y Trazabilidad
-- **Regla:** Tras cada modificación que implique un despliegue o push, se DEBE actualizar sincrónicamente la versión y fecha/hora en: `App.tsx` (Badge Principal), `Evolution.tsx` (Timeline y Footer), `README.md` (Header y Roadmap) y `DIARIO_APRENDIZAJE.md`.
-- **Desorden:** Se prohíbe terminantemente la discrepancia de versiones entre los distintos puntos de información del proyecto.
+## 9. Inmutabilidad Estética (UI Preservation)
+- **Regla:** Queda terminantemente prohibido modificar el diseño, colores, tipografías o disposición de los elementos "Core" definidos en `DESIGN_SYSTEM.md`.
+- **Procedimiento:** Antes de añadir o mover componentes en el Header, Sidebar o Visor HCE, se debe asegurar la integridad de la marca (Logo, Colores NachuS, etc).
+- **Excepción:** Solo se permiten cambios estéticos si el usuario lo solicita explícitamente y de forma detallada.
 
 ---
 *Gobernanza Queryclin - V4.2.9*

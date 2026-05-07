@@ -1,3 +1,67 @@
+## [2026-05-07]
+### Robustez en Ingesta y Resolución de Claves Estructurales (V4.6.1)
+- **`csv.worker.ts`**:
+  - **Corrección de Error [001]**: Resuelto el fallo que bloqueaba la ingesta si el CSV utilizaba un alias (ej. `NHC`) en lugar del nombre canónico (`N.H.C`).
+  - **Normalización Previa**: Refactorizada la lógica de validación para normalizar los registros (aplicando `headerAliases`) antes de verificar la presencia de las claves estructurales obligatorias (`NHC`, `Id_Toma`, `Orden_Toma`).
+  - **Mejora en Detección de Campos No Mapeados**: El sistema de auditoría ahora reconoce correctamente los alias de los campos mapeados, evitando falsas alarmas de "campos no mapeados" cuando se utiliza nomenclatura alternativa.
+- **`mappings.ts`**:
+  - **Sincronización HCE-OBS**: Añadidos aliases estándar para `Id_Toma` y `Orden_Toma` en el modelo **HCE-OBS**, garantizando la misma resiliencia ante variaciones de cabecera que en los modelos MIR y ALG.
+- **Sincronización de Versión**: Incremento a **V4.6.1**.
+
+## [2026-05-07]
+### Restauración de Estética Inmutable (V4.6.2)
+- **`HCEView.tsx`**:
+  - Revertidos los cambios estéticos experimentales en **HCE-OBS** para restaurar la fidelidad visual absoluta con los modelos ALG y MIR.
+  - El campo **C.P.** vuelve a su posición original en la segunda fila de la cabecera demográfica.
+  - Se ha unificado el título del sidebar a **"Navegación / Tomas"** para OBS y se ha restaurado el renderizado en formato tabla.
+  - Eliminada la barra de navegación secundaria redundante en OBS, manteniendo una interfaz limpia y sobria.
+- **`mappings.ts` (HCE-OBS)**:
+  - Resuelto el problema de campos no mapeados mediante la adición de `headerAliases` para **"Días de gestación"** y **"Semanas de gestación"**, permitiendo su correcta clasificación en la sección de Datación.
+  - Corregida la errata **"Jucio"** por **"Juicio"** en los campos de diagnóstico, manteniendo compatibilidad con ambas nomenclaturas mediante el sistema de alias.
+  - Mapeado el campo **"PAD"** dentro de la subcategoría de **CONSTANTES** en HCE-OBS, integrándolo correctamente en la tabla de constantes vitales.
+  - Renombrada la subcategoría **"02-04 - EXPLORACION GENERAL"** a **"02-04 - EXPLORACION"** y añadido soporte para la variante acentuada **"Exploración general:"** mediante alias.
+  - Corregido error de decodificación en **"Peso 1ª Visita"** (aparecía como "1? Visita") mediante la actualización del transcodificador CP850 en `App.tsx` para soportar los caracteres ordinales `ª` y `º`.
+  - Resuelto el problema recurrente del símbolo `?` en campos como **"Htº"** mediante la inclusión del símbolo de grado `°` (248) en el transcodificador y la creación de aliases de resiliencia para Hematocrito.
+  - Mapeado el campo **"SCREENINIG ANEUPLODIAS"** (corrigiendo la errata de triple 'I' del origen) a la subcategoría correspondiente en ANALITICAS mediante el sistema de aliases.
+  - Corregido el mapeo de **"Vitalidad (F.C. F.)"** añadiendo aliases para soportar variaciones con y sin espacios en las siglas, asegurando su ubicación en la subcategoría de Exploración Obstétrica.
+- **`HCEView.tsx`**:
+  - Unificada la tabla de **Constantes Clínicas** para todos los modelos (MIR, ALG, OBS) siguiendo el diseño premium de 4 columnas.
+  - Para **HCE-OBS**, se ha integrado el campo específico **"Aumento de peso desde el comienzo del embarazo"** en la estructura de la tabla y se ha suprimido de la lista individual de campos para evitar duplicidades.
+  - Sincronización de estilos (blanco/verde) y bordes para garantizar la inmutabilidad estética.
+- **Jerarquía y Estructura HCE-OBS**:
+  - Implementado sistema de **Categorías > Subcategorías** en `mappings.ts` mediante el delimitador `>`.
+  - Refactorizado el motor de renderizado en `HCEView.tsx` para agrupar subsecciones en 6 bloques principales (Antecedentes, Anamnesis, etc.), manteniendo la paridad visual con MIR/ALG.
+  - Implementado sistema de **Limpieza de Títulos** que elimina prefijos de numeración (`01-`, `02-01-`) para una visualización más limpia y profesional.
+  - Introducidos sub-encabezados elegantes para distinguir subcategorías dentro de cada bloque principal.
+- **Hotfix `HCEView.tsx`**:
+  - Corregido error de sintaxis ('return' outside of function) causado por la eliminación accidental de un condicional durante la refactorización jerárquica.
+- **Robustez en el Renderizado**:
+  - Implementadas comprobaciones de nulidad en las funciones `normalize` y `cleanTitle` para evitar excepciones en tiempo de ejecución.
+  - Restaurada la propiedad `isSelected` en los objetos de sección, necesaria para la lógica de resaltado de búsqueda.
+  - Corregida la omisión accidental de la declaración de `renderedSections` durante la refactorización jerárquica.
+  - Ajustada la ubicación de la tabla de **Constantes** para que se renderice específicamente dentro de la subcategoría **CONSTANTES** en HCE-OBS.
+  - Sincronizada la constante de versión en `App.tsx` para que el **GlobalHeader** refleje correctamente la versión actual del sistema.
+  - **Automatización Total de Versionado**: Refactorizado el sistema para extraer la versión de `package.json` y la fecha de compilación directamente de **Vite** (`__BUILD_DATE__`). Esto garantiza que el sistema siempre muestre información 100% real y actualizada sin intervención manual.
+  - **Identidad de Marca**: Restaurada la estética original del logotipo de **Queryclin** (contraste Blue-Bold / Primary-Medium) eliminando el tipado agresivo en mayúsculas.
+  - **Gobernanza Visual**: Creado el archivo `DESIGN_SYSTEM.md` y actualizada la "Constitución" (`RULES.md`) con una nueva regla de **Inmutabilidad Estética** para evitar que futuros agentes alteren el diseño premium sin permiso.
+  - Restaurado el enlace interactivo en el chip de versión del **GlobalHeader**, permitiendo de nuevo el acceso a la guía cronológica/evolución del proyecto mediante un clic.
+  - Añadida seguridad adicional en el procesamiento de valores de campos multivariables.
+- **Sincronización de Versión**: Incremento a **V4.7.5**.
+
+## [2026-05-07]
+### Gobernanza HCE-OBS y Renderizado Determinista (V4.6.0)
+- **`mappings.ts`**:
+  - Implementada la estructura jerárquica estricta para **HCE-OBS** basada en la normativa inmutable.
+  - Definidas categorías clínicas fijas (Antecedentes, Anamnesis, Datación, etc.) con sus respectivos campos raw.
+  - Configurada cabecera compartida (HCE-COMUN) con soporte para CIPA, NHC y procesos hospitalarios.
+- **`HCEView.tsx`**:
+  - **Renderizado Multivalor ($)**: Implementada lógica de agrupación automática para campos que comparten prefijo `$`. Estos campos se visualizan ahora como listas de viñetas en un único bloque clínico.
+  - **Determinismo Estricto**: Eliminada la normalización visual de etiquetas para preservar la nomenclatura hospitalaria exacta (incluyendo guiones bajos).
+  - **Cabecera Unificada**: Extendida la cabecera compacta a HCE-OBS para garantizar consistencia visual entre MIR, ALG y OBS.
+- **`clinicalTaxonomy.ts`**:
+  - Preparada la taxonomía para soportar el nuevo filtrado por sub-categorías de obstetricia.
+- **Sincronización de Versión**: Salto mayor a **V4.6.0** con plena compatibilidad de rediseño.
+
 ## [2026-05-06]
 ### Interfaz Contextual Unificada (V4.5.0)
 - **`GlobalHeader.tsx`**:

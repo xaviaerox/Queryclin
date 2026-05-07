@@ -140,4 +140,21 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [ ] **E15. IA Generativa Local**: Resúmenes automáticos de evolución clínica mediante LLM en el cliente.
 
 ---
+## 🎓 FORMACIÓN TÉCNICA Y ESPECIALIZACIÓN
+- [x] **Máster en Google Antigravity, IA y Vibe Coding**: Certificación oficial en desarrollo full-stack asistido por agentes (Udemy, 13/04/2026).
+- [x] **Metodologías Agentes**: Implementación de Vibe Coding y Spec Driven Development como estándar de trabajo en el proyecto.
+- [x] **Especialización en Machine Learning (Python/R)**: Finalización del programa *Machine Learning A-Z™* (Udemy, 07/05/2026).
+- [x] **Dominio de Algoritmos**: Capacitación en Regresión, Clasificación, Clustering, NLP y Deep Learning.
+- [x] **Preparación Predictiva**: Creación de plantillas de pre-procesamiento para futuros módulos de análisis inteligente en Queryclin.
+- [x] **Logro**: Adquisición de la base científica necesaria para la evolución del buscador hacia un sistema de soporte a la decisión clínica (CDSS).
+
+---
+## 🟢 FASE 19: Gobernanza HCE-OBS y Renderizado Determinista (V4.6.0 ✅)
+- [x] **A23. Implementación de Jerarquía HCE-OBS**: Integración de la taxonomía inmutable y mapeo categórico estricto.
+- [x] **U25. Renderizado Multivalor ($)**: Desarrollo del motor de agrupación para visualización de campos clínicos como listas de viñetas.
+- [x] **U26. Determinismo Visual Inmutable**: Eliminación de normalizaciones en etiquetas para preservar la nomenclatura técnica hospitalaria.
+- [x] **A24. Cabecera HCE-COMUN Compartida**: Estandarización de la identidad visual de la cabecera demográfica para todos los modelos (MIR, ALG, OBS).
+- [x] **Logro**: Queryclin se consolida como un sistema de visualización clínica de alta fidelidad, capaz de manejar estructuras jerárquicas complejas con total precisión diagnóstica.
+
+---
 *Queryclin - Sistema de Análisis Clínico Local-First*

@@ -11,6 +11,13 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      '__BUILD_DATE__': JSON.stringify(new Date().toLocaleString('es-ES', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })),
     },
     resolve: {
       alias: {

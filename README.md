@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.5.0)
+# Queryclin — HCE Intelligence Dashboard (V4.7.5)
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -25,6 +25,8 @@ La visión original se basó en transformar la experiencia de auditoría clínic
 
 ---
 
+## 3. Arquitectura e Ingesta Inteligente
+
 Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y estabilidad ante la auditoría, el stack se compone de una **Arquitectura Limpia (Clean Architecture)** desacoplada:
 
 - **React 19 + TypeScript:** Esquema de datos estricto para garantizar la integridad clínica.
@@ -36,7 +38,6 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
   - *`QueryEngine.ts`*: Motor de recuperación de información basado en **Okapi BM25**.
   - *`Tokenizer.ts`*: Procesamiento lingüístico con **Clinical Synonym Mapper** y expansión de consultas.
 - **Fachada de Integración (`src/lib/searchEngine.ts`):** Punto único de contacto para la UI que delega en los micro-servicios del motor, garantizando una transición transparente desde la arquitectura anterior.
-
 
 ---
 
@@ -121,12 +122,14 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Cabecera Global Unificada**: Centralización de identidad y herramientas de búsqueda en una barra superior persistente.
 - **Buscador Refinador**: Navegación fluida entre expedientes manteniendo el contexto de filtros activos.
 
-### Fase 21: Ergonomía de Navegación Profunda (V4.5.0 — ACTUAL 🚀)
+### Fase 21: Ergonomía de Navegación Profunda (V4.5.0 ✅)
 - **Interfaz Contextual Unificada**: Rediseño del GlobalHeader con alineación de buscador al informe y metadatos de versión.
-- **Cabecera Global Unificada**: Integración de botones de retorno y paginación de expedientes en la barra superior persistente.
-- **Optimización Espacial**: Eliminación de headers locales para maximizar el área de visualización del informe clínico.
-- **Refinamiento de Mappings**: Consolidación total de campos "Detalles" y constantes vitales en HCE-MIR.
+- **Sincronización de Estado**: Elevación de navegación a App.tsx para coherencia total.
 
+### Fase 22: Gobernanza HCE-OBS y Automatización (V4.7.5 — ACTUAL 🚀)
+- **Jerarquía Clínica**: Motor de renderizado de dos niveles (Categoría > Subcategoría) para obstetricia.
+- **Automatización de Build**: Integración de versionado dinámico y fecha de compilación automática.
+- **Gobernanza Visual**: Establecimiento de un Sistema de Diseño inmutable para proteger la identidad de marca.
 
 ---
 
@@ -148,6 +151,7 @@ El proyecto está organizado para garantizar el orden y la escalabilidad:
 -   `scripts/`: Herramientas de generación y diagnóstico técnico.
 -   `tests/data/`: Datasets de prueba controlados.
 -   `docs/`: Diseños y especificaciones originales.
+-   **[DESIGN_SYSTEM.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/DESIGN_SYSTEM.md)**: Sistema de diseño inmutable.
 -   **[RULES.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/RULES.md)**: El marco de gobernanza estricta ("Constitución").
 -   **[BATTLE_LOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/BATTLE_LOG.md)**: Diario narrativo de desafíos técnicos y soluciones.
 -   **[CHANGELOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/CHANGELOG.md)**: Registro histórico de modificaciones.

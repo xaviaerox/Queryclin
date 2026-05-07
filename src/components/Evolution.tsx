@@ -64,18 +64,18 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'emerald'
     },
     {
-      date: '05 de Mayo, 2026',
-      title: 'V4.2.5: Refinamiento de Búsqueda Contextual',
-      description: 'Implementación de filtrado bidireccional estricto con resaltado selectivo por categorías, garantizando la integridad del informe completo mientras se mantiene el foco en el hallazgo relevante.',
+      date: '06 de Mayo, 2026',
+      title: 'V4.5.0: Interfaz Contextual Unificada',
+      description: 'Rediseño integral de la cabecera global con navegación de expedientes integrada. Sincronización de estado entre vistas y optimización de la ergonomía de lectura para informes extensos.',
       icon: <Zap className="text-blue-500" />,
       color: 'blue'
     },
     {
-      date: '06 de Mayo, 2026 (Actual)',
-      title: 'V4.3.8: Refinamiento de Mappings e Integridad',
-      description: 'Consolidación total de los formularios HCE-MIR. Se eliminan campos huérfanos y metadatos técnicos para una interfaz limpia. El sistema ahora diferencia búsquedas idénticas con filtros distintos, garantizando la persistencia total de contextos de investigación clínica.',
-      icon: <Microscope className="text-orange-500" />,
-      color: 'orange'
+      date: '07 de Mayo, 2026 (Actual)',
+      title: 'V4.7.5: Jerarquía Clínica y Gobernanza HCE-OBS',
+      description: 'Implementación de la taxonomía jerárquica (Categoría > Subcategoría) y motor de renderizado determinista para obstetricia. Integración de limpieza de títulos dinámica y ubicación contextual de constantes vitales.',
+      icon: <Microscope className="text-emerald-500" />,
+      color: 'emerald'
     }
   ];
 
@@ -140,9 +140,9 @@ export default function Evolution({ onBack }: EvolutionProps) {
         </div>
       </div>
 
-      <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-        Hoja de Ruta 2026 - Queryclin V4.3.8
-      </div>
+        <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
+          Hoja de Ruta 2026 - Queryclin V4.7.5
+        </div>
     </div>
   );
 }
