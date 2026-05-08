@@ -156,5 +156,14 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A24. Cabecera HCE-COMUN Compartida**: Estandarización de la identidad visual de la cabecera demográfica para todos los modelos (MIR, ALG, OBS).
 - [x] **Logro**: Queryclin se consolida como un sistema de visualización clínica de alta fidelidad, capaz de manejar estructuras jerárquicas complejas con total precisión diagnóstica.
 
+
+## 🛡️ FASE 23: Gobernanza de Seguridad y Privacidad Pública (V5.0.0 — ACTUAL 🚀)
+- [x] **G1. Estructura de Gobernanza (.ag)**: Creación de políticas de repositorio público, privacidad y límites de seguridad.
+- [x] **G2. Hardening de Seguridad (/security)**: Implementación de guías de contribución segura, respuesta a incidentes y política de datos.
+- [x] **G3. Plantillas de Repositorio Público**: Desarrollo de templates de Pull Request e Issues con advertencias de privacidad.
+- [x] **G4. Refuerzo de .gitignore**: Bloqueo estricto de extensiones sensibles y definición de excepciones para mocks.
+- [x] **G5. Sanitización de Documentación**: Actualización del README y manuales para alineación con principios privacy-first.
+- [x] **Logro**: Queryclin se transforma en un proyecto de código abierto profesional, seguro para su exposición pública y resistente a filtraciones de datos clínicos.
+
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

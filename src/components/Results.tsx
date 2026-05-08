@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { SearchResult } from '../lib/searchEngine';
-import { ArrowLeft, FileText, Activity, User, ChevronRight, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, FileText, Activity, User, ChevronRight, FileSpreadsheet, X, Info } from 'lucide-react';
 import { db } from '../storage/indexedDB';
 import { Patient, getGender } from '../core/types';
 import * as XLSX from 'xlsx';
+import { transformPatientsForExport, ExportMode } from '../utils/exportUtils';
 
 interface ResultsProps {
   results: SearchResult[];
@@ -119,9 +120,89 @@ function ResultRow({ res, onSelect }: { key?: any; res: SearchResult, onSelect: 
   );
 }
 
+// ─── Modal de Exportación ─────────────────────────────────────────────────────
+function ExportModal({ onConfirm, onClose, count }: { onConfirm: (mode: ExportMode) => void; onClose: () => void; count: number; }) {
+  const [mode, setMode] = useState<ExportMode>('all');
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-[var(--surface-clinical)] w-full max-w-md rounded-3xl shadow-2xl border border-[var(--border-clinical)] overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-black text-[var(--text-primary)]">Exportar Resultados</h3>
+            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <X size={20} className="text-[var(--text-secondary)]" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <button 
+              onClick={() => setMode('all')}
+              className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                mode === 'all' 
+                  ? 'border-[var(--accent-clinical)] bg-[var(--accent-clinical)]/5' 
+                  : 'border-[var(--border-clinical)] hover:border-[var(--accent-clinical)]/30 bg-transparent'
+              }`}
+            >
+              <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${mode === 'all' ? 'border-[var(--accent-clinical)]' : 'border-[var(--border-clinical)]'}`}>
+                {mode === 'all' && <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-clinical)]" />}
+              </div>
+              <div className="flex-1">
+                <span className="block font-bold text-[var(--text-primary)]">Exportación Completa</span>
+                <span className="text-[12px] text-[var(--text-secondary)] opacity-70 leading-snug block mt-0.5">Incluye todos los registros clínicos encontrados ({count} resultados).</span>
+              </div>
+            </button>
+
+            <button 
+              onClick={() => setMode('latest')}
+              className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                mode === 'latest' 
+                  ? 'border-[var(--accent-clinical)] bg-[var(--accent-clinical)]/5' 
+                  : 'border-[var(--border-clinical)] hover:border-[var(--accent-clinical)]/30 bg-transparent'
+              }`}
+            >
+              <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center ${mode === 'latest' ? 'border-[var(--accent-clinical)]' : 'border-[var(--border-clinical)]'}`}>
+                {mode === 'latest' && <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent-clinical)]" />}
+              </div>
+              <div className="flex-1">
+                <span className="block font-bold text-[var(--text-primary)]">Solo Última Toma</span>
+                <span className="text-[12px] text-[var(--text-secondary)] opacity-70 leading-snug block mt-0.5">Un único registro clínico por paciente (el más reciente encontrado).</span>
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-8 bg-amber-50 dark:bg-amber-950/20 p-4 rounded-2xl border border-amber-200/50 dark:border-amber-500/20 flex gap-3">
+            <Info size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-amber-800 dark:text-amber-400 font-medium leading-relaxed">
+              La exportación respetará los filtros y búsquedas activas. Los campos multivalor ($) se mantendrán en su formato original.
+            </p>
+          </div>
+
+          <div className="mt-8 flex gap-3">
+            <button 
+              onClick={onClose}
+              className="flex-1 px-6 py-3 rounded-2xl font-bold text-[var(--text-secondary)] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button 
+              onClick={() => onConfirm(mode)}
+              className="flex-1 px-6 py-3 bg-[var(--accent-clinical)] text-white rounded-2xl font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <FileSpreadsheet size={18} />
+              Descargar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Componente Principal ──────────────────────────────────────────────────────
 export default function Results({ results, query, onSelect, onBack }: ResultsProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [showExportModal, setShowExportModal] = useState(false);
   const itemsPerPage = 50;
   
   const totalPages = Math.ceil(results.length / itemsPerPage);
@@ -132,7 +213,8 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     setCurrentPage(1);
   }, [results]);
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (mode: ExportMode) => {
+    setShowExportModal(false);
     if (results.length === 0) return;
     
     // Tarea E2: Generador de Informes / Exportación XLSX Profesional
@@ -144,23 +226,8 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     
     if (fullPatients.length === 0) return;
 
-    // Aplanamiento de datos para formato tabla Excel
-    const exportData: any[] = [];
-    
-    fullPatients.forEach(p => {
-      Object.values(p.tomas).forEach(toma => {
-        toma.registros.forEach(reg => {
-          // Consolidar NHC, Metadatos de la Toma y todos los campos clínicos
-          exportData.push({
-            'NHC': p.nhc,
-            'Identificador_Toma': toma.idToma,
-            'Version_Registro': reg.ordenToma,
-            ...p.demographics,
-            ...reg.data
-          });
-        });
-      });
-    });
+    // Aplanamiento de datos para formato tabla Excel utilizando la utilidad de transformación
+    const exportData = transformPatientsForExport(fullPatients, mode);
 
     // Generación del libro de Excel
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -169,7 +236,7 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
     
     // Generar nombre de archivo basado en la búsqueda
     const safeQuery = query.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const fileName = `queryclin_export_${safeQuery || 'all'}.xlsx`;
+    const fileName = `queryclin_export_${mode}_${safeQuery || 'all'}.xlsx`;
     
     XLSX.writeFile(workbook, fileName);
   };
@@ -197,7 +264,7 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
 
         {results.length > 0 && (
           <button 
-            onClick={handleExportExcel}
+            onClick={() => setShowExportModal(true)}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 border-b-4 border-emerald-800"
             title="Exportar resultados actuales a archivo Excel (.xlsx)"
           >
@@ -206,6 +273,14 @@ export default function Results({ results, query, onSelect, onBack }: ResultsPro
           </button>
         )}
       </div>
+
+      {showExportModal && (
+        <ExportModal 
+          count={results.length} 
+          onClose={() => setShowExportModal(false)} 
+          onConfirm={handleExportExcel} 
+        />
+      )}
 
       {/* Lista de Resultados (Layout de Fila Unica) */}
       <div className="flex flex-col gap-2">

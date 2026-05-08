@@ -1,3 +1,39 @@
+## [2026-05-08]
+### Gobernanza de Seguridad y Privacidad Pública (V5.0.0)
+- **Seguridad y Privacidad**:
+  - **Repositorio Público Hardening**: Implementado un ecosistema completo de gobernanza para la exposición pública del repositorio, incluyendo políticas de límites de seguridad, datos prohibidos y reglas de publicación.
+  - **Estructura de Seguridad (`/security`)**: Creada una suite de documentos de seguridad: `SECURITY.md`, `DATA_POLICY.md`, `REPOSITORY_HARDENING.md`, `SAFE_CONTRIBUTING.md` e `INCIDENT_RESPONSE.md`.
+  - **Gobernanza IA y Humana (`/.ag`)**: Reforzadas las directrices para agentes de IA y colaboradores sobre la naturaleza pública del repositorio y la prohibición absoluta de datos clínicos reales.
+  - **Refuerzo de `.gitignore`**: Bloqueo proactivo de extensiones sensibles (`.xlsx`, `.csv`, `.db`, `.env`, `.bak`) y directorios de exportación/logs para evitar filtraciones accidentales.
+- **`README.md`**:
+  - Actualizado con advertencias críticas sobre el entorno público y links directos a la nueva gobernanza de seguridad.
+- **Plantillas GitHub**:
+  - Implementados `PULL_REQUEST_TEMPLATE.md` y templates de `ISSUE` con checklists de seguridad obligatorios y advertencias de privacidad.
+- **Sincronización de Versión**: Incremento global a **V5.0.0**.
+
+## [2026-05-08]
+### Reestructuración Documental y Gobernanza IA-First (V4.9.0)
+- **Repositorio**:
+  - **Implementación del Ecosistema `/.ag`**: Creado un directorio de gobernanza exclusivo para agentes de IA (Antigravity) que incluye identidad, restricciones, mapa de contexto, políticas de ejecución y anti-alucinación.
+  - **Reorganización de `/docs`**: Reestructurada la documentación técnica en módulos específicos (Arquitectura, Clínica, Ingestión, Búsqueda, UI e Histórico) para mejorar la navegabilidad.
+  - **Sistema de Gestión de Tareas**: Creado el directorio `/tasks` con plantillas y estados (Active/Completed/Archived) para una mejor trazabilidad del trabajo autónomo.
+  - **Endurecimiento de Gobernanza**: Creado el directorio `/governance` con reglas explícitas sobre nomenclatura, documentación, tareas y arquitectura.
+- **`README.md`**:
+  - **Navegación Optimizada**: Rediseñada la sección de documentación para enlazar directamente con el nuevo ecosistema de gobernanza IA.
+- **Sincronización de Versión**: Incremento global a **V4.9.0**.
+
+## [2026-05-08]
+### Exportación Controlada y Consolidación de "Última Toma" (V4.8.0)
+- **`Results.tsx`**:
+  - **Implementación de Exportación Selectiva**: Se ha integrado un nuevo modal de opciones de exportación que permite al usuario elegir entre "Exportación Completa" (todos los registros) y "Solo Última Toma" (un único registro por paciente).
+  - **Refinamiento UX**: Eliminada la terminología técnica (`Id_Toma`, `Orden_Toma`) del modal de exportación para ofrecer una interfaz más limpia y orientada al usuario final.
+  - **Pipeline Unificado**: Se ha refactorizado el flujo de descarga para que ambas modalidades utilicen el mismo motor de generación XLSX, garantizando la estabilidad del sistema.
+- **`exportUtils.ts` (NUEVO)**:
+  - **Consolidación Clínica Determinista**: Implementada la lógica de selección de la "Última Toma" basada exclusivamente en la jerarquía clínica: mayor `Id_Toma` y, en caso de empate, mayor `Orden_Toma`.
+  - **Transformación O(n)**: El proceso de consolidación se realiza en una sola pasada de alta eficiencia, garantizando el rendimiento incluso con datasets de más de 100k registros.
+  - **Integridad de Datos**: Asegurada la preservación exacta de los campos multivalor ($) y los mappings demográficos durante la transformación.
+- **Sincronización de Versión**: Incremento global a **V4.8.0**.
+
 ## [2026-05-07]
 ### Robustez en Ingesta y Resolución de Claves Estructurales (V4.6.1)
 - **`csv.worker.ts`**:

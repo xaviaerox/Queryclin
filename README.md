@@ -11,6 +11,8 @@ El personal médico se ve frecuentemente forzado a lidiar con exportaciones masi
 
 > [!IMPORTANT]
 > **Privacidad Local-First:** Debido a la sensibilidad de los datos médicos, la arquitectura es estrictamente local. Los datos jamás abandonan la computadora; todo el procesamiento se realiza en la base de datos del cliente (IndexedDB) y la memoria del navegador.
+>
+> **Entorno Público:** Este repositorio y su despliegue son **PÚBLICOS**. Bajo ninguna circunstancia se debe subir información clínica real, datos de pacientes o secretos de infraestructura hospitalaria. Todos los ejemplos y datasets incluidos son 100% sintéticos.
 
 ---
 
@@ -144,17 +146,39 @@ La aplicación es accesible en red local compartiendo la IP del host en el puert
 
 ---
 
-## 6. Estructura y Gobernanza
+---
 
-El proyecto está organizado para garantizar el orden y la escalabilidad:
+## 6. Documentación y Gobernanza IA-First
 
--   `scripts/`: Herramientas de generación y diagnóstico técnico.
--   `tests/data/`: Datasets de prueba controlados.
--   `docs/`: Diseños y especificaciones originales.
--   **[DESIGN_SYSTEM.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/DESIGN_SYSTEM.md)**: Sistema de diseño inmutable.
--   **[RULES.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/RULES.md)**: El marco de gobernanza estricta ("Constitución").
--   **[BATTLE_LOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/BATTLE_LOG.md)**: Diario narrativo de desafíos técnicos y soluciones.
--   **[CHANGELOG.md](file:///c:/Users/hrmadm/Documents/GitHub/Queryclin/CHANGELOG.md)**: Registro histórico de modificaciones.
+Este repositorio está optimizado para la colaboración autónoma con agentes de IA (**Antigravity**). La estructura documental garantiza el determinismo, la trazabilidad y la minimización de alucinaciones.
+
+### 🤖 Ecosistema IA (`/.ag`)
+- **[Identity](.ag/identity.md)**: Misión, visión y principios clínicos de Queryclin.
+- **[Constraints](.ag/constraints.md)**: Reglas absolutas e invariantes arquitectónicas.
+- **[Context Map](.ag/context-map.md)**: Mapeo de responsabilidades por módulos.
+- **[Execution Policy](.ag/execution-policy.md)**: Protocolos operativos para agentes IA.
+- **[Anti-Hallucination](.ag/anti-hallucination.md)**: Políticas de prevención de errores y suposiciones.
+- **[Workflows](.ag/workflows.md)**: Flujos de trabajo estandarizados.
+
+### 📂 Centro de Documentación (`/docs`)
+- **[Arquitectura](docs/architecture/)**: Diseños de alto nivel y decisiones técnicas.
+- **[Clínica](docs/clinical/)**: Taxonomía, mappings (`hce-obs.md`) y reglas médicas.
+- **[Ingestión](docs/ingestion/)**: Formatos soportados y lógica de workers.
+- **[Búsqueda](docs/search-engine/)**: Algoritmos BM25 y optimizaciones.
+- **[Interfaz (UI)](docs/ui/)**: Guía de estilo y [Design System](docs/ui/design-system.md).
+- **[Histórico](docs/historical/)**: [Battle Log](docs/historical/battle-log.md) y [Diario de Aprendizaje](docs/historical/learning-diary.md).
+
+### 🛠️ Gestión de Tareas y Cambios
+- **[TASKS.md](TASKS.md)**: Listado maestro de objetivos y fases.
+- **[CHANGELOG.md](CHANGELOG.md)**: Registro cronológico de modificaciones.
+- **[RULES.md](RULES.md)**: Constitución y reglas de gobernanza estricta.
+
+### 🛡️ Gobernanza, Privacidad y Seguridad
+- **[Gobernanza (.ag)](.ag/)**: Políticas de [Repositorio Público](.ag/public-repository-policy.md), [Privacidad](.ag/privacy-policy.md) y [Datos Prohibidos](.ag/forbidden-data.md).
+- **[Seguridad (/security)](security/)**: [Política de Seguridad](security/SECURITY.md), [Hardening de Repositorio](security/REPOSITORY_HARDENING.md) y [Plan de Respuesta a Incidentes](security/INCIDENT_RESPONSE.md).
+- **[Contribución Segura](security/SAFE_CONTRIBUTING.md)**: Reglas para colaboradores externos.
+
+---
 
 > [!IMPORTANT]
-> **Instrucciones para Agentes de IA:** Cualquier asistente de IA que trabaje en este repositorio tiene la obligación de actualizar el `CHANGELOG.md` tras cada modificación y el historial de `TASKS.md`, siguiendo estrictamente las directrices de `RULES.md`.
+> **Instrucciones para Agentes de IA:** Es obligatorio consultar el directorio `.ag/` antes de iniciar cualquier tarea. Toda modificación debe registrarse en `CHANGELOG.md` y actualizar la tarea correspondiente en `/tasks`.

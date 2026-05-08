@@ -52,6 +52,20 @@ tests/
 *.dat
 *.db
 *.sqlite
+*.bak
+*.tmp
+*.env
+exports/
+temp/
+debug/
+logs/
+indexeddb/
+
+# Exceptions for Mock Datasets
+!src/assets/mocks/*.csv
+!src/assets/mocks/*.xlsx
+!src/assets/mocks/*.json
+
 STRESS_TEST_DATA.csv
 HC_Pruebas.txt
 test-results/
