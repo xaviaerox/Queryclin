@@ -71,9 +71,30 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'blue'
     },
     {
-      date: '07 de Mayo, 2026 (Actual)',
+      date: '07 de Mayo, 2026',
       title: 'V4.7.5: Jerarquía Clínica y Gobernanza HCE-OBS',
       description: 'Implementación de la taxonomía jerárquica (Categoría > Subcategoría) y motor de renderizado determinista para obstetricia. Integración de limpieza de títulos dinámica y ubicación contextual de constantes vitales.',
+      icon: <Microscope className="text-emerald-500" />,
+      color: 'emerald'
+    },
+    {
+      date: '08 de Mayo, 2026',
+      title: 'V5.0.0: Gobernanza de Seguridad y Privacidad Pública',
+      description: 'Salto a la madurez industrial. Implementación de un ecosistema completo de gobernanza para repositorios públicos, endurecimiento de seguridad (Local-First) y motor de exportación de "Última Toma" consolidada.',
+      icon: <Shield className="text-indigo-500" />,
+      color: 'indigo'
+    },
+    {
+      date: '08 de Mayo, 2026',
+      title: 'V5.1.0: Optimización Multivariable y Resiliencia',
+      description: 'Rediseño del renderizado de hallazgos ($) como listas expandidas y mejora de la resiliencia en la ingesta mediante normalización proactiva de cabeceras técnicas.',
+      icon: <Zap className="text-orange-500" />,
+      color: 'orange'
+    },
+    {
+      date: '11 de Mayo, 2026 (Actual)',
+      title: 'V5.2.0: Debug Mode y Refinamiento de Taxonomía',
+      description: 'Implementación del Modo Debug persistente, motor de renderizado híbrido (Narrativo/Tabular) y corrección masiva de la taxonomía clínica para una precisión diagnóstica absoluta.',
       icon: <Microscope className="text-emerald-500" />,
       color: 'emerald'
     }
@@ -141,7 +162,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
         <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-          Hoja de Ruta 2026 - Queryclin V4.7.5
+          Hoja de Ruta 2026 - Queryclin V5.2.0
         </div>
     </div>
   );
