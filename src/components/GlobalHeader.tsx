@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, X, ChevronRight, Home as HomeIcon, Sun, Moon, HelpCircle, Database, ArrowLeft, ChevronLeft } from 'lucide-react';
+import { Search, Filter, X, ChevronRight, Home as HomeIcon, Sun, Moon, HelpCircle, Database, ArrowLeft, ChevronLeft, Bug, Eye } from 'lucide-react';
+
 
 interface GlobalHeaderProps {
   query: string;
@@ -23,15 +24,20 @@ interface GlobalHeaderProps {
   onShowAll: () => void;
   onShowHelp: () => void;
   onShowEvolution: () => void;
+  debugMode: boolean;
+  toggleDebug: () => void;
 }
+
 
 export default function GlobalHeader({ 
   query, activeFilters, onSearch, onGoHome, getSuggestions, 
   view, currentIndex, totalResults, onNavigate, onBack,
   activeDate, activeTime,
   theme, toggleTheme, patientCount, version, buildDate,
-  onClearData, onShowAll, onShowHelp, onShowEvolution
+  onClearData, onShowAll, onShowHelp, onShowEvolution,
+  debugMode, toggleDebug
 }: GlobalHeaderProps) {
+
   const [localQuery, setLocalQuery] = useState(query);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -195,12 +201,22 @@ export default function GlobalHeader({
           <button onClick={toggleTheme} className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-clinical)] hover:bg-[var(--accent-clinical)]/5 rounded-full transition-all">
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
+          
+          <button 
+            onClick={toggleDebug}
+            title={debugMode ? "Desactivar Modo Debug" : "Activar Modo Debug"}
+            className={`p-2 rounded-full transition-all ${debugMode ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-[var(--text-secondary)] hover:text-red-500 hover:bg-red-50'}`}
+          >
+            {debugMode ? <Bug size={20} /> : <Eye size={20} />}
+          </button>
+
           <button 
             onClick={onShowHelp}
             className={`p-2 rounded-full transition-all ${view === 'help' ? 'bg-[var(--accent-clinical)] text-white' : 'text-[var(--text-secondary)] hover:text-[var(--accent-clinical)] hover:bg-[var(--accent-clinical)]/5'}`}
           >
             <HelpCircle size={20} />
           </button>
+
           
           <div className="w-px h-6 bg-[var(--border-clinical)] mx-1" />
           

@@ -1,3 +1,65 @@
+## [2026-05-11]
+### Debug Mode y Refinamiento de Taxonomía Clínica (V5.2.0)
+- **`App.tsx`**:
+  - **New Feature**: Implementado el **Modo Debug** persistente en `localStorage`. Permite visualizar campos no mapeados y datos vacíos para auditoría técnica.
+  - **UI/UX**: Añadida la capacidad de alternar el Modo Debug desde la interfaz global.
+- **`HCEView.tsx`**:
+  - **Motor de Renderizado Narrativo**: Introducida la lógica de **Campos Narrativos** (`NARRATIVE_FIELDS`). El sistema ahora discrimina automáticamente entre campos de texto largo (párrafos) y campos tabulares (grids), optimizando drásticamente la densidad de información.
+  - **Deduplicación Inteligente**: Implementado un post-procesador de secciones que elimina duplicados entre categorías raíz y subcategorías, además de normalizar etiquetas (ej: "Grupo y RH" vs "Grupo y RH:").
+  - **Visualización de Grids**: Refinada la lógica de `ClinicalGrid` para mostrar campos vacíos solo cuando el Modo Debug está activo o en secciones técnicas críticas de obstetricia.
+  - **Exclusión de Redundancia**: Ampliada la lista de campos excluidos del cuerpo del informe (aquellos que ya residen en cabecera o control) para evitar ruido visual.
+- **`core/mappings.ts`**:
+  - **Refinamiento de Taxonomía**: Reestructuración masiva de las categorías visuales para `hce_alg`, `hce_mir` y `hce_obs`. 
+  - **Corrección de Erratas**: Corregidos múltiples errores tipográficos en los nombres de campos clínicos (ej: `Bradicarda` -> `Bradicardia`, `Decelearciones` -> `Deceleraciones`, `Test de O,Sullivan` -> `Test de O'Sullivan`).
+  - **Mapping de Obstetricia**: Añadidos campos críticos faltantes en la sección de antecedentes personales y analíticas de `hce_obs`.
+- **Sincronización de Versión**: Salto a **V5.2.0**.
+
+## [2026-05-11]
+### Estabilización y Recuperación tras Interrupción de Conexión (V5.1.1)
+- **`App.tsx`**:
+  - **Fixed**: Eliminado el parámetro no soportado `raw: false` en `XLSX.utils.sheet_to_csv` que causaba errores de compilación TypeScript.
+- **`core/mappings.ts`**:
+  - **Fixed**: Corregida la duplicidad de la clave `HTA (Hipertensión Arterial)` en los alias de cabecera de `hce_mir`, resolviendo el error `TS1117`.
+- **`ingestion/csvStreamer.ts`**:
+  - **Resiliencia**: Actualizado el generador `streamCSV` para ignorar líneas vacías o compuestas únicamente por delimitadores, mejorando la robustez ante archivos CSV mal formateados.
+- **`ingestion/csv.worker.ts`**:
+  - **Typing**: Aplicado casting explícito en la normalización de alias para corregir inferencias de tipo `unknown` en entornos estrictos de TypeScript.
+- **`components/HCEView.tsx` & `Results.tsx`**:
+  - **Typing**: Refinado el tipado de categorías visuales y acceso a tomas clínicas mediante casting seguro, eliminando errores de acceso a propiedades en tipos desconocidos.
+- **Suite de Tests**:
+  - **Estabilización**: Sincronizado el mock de la base de datos en `searchEngine.test.ts` para incluir soporte a múltiples almacenes (`metadata`, `search_index`) y el método `getAllKeys`, restaurando el paso del 100% de los tests unitarios.
+- **Sincronización de Versión**: Incremento a **V5.1.1**.
+
+## [2026-05-08]
+### Optimización de Campos Multivariables y Resiliencia en Ingesta (V5.1.0)
+- **`HCEView.tsx`**:
+  - **Fixed**: Corregida la agrupación de campos multivariables (separados por `$`) en `HCEView.tsx`.
+  - **UI/UX**: Implementada una nueva interfaz de **Lista de Hallazgos Expandida** para campos multivariables. Los resultados se presentan ahora en un contenedor estilizado y permanentemente visible (sin necesidad de clic manual), optimizando la velocidad de lectura clínica.
+  - **Lógica de Agrupación Refinada**: Mejorado el motor de agrupación para manejar correctamente el literal `(Variables)`, tratándolo como un marcador de grupo redundante que se oculta automáticamente si existen otros hallazgos más específicos.
+  - **Importación de Iconografía**: Añadido `ChevronDown` para reforzar la metáfora visual de lista desplegable.
+  - **Clinical Logic**: Refinado el filtrado de valores redundantes como `(Variables)` en grupos multivariables y mejorada la captura de valores no booleanos en estos grupos.
+- **`csv.worker.ts`**:
+  - **Normalización de Cabeceras Proactiva**: Refactorizado `normalizeRecord` para considerar automáticamente todos los campos definidos en `visualCategories` como candidatos para la normalización. Esto permite que el sistema reconozca campos incluso si en el CSV original contienen espacios extra o dos puntos técnicos (`:`), eliminando fallos de "campos no mostrados" por inconsistencias de formato.
+- **Sincronización de Versión**: Incremento a **V5.1.0**.
+
+## [2026-05-08]
+### Desacoplamiento de Filtrado y Visualización HCE (V5.0.2)
+- **`HCEView.tsx`**:
+  - **Historia Clínica Completa**: Eliminada la restricción que ocultaba categorías clínicas no seleccionadas en el filtro de búsqueda. Ahora, el sistema muestra siempre el expediente completo (Antecedentes, Anamnesis, etc.) para proporcionar el contexto clínico total requerido por el usuario.
+  - **Resaltado de Búsqueda Ubicuo**: Activado el resaltado de términos de búsqueda (`shouldHighlight={true}`) en todas las secciones del informe, independientemente de los filtros activos. Esto permite localizar hallazgos relevantes en todo el historial una vez identificado el paciente.
+  - **Sincronización de Tipado**: Actualizada la interfaz `HCEViewProps` para soportar la gama completa de filtros (fechas, servicios, campos) persistidos en el motor de búsqueda.
+- **Sincronización de Versión**: Incremento a **V5.0.2**.
+
+## [2026-05-08]
+### Refinamiento de Mensajes de Procesamiento (V5.0.1)
+- **`App.tsx`**:
+  - **Contextualización de Operaciones**: Implementado un sistema de discriminación de mensajes según el tipo de operación activa (ingesta de datos vs. limpieza de base de datos).
+  - **Mensajes Personalizados**: 
+    - El borrado de datos ahora muestra el título **"Limpiando memoria clínica..."** y una descripción enfocada en la seguridad y privacidad de los datos.
+    - Se ha actualizado el estado visual a **"Borrado Seguro"** para diferenciarlo de la ingesta activa.
+  - **Arquitectura de Estado**: Añadido el estado `processingType` para gestionar de forma robusta la UI durante procesos de larga duración en segundo plano.
+- **Sincronización de Versión**: Incremento a **V5.0.1**.
+
 ## [2026-05-08]
 ### Gobernanza de Seguridad y Privacidad Pública (V5.0.0)
 - **Seguridad y Privacidad**:

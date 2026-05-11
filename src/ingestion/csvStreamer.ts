@@ -54,7 +54,7 @@ export function* streamCSV(csvText: string, forcedDelimiter?: string): Generator
       currentRow.push(currentVal.trim());
       currentVal = '';
       
-      if (currentRow.length > 0) {
+      if (currentRow.length > 0 && currentRow.some(val => val.length > 0)) {
         // Validación: Si la fila tiene menos columnas que el header, el sistema debe saberlo
         const record: any = {};
         for (let j = 0; j < headers.length; j++) {

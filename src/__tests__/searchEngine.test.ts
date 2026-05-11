@@ -3,7 +3,16 @@ import { searchEngine } from '../lib/searchEngine';
 import { HCEData } from '../core/types';
 
 // Mock de la base de datos
-const mockDb: Record<string, any> = {};
+const mockSearchIndex: Record<string, any> = {};
+const mockMetadata: Record<string, any> = {
+  skeleton_fragments: 1,
+  skeletons_frag_0: { 
+    '123': { nhc: '123', tomasMeta: { 'T1': { service: 'urgencias', date: 0 } }, services: ['urgencias'], dates: { start: 0, end: 100 } },
+    '456': { nhc: '456', tomasMeta: { 'T1': { service: 'urgencias', date: 50 } }, services: ['urgencias'], dates: { start: 50, end: 150 } }
+  },
+  document_count: 2,
+  term_fragment_counts: {}
+};
 
 vi.mock('../storage/indexedDB', () => ({
   db: {
@@ -13,38 +22,27 @@ vi.mock('../storage/indexedDB', () => ({
       patients: 'patients'
     },
     saveBatch: vi.fn(async (store, items) => {
-      if (store === 'search_index') {
-        Object.assign(mockDb, items);
-      }
+      if (store === 'search_index') Object.assign(mockSearchIndex, items);
+      if (store === 'metadata') Object.assign(mockMetadata, items);
       return Promise.resolve();
     }),
     getFromStore: vi.fn(async (store, key) => {
-      if (store === 'search_index') return mockDb[key];
-      if (key === 'skeleton_fragments') return 1;
-      if (key === 'skeletons_frag_0') return { 
-        '123': { nhc: '123', services: ['urgencias'], dates: { start: 0, end: 100 } },
-        '456': { nhc: '456', services: ['urgencias'], dates: { start: 50, end: 150 } }
-      };
-      if (key === 'document_count') return 2;
+      if (store === 'search_index') return mockSearchIndex[key];
+      if (store === 'metadata') return mockMetadata[key];
       return null;
     }),
     getBatch: vi.fn(async (store, keys) => {
       const results: Record<string, any> = {};
+      const target = store === 'search_index' ? mockSearchIndex : mockMetadata;
       keys.forEach(key => {
-        if (store === 'search_index' && mockDb[key]) {
-          results[key] = mockDb[key];
-        }
-        // Para esqueletos y otros metadatos
-        if (store === 'metadata') {
-          if (key === 'skeleton_fragments') results[key] = 1;
-          if (key === 'skeletons_frag_0') results[key] = { 
-            '123': { nhc: '123', services: ['urgencias'], dates: { start: 0, end: 100 } },
-            '456': { nhc: '456', services: ['urgencias'], dates: { start: 50, end: 150 } }
-          };
-          if (key === 'document_count') results[key] = 2;
-        }
+        if (target[key] !== undefined) results[key] = target[key];
       });
       return results;
+    }),
+    getAllKeys: vi.fn(async (store) => {
+      if (store === 'search_index') return Object.keys(mockSearchIndex);
+      if (store === 'metadata') return Object.keys(mockMetadata);
+      return [];
     }),
     open: vi.fn()
   }
@@ -80,7 +78,17 @@ describe('SearchEngine', () => {
 
   beforeEach(async () => {
     // Limpiar mock DB antes de cada test
-    for (const key in mockDb) delete mockDb[key];
+    for (const key in mockSearchIndex) delete mockSearchIndex[key];
+    Object.assign(mockMetadata, {
+      skeleton_fragments: 1,
+      skeletons_frag_0: { 
+        '123': { nhc: '123', tomasMeta: { 'T1': { service: 'urgencias', date: 0 } }, services: ['urgencias'], dates: { start: 0, end: 100 } },
+        '456': { nhc: '456', tomasMeta: { 'T1': { service: 'urgencias', date: 50 } }, services: ['urgencias'], dates: { start: 50, end: 150 } }
+      },
+      document_count: 2,
+      term_fragment_counts: {}
+    });
+    
     await searchEngine.buildIndex(sampleData);
     await searchEngine.loadIndex(sampleData);
   });

@@ -52,7 +52,7 @@ function ResultRow({ res, onSelect }: { key?: any; res: SearchResult, onSelect: 
   let displayValue = demographics['PROCESO'] || demographics['ECPROCESO2'] || demographics['EC_Proceso2'];
   
   if (!displayValue && patient) {
-    const firstToma = Object.values(patient.tomas)[0];
+    const firstToma = Object.values(patient.tomas)[0] as any;
     if (firstToma) {
       displayValue = firstToma.latest.data['EC_Proceso2'] || firstToma.latest.data['EC_PROCESO2'];
     }

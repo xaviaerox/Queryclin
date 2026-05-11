@@ -134,6 +134,11 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A27. Interfaz Contextual Unificada**: Rediseño del GlobalHeader con alineación de buscador al informe y metadatos de versión.
 - [x] **Logro**: La interfaz alcanza un nivel de madurez profesional; la navegación es 100% contextual y el área de trabajo clínica está optimizada para la lectura de datos sin distracciones.
 
+## 🟢 FASE 24: Desacoplamiento de Filtros y Visualización (V5.0.2 ✅)
+- [x] **U30. Visualización de Historia Completa**: Eliminada la restricción de categorías en el visor HCE para garantizar el contexto clínico total.
+- [x] **U31. Resaltado Global de Búsqueda**: Activado el resaltado de términos en todas las secciones del expediente, independientemente de los filtros de búsqueda activos.
+- [x] **Logro**: Se cumple la premisa de "Buscar en Categoria, Visualizar en Completo", optimizando la navegación sin perder la integridad de la historia clínica.
+
 ---
 ## 🟡 PRÓXIMOS OBJETIVOS (2026+)
 - [ ] **E11. Motor Semántico Híbrido**: Integración de embeddings locales con Transformers.js.
@@ -163,7 +168,27 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **G3. Plantillas de Repositorio Público**: Desarrollo de templates de Pull Request e Issues con advertencias de privacidad.
 - [x] **G4. Refuerzo de .gitignore**: Bloqueo estricto de extensiones sensibles y definición de excepciones para mocks.
 - [x] **G5. Sanitización de Documentación**: Actualización del README y manuales para alineación con principios privacy-first.
+- [x] **G6. Refinamiento de Mensajes de Sistema**: Implementación de mensajes contextuales diferenciados para ingesta y borrado seguro de datos (V5.0.1).
 - [x] **Logro**: Queryclin se transforma en un proyecto de código abierto profesional, seguro para su exposición pública y resistente a filtraciones de datos clínicos.
+
+## 🟢 FASE 25: Optimización Multivariable y Resiliencia en Ingesta (V5.1.0 — ACTUAL 🚀)
+- [x] **U32. Interfaz de Hallazgos Expandida**: Implementado el renderizado de campos `$` como listas permanentemente visibles en un contenedor estilizado.
+- [x] **A28. Lógica de Agrupación Inteligente**: Refinada la gestión de valores redundantes como `(Variables)` y captura exhaustiva de hallazgos no booleanos.
+- [x] **A29. Normalización de Cabeceras Proactiva**: Implementada tolerancia automática a variaciones de formato (espacios, colones) en el mapeo de campos durante la ingesta.
+- [x] **Logro**: Mejora crítica en la ergonomía de visualización para obstetricia y ginecología (HCE-OBS), garantizando que ningún dato se pierda por inconsistencias de formato en el origen.
+
+## 🟢 FASE 26: Estabilización de Entorno y Aseguramiento de Tests (V5.1.1 — ACTUAL 🚀)
+- [x] **D35. Recuperación Post-Interrupción**: Diagnóstico y corrección de errores de sintaxis y tipado TypeScript (TS1117, TS2339) en `App.tsx`, `HCEView.tsx` y `Results.tsx`.
+- [x] **D36. Refactorización de Resiliencia en Ingesta**: Corrección de la lógica de líneas vacías en `streamCSV` para asegurar la integridad de los datasets importados.
+- [x] **D37. Estabilización de Suite de Tests**: Refactorización del mock de base de datos en `searchEngine.test.ts` para soportar la arquitectura de múltiples almacenes de la V5.
+- [x] **Logro**: Restauración total de la integridad del código y de la suite de pruebas automatizadas, garantizando un entorno de desarrollo libre de regresiones.
+
+## 🟢 FASE 27: Debug Mode y Refinamiento de Taxonomía Clínica (V5.2.0 — ACTUAL 🚀)
+- [x] **U35. Modo Debug Persistente**: Implementación de toggle de depuración para visualización de campos no mapeados y datos vacíos.
+- [x] **U36. Motor de Renderizado Híbrido**: Discriminación automática entre campos narrativos (texto libre) y tabulares (grids) para mejorar la densidad visual.
+- [x] **A32. Post-Procesamiento de Secciones**: Lógica de deduplicación de campos y normalización de etiquetas en el visor HCE.
+- [x] **A33. Refinamiento de Mappings**: Corrección de erratas técnicas y reestructuración de categorías visuales en `FORMS` (MIR, ALG, OBS).
+- [x] **Logro**: Queryclin alcanza una madurez visual y técnica superior, permitiendo auditorías de datos precisas y una navegación clínica libre de redundancias.
 
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

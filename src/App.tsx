@@ -53,6 +53,7 @@ export default function App() {
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingType, setProcessingType] = useState<'ingest' | 'clear' | null>(null);
   const [progressPercent, setProgressPercent] = useState(0);
   const [patientCount, setPatientCount] = useState<number>(0);
   const [activeFormId, setActiveFormId] = useState<string>('');
@@ -62,6 +63,11 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('queryclin_theme') as 'light' | 'dark') || 'light';
   });
+
+  const [debugMode, setDebugMode] = useState<boolean>(() => {
+    return localStorage.getItem('queryclin_debug') === 'true';
+  });
+
 
   useEffect(() => {
     const initData = async () => {
@@ -111,7 +117,13 @@ export default function App() {
     localStorage.setItem('queryclin_theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    localStorage.setItem('queryclin_debug', String(debugMode));
+  }, [debugMode]);
+
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  const toggleDebug = () => setDebugMode(prev => !prev);
+
 
   const handleFileUpload = async (file: File, formId: string, config?: { fileType: string, delimiter: string }) => {
     const mapping = FORMS.find(f => f.id === formId);
@@ -121,6 +133,7 @@ export default function App() {
     }
 
     setIsProcessing(true);
+    setProcessingType('ingest');
     setDebugLogs([]);
     setProgressPercent(0);
 
@@ -148,7 +161,7 @@ export default function App() {
           }
         }
         
-        text = XLSX.utils.sheet_to_csv(worksheet, { FS: config?.delimiter || '|', raw: false, dateNF: 'dd/mm/yyyy hh:mm:ss' });
+        text = XLSX.utils.sheet_to_csv(worksheet, { FS: config?.delimiter || '|', dateNF: 'dd/mm/yyyy hh:mm:ss' });
         console.log('[App] Archivo Excel convertido a CSV para procesamiento. Errores rescatados.');
 
 
@@ -197,6 +210,7 @@ export default function App() {
           setActiveFormId(formId);
           setData({ patients: {} }); 
           setIsProcessing(false);
+          setProcessingType(null);
           worker.terminate();
 
           // Cargamos el índice pesado en el siguiente tick
@@ -212,6 +226,7 @@ export default function App() {
         } else if (type === 'debug_error') {
           setDebugLogs(event.data.logs);
           setIsProcessing(false);
+          setProcessingType(null);
           worker.terminate();
         } else if (type === 'debug_warn') {
           // No aborta, solo acumula los logs
@@ -220,6 +235,7 @@ export default function App() {
           console.error("Error en el worker:", message);
           alert("Error crítico durante la ingesta: " + message);
           setIsProcessing(false);
+          setProcessingType(null);
           worker.terminate();
         }
       };
@@ -228,11 +244,13 @@ export default function App() {
       worker.onerror = (err) => {
         console.error("Fallo crítico del worker:", err);
         setIsProcessing(false);
+        setProcessingType(null);
         worker.terminate();
       };
     } catch (err: any) {
       console.error("Fallo crítico en handleFileUpload:", err);
       setIsProcessing(false);
+      setProcessingType(null);
       alert("Error preparando el archivo para ingesta: " + err.message);
     }
   };
@@ -363,6 +381,8 @@ export default function App() {
     if (window.confirm("¿Está seguro de que desea eliminar todos los registros clínicos de la memoria? Esta acción no se puede deshacer y requerirá volver a importar el archivo CSV.")) {
       try {
         setIsProcessing(true);
+        setProcessingType('clear');
+        setProgressPercent(0);
         await db.clear();
         searchEngine.startIndexing(); // Reinicia el estado interno del buscador
         setData(null);
@@ -371,11 +391,13 @@ export default function App() {
         setSearchResults([]);
         setView('home');
         setIsProcessing(false);
+        setProcessingType(null);
         console.log("[UI] Estado reseteado tras limpieza de DB.");
       } catch (err) {
         console.error("Error al limpiar la base de datos:", err);
         alert("No se pudo limpiar la base de datos completamente.");
         setIsProcessing(false);
+        setProcessingType(null);
       }
     }
   };
@@ -447,7 +469,10 @@ export default function App() {
           onShowAll={() => handleSearch('')}
           onShowHelp={() => setView('help')}
           onShowEvolution={() => setView('evolution')}
+          debugMode={debugMode}
+          toggleDebug={toggleDebug}
         />
+
 
 
         <main className={`flex-1 overflow-y-auto relative bg-[var(--bg-clinical)] transition-all duration-300`}>
@@ -456,8 +481,14 @@ export default function App() {
               <div className="w-20 h-20 border-4 border-[var(--accent-clinical)] border-t-transparent rounded-full animate-spin mb-8 shadow-[0_0_30px_rgba(var(--accent-clinical-rgb),0.2)]"></div>
               
               <div className="max-w-md w-full space-y-6 text-center">
-                <h2 className="text-2xl font-black text-[var(--text-primary)]">Procesando registros médicos...</h2>
-                <p className="text-[var(--text-secondary)] font-medium">Queryclin está organizando e indexando la base de datos local para permitir la búsqueda instantánea de los pacientes importados.</p>
+                <h2 className="text-2xl font-black text-[var(--text-primary)]">
+                  {processingType === 'clear' ? 'Limpiando memoria clínica...' : 'Procesando registros médicos...'}
+                </h2>
+                <p className="text-[var(--text-secondary)] font-medium">
+                  {processingType === 'clear' 
+                    ? 'Eliminando de forma segura todos los registros e índices de la sesión actual. Este proceso asegura la privacidad de los datos.'
+                    : 'Queryclin está organizando e indexando la base de datos local para permitir la búsqueda instantánea de los pacientes importados.'}
+                </p>
                 
                 {/* Barra de Progreso Evolutiva */}
                 <div className="w-full bg-[var(--surface-clinical)] h-4 rounded-full border border-[var(--border-clinical)] overflow-hidden shadow-inner p-1">
@@ -468,7 +499,7 @@ export default function App() {
                 </div>
                 
                 <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60">
-                  <span>Estado: Ingesta Activa</span>
+                  <span>Estado: {processingType === 'clear' ? 'Borrado Seguro' : 'Ingesta Activa'}</span>
                   <span>{progressPercent}% Completado</span>
                 </div>
               </div>
@@ -551,7 +582,9 @@ export default function App() {
                 setSelectedVersionIndex(0);
               }}
               onBack={() => setView('results')}
+              debugMode={debugMode}
             />
+
           )}
           {view === 'help' && (
             <Help onBack={() => setView('home')} />

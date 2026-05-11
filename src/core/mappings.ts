@@ -47,37 +47,39 @@ export const FORMS: FormMapping[] = [
       reacciones: 'Antecedentes de alergia:'
     },
     visualCategories: {
-      'CABECERA': [
-        'N.H.C', 'Cipa', 'EC_Sexo', 'Fecha de Nacimiento', 'DEMOG-Código postal', 
-        'EC_Ciudad_Paciente', 'EC_Estado_Civil', 'Unidad de Enfermería'
+      '01-ANTECEDENTES': [
+        'Antecedentes Familiares Generales', 
+        'Antecedentes Personales Generales', 
+        'Antecedentes Quirúrgicos Generales', 
+        'Motivo de la consulta', 
+        'Tratamiento previo'
       ],
-      'CONTROL': [
-        'Id_Toma', 'Orden_Toma', 'EC_Fecha_Toma', 'EC_Proceso', 'EC_Proceso2', 
-        'EC_Usuario_Creador', 'Ámbito', 'Contador'
+
+      '02-ANAMNESIS Y EXPLORACIÓN': [
+        'Enfermedad actual', 'Exploración física'
       ],
-      'ANTECEDENTES': [
-        'Antecedentes de alergia:', 'Antecedentes Familiares Generales', 
-        'Antecedentes Personales Generales', 'Antecedentes Quirúrgicos Generales', 
-        'Motivo de la consulta', 'Tratamiento previo'
-      ],
-      'ANAMNESIS Y EXPLORACIÓN': [
-        'Enfermedad actual', 'Exploración física', 'Observaciones', 'Peso:', 'Talla:', 
-        'IMC:', 'Valoración IMC', 'Superficie Corporal', 'T', 
+      '02-ANAMNESIS Y EXPLORACIÓN > CONSTANTES': [
+        'Peso:', 'Talla:', 'IMC:', 'Valoración IMC', 'Superficie Corporal', 'T', 
         'Grupo sanguineo y RH', 'Transfusiones'
       ],
-      'DIAGNÓSTICO Y TRATAMIENTO': [
+      '02-ANAMNESIS Y EXPLORACIÓN > NOTAS': [
+        'Observaciones'
+      ],
+
+      '03-DIAGNÓSTICO Y TRATAMIENTO': [
         'Diagnóstico', 'Tratamiento', 'Recomendaciones', 'Proxima revisión', 'Recetas prescritas'
       ],
-      'RESULTADOS PRUEBAS': [
+      '04-RESULTADOS PRUEBAS': [
         'Resultado analítica', 'Resultado anatomía patológica', 'Resultado radiodiagnóstico', 
         'Otras pruebas realizadas', 'Pruebas solicitadas'
       ],
-      'PROCESO HOSP/CEX': [
+      '05-PROCESO HOSP/CEX': [
         'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 
         'Motivo de ingreso', 'Resumen de evolución', 'Revisiones posteriores', 
         'Tipo de Ingreso:', 'Tratamiento recomendado', 'Evolución (CEX)'
       ]
     }
+
   },
   {
     id: 'hce_mir',
@@ -93,7 +95,7 @@ export const FORMS: FormMapping[] = [
       'Años desde que dejo de fumar': ['Años desde que dejo de fumar', 'Años desde que dejó de fumar'],
       'Años fumando': ['Años fumando', 'Años Fumando'],
       'Cigarrillos al dia': ['Cigarrillos al dia', 'Cigarrillos al día'],
-      'HTA (Hipertensión Arterial)': ['HTA (Hipertensión Arterial)', 'HTA', 'Hipertension Arterial'],
+      'HTA (Hipertensión Arterial)': ['HTA (Hipertensión Arterial)', 'HTA', 'Hipertensión Arterial', 'HTA:', 'Hipertensión Arterial:', 'Hipertension Arterial'],
       'IMC:': ['IMC:', 'IMC'],
       'Peso:': ['Peso:', 'Peso'],
       'Talla:': ['Talla:', 'Talla'],
@@ -116,7 +118,6 @@ export const FORMS: FormMapping[] = [
       'O2 Hb': ['O2 Hb', 'Oxihemoglobina (O2 Hb)', 'O2 Hb:', 'Oxihemoglobina', 'Saturación O2', 'Saturación O2:'],
       'Diabetes Mellitus': ['Diabetes Mellitus', 'Diabetes mellitus', 'Diabetes Mellitus:', 'Diabetes mellitus:'],
       'Detalles DM': ['Detalles DM', 'Detalles Diabetes Mellitus', 'Detalles Diabetes mellitus', 'Detalles DM:', 'Detalles Diabetes Mellitus:'],
-      'HTA (Hipertensión Arterial)': ['HTA (Hipertensión Arterial)', 'HTA', 'Hipertensión Arterial', 'HTA:', 'Hipertensión Arterial:'],
       'Detalles Hipertensión Arterial': ['Detalles Hipertensión Arterial', 'Detalles HTA', 'Detalles Hipertensión Arterial:', 'Detalles HTA:'],
       'Dislipemia': ['Dislipemia', 'Dislipemia:', 'Dislipidemia', 'Dislipidemia:'],
       'Detalles Dislipemia': ['Detalles Dislipemia', 'Detalles Dislipidemia', 'Detalles Dislipemia:', 'Detalles Dislipidemia:'],
@@ -133,33 +134,38 @@ export const FORMS: FormMapping[] = [
       unidadEnfermeria: 'Unidad de Enfermería'
     },
     visualCategories: {
-      'ANTECEDENTES': [
+      '01-ANTECEDENTES': [
         'Antecedentes Familiares Generales', 'Antecedentes MIR:', 'Antecedentes Personales Generales', 
         'Antecedentes Quirúrgicos Generales', 'Tratamiento Previo'
       ],
-      'ANAMNESIS Y EXPLORACION': [
-        'Enfermedad Actual', 'Exploración Física', 'Observaciones', 'Situación Basal (Otros)', 'Situación Basal', 'Otras Exploraciones',
-        // --- BLOQUE CRÍTICO: CONSTANTES ---
+
+      '02-ANAMNESIS Y EXPLORACION': [
+        'Enfermedad Actual', 'Exploración Física'
+      ],
+      '02-ANAMNESIS Y EXPLORACION > CONSTANTES': [
         'IMC:', 'Valoración IMC', 'Diabetes Mellitus', 'Detalles DM', 'O2 Hb', 'Hábito Enólico', 'Hábitos Tóxicos',
         'Peso:', 'Superficie Corporal', 'FC', 'HTA (Hipertensión Arterial)', 'Detalles Hipertensión Arterial', 'Años desde que dejo de fumar', 'Cigarrillos al dia', 'Hábito Tabáquico',
         'Grupo Sanguíneo', 'Transfusiones', 'Perímetro abdominal', 'Dislipemia', 'Detalles Dislipemia', 'Paquetes año',
         'Talla:', 'Tmp', 'PAD', 'PAS', 'Grado NYHA'
       ],
-      'DIAGNOSTICO Y TTO': [
+      '02-ANAMNESIS Y EXPLORACION > OBSERVACIONES': [
+        'Observaciones', 'Situación Basal (Otros)', 'Situación Basal', 'Otras Exploraciones'
+      ],
+
+      '03-DIAGNOSTICO Y TTO': [
         'Diagnóstico', 'Evolución (CEX)', 'Próxima revisión', 'Recomendaciones', 'Tratamiento'
       ],
-      'RESULTADOS PRUEBAS': [
+      '04-RESULTADOS PRUEBAS': [
         'Otras Pruebas Realizadas', 'Recetas Prescritas', 'Resultado Analítica', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
       ],
-      'PROCESO HOSP/CEX': [
+      '05-PROCESO HOSP/CEX': [
         'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 'Motivo de Consulta', 
         'Motivo de Ingreso', 'Resumen de evolución', 'Revisiones posteriores', 'Tipo de Ingreso:', 
         'Tratamiento crónico', 'Tratamiento recomendado'
-      ],
-      'OTROS': [
-        'EC_Estado_Civil', 'Pruebas solicitadas'
       ]
     }
+
+
   },
   {
     id: 'hce_obs',
@@ -202,7 +208,7 @@ export const FORMS: FormMapping[] = [
     },
     visualCategories: {
       '01-ANTECEDENTES': [
-        'Ámbito', 'Edad', 'Edad Toma', 'Finalidad de la toma:', 'Reacciones Adversas a fármacos'
+        'Ámbito', 'Edad', 'Edad Toma', 'Finalidad de la toma:', 'Reacciones Adversas a fármacos', 'Observaciones'
       ],
       '01-ANTECEDENTES > ANTECEDENTES PERSONALES': [
         'Alcohol durante el embarazo?', 'Antecedentes Familiares Generales', 'Antecedentes Personales Generales',
@@ -210,12 +216,15 @@ export const FORMS: FormMapping[] = [
         'Dislipemia', 'Fumadora durante el embarazo?', 'Grado NYHA', 'Grupo Sanguíneo:', 'Grupo y RH', 'Grupo y RH:',
         'Hábito Enólico', 'Hábito Tabáquico', 'Hábitos tóxicos', 'Hábitos tóxicos gestación', 'HTA (Hipertensión Arterial)',
         'Motivos Transfusiones', 'Procesos Ginecológicos Anteriores:', 'Situación basal', 'Situación Basal (Otros)',
-        'Tipo de HTA', 'Transfusiones', 'Tratamiento crónico'
+        'Tipo de HTA', 'Transfusiones', 'Tratamiento crónico',
+        'Años desde que dejo de fumar', 'Años desde que dejó de fumar', 'Años fumando', 'Cigarrillos al dia', 'Cigarrillos al día', 'Paquetes año'
       ],
+
       '01-ANTECEDENTES > ANTECEDENTES OBS': [
         'Abortos:', 'Cesáreas:', 'Ectópicos:', 'Fórmula Menstrual', 'Fórmula Obstétrica', 'Gemelares:', 'Gestaciones:',
-        'Menarquia', 'Observaciones', 'Partos:', 'Prematuros:'
+        'Menarquia', 'Partos:', 'Prematuros:'
       ],
+
       '02-ANAMNESIS Y EXPLORACION': [
         'Anamnesis', 'Motivo de consulta:'
       ],
@@ -267,22 +276,26 @@ export const FORMS: FormMapping[] = [
       ],
       '03-ANALITICAS > BIOQUIMICA': [
         'Á.Úrico', 'Bilirrubina Ind.', 'Bilirrubina Total', 'Curva de Glucemia', 'Fe', 'Ferritina',
-        'Fosfatasa alcalina', 'Gamma GT', 'Glucemia Basal', 'GOT', 'GTP', 'HB Glicosilada',
-        'Perfil glucémico$Hiperglucemias leves', 'Perfil glucémico$Hiperglucemias moderadas',
+        'Fosfatasa alcalina', 'Gamma GT', 'Glucemia Basal', 'GOT', 'GTP', 'HB Glicosilada', 'Á. Úrico', 'Á.Úrico',
+        'Perfil glucémico$Hiperglucemias leves', 'Perfil glucémico$Hiperglucemias moderada', 'Perfil glucémico$Hiperglucemias moderadas',
         'Perfil glucémico$Hiperglucemias severa', 'Perfil glucémico$Hipoglucemias',
         'Perfil glucémico$Normal', 'Perfil glucémico$Patológico', 'Saturación de transferrina',
-        'Test de O,Sullivan', 'Trasnferrina'
+        'Test de O,Sullivan', 'Transferrina'
+
       ],
       '03-ANALITICAS > COAGULACION': [
-        ' %INR', 'Actividad', 'Fibrinógeno', 'PTTA', 'T. Protrombinas'
+        '%INR', 'Actividad', 'Fibrinógeno', 'PTTA', 'T. Protrombinas'
       ],
+
       '03-ANALITICAS > ORINA': [
         'Anormales', 'Cociente albumina creatinina en muestra de orina aislada', 'Germen',
-        'Microalbuminuria', 'Nº de colonias, 10 elevado a', 'Sedimento', 'Sensibilidad Antiibióticos', 'Urocultivo'
+        'Microalbuminuria', 'Nº de colonias, 10 elevado a', 'Sedimento', 'Sensibilidad Antibióticos', 'Urocultivo'
       ],
+
       '03-ANALITICAS > SEROLOGIAS': [
-        'Hbs Ag', 'Otras', 'RPR', 'Rubeola', 'Toxoplasmosis', 'TPHA', 'VHC', 'VIH'
+        'Hbs Ag', 'Hbs  Ag', 'Otras', 'RPR', 'Rubeola', 'Toxoplasmosis', 'TPHA', 'VHC', 'VIH'
       ],
+
       '03-ANALITICAS > SCREENING ANEUPLODIAS': [
         'Observaciones:', 'Riesgo por Screening 2º Trimestre:', 'Riesgo por Screening Combinado:', 'SCREENING ANEUPLODIAS'
       ],
@@ -290,12 +303,13 @@ export const FORMS: FormMapping[] = [
         'Otras Analíticas', 'Resumen Analítica'
       ],
       '04-PRUEBAS Y RESULTADOS': [
-        'FCF$(Variables)', 'FCF$Bradicarda basal grave', 'FCF$Bradicarda basal leve', 'FCF$Bradicarda basal moderada',
+        'FCF$(Variables)', 'FCF$Bradicardia basal grave', 'FCF$Bradicardia basal leve', 'FCF$Bradicardia basal moderada',
         'FCF$Deceleración prolongada (calderon)', 'FCF$Deceleraciones tipo I', 'FCF$Deceleraciones tipo II',
-        'FCF$Decelearciones tipo III (Variables)', 'FCF$I (Variables)', 'FCF$Patrón no reactivo', 'FCF$Patrón reactivo',
+        'FCF$Deceleraciones tipo III (Variables)', 'FCF$I (Variables)', 'FCF$Patrón no reactivo', 'FCF$Patrón reactivo',
         'FCF$Ritmo Comprimido', 'FCF$Ritmo Saltatorio', 'FCF$Ritmo Silente', 'FCF$Taquicardia grave', 'FCF$Taquicardia leve',
         'FCF$Taquicardia moderada', 'Frecuencia de contracciones', 'Intensidad Dinámica', 'Tipo de Dinámica'
       ],
+
       '04-PRUEBAS Y RESULTADOS > PRUEBA DE OXICTOCINA': [
         'Prueba Oxitocina'
       ],

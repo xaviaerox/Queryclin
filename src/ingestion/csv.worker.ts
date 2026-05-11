@@ -66,10 +66,10 @@ self.onmessage = async (e: MessageEvent) => {
 
             // Verificar si este key original es un alias de algo mapeado
             if (mapping.headerAliases) {
-                return !Object.entries(mapping.headerAliases).some(([canonical, aliases]) => {
+                return !Object.entries(mapping.headerAliases as any).some(([canonical, aliases]) => {
                     const isMappedCanonical = allMappedKeys.includes(canonical);
                     if (!isMappedCanonical) return false;
-                    return aliases.some(a => a.toLowerCase().trim() === k.toLowerCase().trim().replace(/:$/, ''));
+                    return (aliases as string[]).some(a => a.toLowerCase().trim() === k.toLowerCase().trim().replace(/:$/, ''));
                 });
             }
             
@@ -237,15 +237,21 @@ async function processBatch(records: any[], currentTotal: number, mapping: FormM
  */
 function normalizeRecord(record: any, mapping: FormMapping): any {
   const normalized: any = {};
-  if (mapping.headerAliases) {
-    for (const [canonical, aliases] of Object.entries(mapping.headerAliases)) {
-      const foundKey = Object.keys(record).find(k => 
-        aliases.some(a => {
-          const cleanA = a.toLowerCase().trim();
-          const cleanK = k.toLowerCase().trim().replace(/:$/, '');
-          return cleanA === cleanK;
-        })
-      );
+  if (mapping.headerAliases || mapping.visualCategories) {
+    const allCanonical = new Set([
+      ...Object.keys(mapping.headerAliases || {}),
+      ...Object.values(mapping.visualCategories || {}).flat()
+    ]);
+
+    for (const canonical of allCanonical) {
+      const aliases = (mapping.headerAliases && mapping.headerAliases[canonical]) || [];
+      const foundKey = Object.keys(record).find(k => {
+        const cleanK = k.toLowerCase().trim().replace(/:$/, '');
+        // Match canonical name itself
+        if (canonical.toLowerCase().trim().replace(/:$/, '') === cleanK) return true;
+        // Match aliases
+        return aliases.some(a => a.toLowerCase().trim() === cleanK);
+      });
       if (foundKey) normalized[canonical] = record[foundKey];
     }
   }

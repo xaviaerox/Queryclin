@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V4.7.5)
+# Queryclin — HCE Intelligence Dashboard (V5.2.0) 🚀
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -128,10 +128,16 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Interfaz Contextual Unificada**: Rediseño del GlobalHeader con alineación de buscador al informe y metadatos de versión.
 - **Sincronización de Estado**: Elevación de navegación a App.tsx para coherencia total.
 
-### Fase 22: Gobernanza HCE-OBS y Automatización (V4.7.5 — ACTUAL 🚀)
+### Fase 22: Gobernanza HCE-OBS y Automatización (V4.7.5 ✅)
 - **Jerarquía Clínica**: Motor de renderizado de dos niveles (Categoría > Subcategoría) para obstetricia.
 - **Automatización de Build**: Integración de versionado dinámico y fecha de compilación automática.
 - **Gobernanza Visual**: Establecimiento de un Sistema de Diseño inmutable para proteger la identidad de marca.
+
+### Fase 23: Gobernanza de Seguridad y Privacidad Pública (V5.0.0 — ACTUAL 🚀)
+- **Estructura de Gobernanza (.ag)**: Políticas de repositorio público, privacidad y límites de seguridad para IA.
+- **Hardening de Seguridad (/security)**: Guías de contribución segura, respuesta a incidentes y política de datos PHI.
+- **Exportación de "Última Toma"**: Motor de consolidación determinista para informes clínicos actuales.
+- **Sincronización Global**: Salto a V5.0.0 con blindaje total para exposición pública.
 
 ---
 
