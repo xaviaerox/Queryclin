@@ -1,6 +1,6 @@
 import { HCEData, RegistroToma } from '../core/types';
 import { db } from '../storage/indexedDB';
-import { globalTokenizer } from './Tokenizer';
+import { SemanticProcessor } from '../core/search/SemanticProcessor';
 
 // ============================================================
 // OKAPI BM25 — Parámetros de ajuste (V3.9.0)
@@ -88,7 +88,7 @@ export class QueryEngine {
       .slice(0, 8);
   }
 
-  public async search(query: string, filters?: { dateRange?: [string, string], service?: string }): Promise<SearchResult[]> {
+  public async search(query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }): Promise<SearchResult[]> {
     const rawTerms = query.split(/\s+/).filter(t => t.length > 0);
     const must: string[] = [];
     const mustNot: string[] = [];
@@ -102,12 +102,11 @@ export class QueryEngine {
       
       if (termUpper === 'AND' || termUpper === 'OR' || termUpper === 'NOT') continue;
 
-      // MEJORA V3.9.0: Usar expandQuery en lugar de tokenize para capturar
-      // sinónimos clínicos y frases compuestas en la consulta del usuario.
-      const tokens = globalTokenizer.expandQuery(originalTerm)
-        .filter(t => !globalTokenizer.QUERY_STOPWORDS.has(t));
-      const compact = originalTerm.toLowerCase().replace(/[^a-z0-9]/g, '');
+      // MEJORA V3.9.0: Usar SemanticProcessor
+      const rawTokens = SemanticProcessor.tokenize(originalTerm);
+      const tokens = rawTokens.length > 1 ? [rawTokens[rawTokens.length - 1]] : rawTokens; // Tomar el canónico si existe
       
+      const compact = originalTerm.toLowerCase().replace(/[^a-z0-9]/g, '');
       const isCode = /[a-z]/.test(compact) && /[0-9]/.test(compact);
       if (isCode && compact.length > 3 && !tokens.includes(compact)) {
         tokens.push(compact);
@@ -177,12 +176,34 @@ export class QueryEngine {
           
           if (mustNotRecords.has(`${doc.nhc}_${doc.idToma}_${doc.ordenToma}`)) continue;
 
-          // TF saturado con BM25: tf_bm25 = (tf * (k1+1)) / (tf + k1 * (1 - b + b * docLen/avgDocLen))
-          // doc.count = TF crudo. doc.docLen = longitud del documento en tokens (si está disponible).
+          // TF saturado con BM25
           const tf = doc.count;
           const docLen = doc.docLen || this.avgDocLength;
           const tfBm25 = (tf * (BM25_K1 + 1)) / (tf + BM25_K1 * (1 - BM25_B + BM25_B * (docLen / this.avgDocLength)));
-          const score = tfBm25 * idf;
+          
+          // Field Boost Post-Score
+          let fieldBoost = 1.0;
+          let docCategories: string[] = doc.c || [];
+          
+          // Structural Filter Check
+          let hasStructuralMatch = true;
+          if (filters?.categories && filters.categories.length > 0) {
+             const requestedCats = filters.categories.map(c => c.toUpperCase().replace(/^\d{2}-/, '').trim());
+             const hasMatch = requestedCats.some(req => docCategories.some(dc => dc.includes(req) || req.includes(dc)));
+             if (!hasMatch) hasStructuralMatch = false;
+          }
+          if (filters?.fields && filters.fields.length > 0) {
+             const hasMatch = filters.fields.some(f => docCategories.includes(f));
+             if (!hasMatch) hasStructuralMatch = false;
+          }
+          if (!hasStructuralMatch) continue;
+
+          if (docCategories.includes('DIAGNOSTICO Y TTO')) fieldBoost = 1.8;
+          else if (docCategories.includes('ANTECEDENTES')) fieldBoost = 1.5;
+          else if (docCategories.includes('RESULTADOS PRUEBAS')) fieldBoost = 1.2;
+          else if (docCategories.includes('OBSERVACIONES')) fieldBoost = 0.9;
+          
+          const score = tfBm25 * idf * fieldBoost;
           // ────────────────────────────────────────────────────────────────
 
           if (!patientMatches[doc.nhc]) {

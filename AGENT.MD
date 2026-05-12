@@ -1,41 +1,37 @@
-# Agent Context: Queryclin (V5.2.0) 🚀
+# Agent Context: Queryclin (V5.3.0) 🚀
 
 ## 🎯 Project Goal
-Build a professional, private, Local-First clinical search engine capable of handling 100,000+ records (HCE) with millisecond response times using IndexedDB and Okapi BM25. Now evolving into a public-facing secure repository.
+Build a professional, private, Local-First clinical search engine capable of handling 100,000+ records (HCE) with millisecond response times using IndexedDB and Okapi BM25. Now featuring a specialized Semantic Engine with structural context.
 
-## 🚀 Current Status: Fase 27 (Debug Mode y Refinamiento de Taxonomía)
+## 🚀 Current Status: Fase 28 (Refactor Semántico y Búsqueda Estructural)
 The project has reached a level of industrial and public maturity with the following latest features:
+- **Semantic Processor**: Unified source of truth for clinical tokenization, stemming, and synonym expansion.
+- **Structural Search Index**: Posts now contain categorical context ('c'), enabling O(1) filtering.
+- **Post-Score Field Boosting**: Dynamic relevance multipliers based on clinical section (Diagnosis, Background).
 - **Public Repository Hardening**: Full governance ecosystem for secure public exhibition.
 - **Security Suite**: Dedicated security policies, incident response plans, and data policies.
-- **Controlled Export (XLSX)**: New "Last Intake" mode for consolidated clinical reporting.
-- **AI-First Governance**: Directory `/.ag` for structured agent guidance and safety.
-- **Native XLSX Support**: Ingest directly from Excel sheets.
-- **3-Step Ingest Assistant**: Simplified UX for clinical staff.
-- **Ubiquitous Search**: Integrated in the header for global access.
-- **Deterministic Field Order**: Forced visual structure based on official mappings.
-- **High-Fidelity Rendering**: Multi-value field support ($) and hierarchical HCE-OBS taxonomy.
+- **Controlled Export (XLSX)**: "Last Intake" mode for consolidated clinical reporting.
 
 ## 🛠️ Technical Stack
 - **Frontend**: React 19 + TypeScript + Vite + TailwindCSS 4.
 - **Storage**: IndexedDB (with fragmenting/sharding for >100k records).
 - **Engine**: 
     - **BM25 Scoring**: For professional-grade relevance.
-    - **Clinical Synonym Mapper**: 23+ patologies mapped.
+    - **Structural Indexing**: Context-aware postings for instant filtering.
+    - **Clinical Semantic Layer**: Whitelist-based stemming and synonym mapping.
     - **Web Workers**: For parallel, non-blocking ingestion.
 - **Architecture**: Clean Architecture (Core, Engine, Ingestion, Storage, Utils).
 - **Security**: Local-First, Privacy-by-Design, PHI-blocked by .gitignore.
 
 ## ⚔️ Battle Log (Latest Challenges)
-- **PII Leak Prevention**: Hardening .gitignore and implementing PR templates with security checklists.
-- **Hierarchy Mapping**: Implementing complex `Category > Subcategory` logic for HCE-OBS.
-- **Build Date Automation**: Injecting `__BUILD_DATE__` via Vite to eliminate manual versioning debt.
-- **Legacy Encodings**: Robust support for CP850 and ISO-8859-1 for old hospital systems.
+- **Hydration Bottleneck**: Eliminating the need to load full patient objects for filtering by moving categorical metadata to the inverted index.
+- **Semantic Consistency**: Syncing search logic with UI highlighting via a shared Regex generator.
+- **Field Boosting Balance**: Implementing relevance weights post-BM25 to avoid Term Frequency distortion.
 
 ## 📋 Immediate Tasks
-- [x] Implement deterministic field ordering and smart paragraph formatting.
+- [x] Implement Semantic Engine and Structural Filtering (V5.3.0).
+- [x] Eliminate massive hydration in search results.
 - [x] Create comprehensive governance ecosystem (`.ag/`, `/security/`).
-- [x] Implement controlled "Last Intake" export mode.
-- [x] Synchronize all project documentation (README, CHANGELOG, TASKS).
 - [ ] Implement Semantic Search with Transformers.js (Next Step).
 - [ ] AI-Generated Clinical Summaries (Future).
 

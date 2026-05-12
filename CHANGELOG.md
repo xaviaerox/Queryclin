@@ -1,3 +1,26 @@
+## [2026-05-12]
+### Refactor Semántico y Búsqueda Estructural (V5.3.0)
+- **Fundación Semántica Centralizada**:
+  - **`SemanticProcessor.ts`**: Implementado como fuente única de verdad para la tokenización clínica, *stemming* basado en listas blancas (`clinicalSynonyms.ts`) y expansión de sinónimos.
+  - Reemplazado el antiguo y redundante `Tokenizer.ts`.
+  - El tokenizador preserva ahora símbolos vitales (`Na+`, `O2Hb`, `T°`, decimales y fechas) gracias al uso de regex clínicos de alta precisión (`[A-Za-z0-9µ°+/._-]+`).
+- **Arquitectura de Búsqueda Estructural**:
+  - **`IndexerService.ts`**: El proceso de indexación ahora asocia categóricamente cada token (ej. "DIAGNOSTICO Y TTO", "ANTECEDENTES") dentro de un array de contexto estructural (`c`) incrustado directamente en los postings del índice invertido.
+  - Soporte explícito para el parseo y categorización de campos multivalor anidados (`$`).
+- **Post-Score Field Boosting**:
+  - **`QueryEngine.ts`**: Se ha migrado el *Field Boosting* fuera de la fase de indexación (donde distorsionaba la fórmula original de saturación TF de BM25) a una arquitectura post-score segura.
+  - Los términos encontrados en Diagnósticos reciben un boost de `x1.8`, en Antecedentes `x1.5` y en Resultados `x1.2`.
+- **Eliminación de Hidratación Masiva (Performance)**:
+  - **`App.tsx`**: Eliminada la lógica heredada en `applyFilters` que forzaba a cargar (hidratar) pacientes completos desde IndexedDB para validar los filtros por Categoría o Campo. Esta validación se resuelve ahora de forma nativa e instantánea a través del array estructural `c` en el motor de búsqueda (`QueryEngine`), logrando mejoras de rendimiento exponenciales.
+- **Resaltado Clínico Determinista**:
+  - **`HighlightedText.tsx`**: El resaltado visual de términos (Highlight) ha sido migrado para consumir la misma API de normalización y stemming del `SemanticProcessor` (`buildHighlightRegex`), asegurando una coherencia perfecta al 100% entre lo que el motor de búsqueda encuentra y lo que la UI resalta.
+- **Documentación y Gobernanza (Hardening)**:
+  - **`README.md` & `TASKS.md`**: Sincronizados con la nueva arquitectura de búsqueda y marcados hitos de la Fase 28.
+  - **`Evolution.tsx`**: Actualizado el timeline visual para incluir el hito V5.3.0 con detalles sobre el rendimiento O(1).
+  - **`structural-semantic-search.md`**: Creada nueva documentación técnica profunda sobre el funcionamiento del motor de búsqueda estructural en `docs/search-engine/`.
+  - **`AGENT.MD`**: Actualizado el contexto para agentes de IA con los nuevos desafíos superados y el stack tecnológico refinado.
+- **Sincronización de Versión**: Salto a **V5.3.0**.
+
 ## [2026-05-11]
 ### Debug Mode y Refinamiento de Taxonomía Clínica (V5.2.0)
 - **`App.tsx`**:

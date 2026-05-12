@@ -1,7 +1,7 @@
 import { HCEData, Patient } from '../core/types';
 import { db } from '../storage/indexedDB';
 import { parseClinicalDate } from '../utils/dateParser';
-import { globalTokenizer } from './Tokenizer';
+import { SemanticProcessor } from '../core/search/SemanticProcessor';
 
 export class IndexerService {
   private documentCount = 0;
@@ -72,26 +72,73 @@ export class IndexerService {
 
         skeleton.tomasMeta[idToma] = { date: time, service: srv };
 
-        const tokens = globalTokenizer.tokenizeRecord(registro.data);
-        const docLen = tokens.length; // BM25: longitud de este documento en tokens
+        let docTokens: string[] = [];
+        const termCategories: Record<string, Set<string>> = Object.create(null);
+        let docLen = 0;
+
+        for (const [key, value] of Object.entries(registro.data)) {
+           if (value === null || value === undefined || String(value).trim() === '') continue;
+
+           // Detectar categoría visual para el filtro estructural
+           let categoryStr = 'OTROS';
+           const upperKey = key.toUpperCase();
+           if (upperKey.includes('ANTECEDENTE') || upperKey.includes('HÁBITO') || upperKey.includes('HABITO') || upperKey.includes('ALERGIA')) categoryStr = 'ANTECEDENTES';
+           else if (upperKey.includes('EXPLORACI') || upperKey.includes('ANAMNESIS') || upperKey.includes('CONSTANTES') || upperKey.includes('FC') || upperKey.includes('TALLA') || upperKey.includes('PESO')) categoryStr = 'ANAMNESIS Y EXPLORACION';
+           else if (upperKey.includes('DIAGNÓSTICO') || upperKey.includes('DIAGNOSTICO') || upperKey.includes('TRATAMIENTO') || upperKey.includes('TTO') || upperKey.includes('RECOMENDACIONES')) categoryStr = 'DIAGNOSTICO Y TTO';
+           else if (upperKey.includes('RESULTADO') || upperKey.includes('PRUEBA') || upperKey.includes('ANALITICA') || upperKey.includes('ECOGRAFIA')) categoryStr = 'RESULTADOS PRUEBAS';
+           else if (upperKey.includes('INGRESO') || upperKey.includes('ALTA') || upperKey.includes('EVOLUCI') || upperKey.includes('HOSPITAL')) categoryStr = 'PROCESO HOSP/CEX';
+
+           let textToTokenize = String(value);
+
+           // Procesar explícitamente campos multivalor $
+           if (key.includes('$')) {
+              const parts = key.split('$');
+              const parent = parts[0];
+              const child = parts[1];
+              textToTokenize += ` ${parent} ${child} ${parent}_${child}`;
+           }
+
+           const tokens = SemanticProcessor.tokenize(textToTokenize);
+           docLen += tokens.length;
+           
+           for (const t of tokens) {
+              if (!termCategories[t]) termCategories[t] = new Set();
+              termCategories[t].add(categoryStr);
+              termCategories[t].add(key); // Para soporte de filtrado estructural por campos
+           }
+           docTokens.push(...tokens);
+        }
+
         this.totalTokens += docLen;
         const termCounts: Record<string, number> = Object.create(null);
-        for (const token of tokens) termCounts[token] = (termCounts[token] || 0) + 1;
+        for (const token of docTokens) termCounts[token] = (termCounts[token] || 0) + 1;
 
-        const nhcTokens = globalTokenizer.tokenize(nhc);
+        const nhcTokens = SemanticProcessor.tokenize(nhc);
         const nhcCompact = nhc.toLowerCase().replace(/[^a-z0-9]/g, '');
         
-        for (const nt of nhcTokens) termCounts[nt] = (termCounts[nt] || 0) + 5; 
-        if (nhcCompact.length > 2) termCounts[nhcCompact] = (termCounts[nhcCompact] || 0) + 50;
+        for (const nt of nhcTokens) {
+           termCounts[nt] = (termCounts[nt] || 0) + 5; 
+           if (!termCategories[nt]) termCategories[nt] = new Set(['ID']);
+        }
+        if (nhcCompact.length > 2) {
+           termCounts[nhcCompact] = (termCounts[nhcCompact] || 0) + 50;
+           if (!termCategories[nhcCompact]) termCategories[nhcCompact] = new Set(['ID']);
+        }
 
         for (const term in termCounts) {
-          if (globalTokenizer.isIndexStopword(term)) continue;
           if (term.length <= 2 && /^\d+$/.test(term)) continue;
           if (term.length === 1) continue;
 
           if (!this.tempIndex[term]) this.tempIndex[term] = [];
-          // BM25: almacenamos docLen junto al count para el scoring en QueryEngine
-          this.tempIndex[term].push({ nhc, idToma, ordenToma: registro.ordenToma, count: termCounts[term], docLen });
+          
+          this.tempIndex[term].push({ 
+            nhc, 
+            idToma, 
+            ordenToma: registro.ordenToma, 
+            count: termCounts[term], 
+            docLen,
+            c: Array.from(termCategories[term] || [])
+          });
           
           if (isSampling) {
             this.tempGlobalTermCounts[term] = (this.tempGlobalTermCounts[term] || 0) + termCounts[term];
@@ -147,7 +194,6 @@ export class IndexerService {
     this.dictionary = Object.entries(this.tempGlobalTermCounts)
       .filter(([term]) => {
         if (term.length < 3) return false;
-        if (globalTokenizer.isIndexStopword(term)) return false;
         if (/^\d+$/.test(term)) return false;
         return true;
       })

@@ -255,92 +255,10 @@ export default function App() {
     }
   };
 
+  // El filtrado por categorías y campos ahora se resuelve de forma nativa e instantánea en QueryEngine.
+  // applyFilters se mantiene por compatibilidad de firma, pero devuelve directamente los resultados limpios.
   const applyFilters = async (results: SearchResult[], filters: { categories?: string[], fields?: string[] }, q: string) => {
-    if ((!filters.categories || filters.categories.length === 0) && (!filters.fields || filters.fields.length === 0)) return results;
-
-    const mapping = FORMS.find(f => f.id === activeFormId);
-    if (!mapping) return results;
-    
-    // Normalize string for searching, same as query engine
-    const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const queryTokens = q.trim() ? normalize(q).split(/\s+/).filter(t => t.length > 2) : [];
-
-    const filteredResults: SearchResult[] = [];
-
-    for (const res of results) {
-      const patientData = await db.getFromStore(db.stores.patients, res.nhc);
-      if (!patientData) {
-        filteredResults.push(res);
-        continue;
-      }
-
-      const validRegistros = res.matchedRegistros.filter(reg => {
-        const toma = patientData.tomas[reg.idToma];
-        const registroData = toma?.registros.find((r: any) => r.ordenToma === reg.ordenToma)?.data;
-        if (!registroData) return false;
-
-        // If specific fields are selected, we only check those
-        if (filters.fields && filters.fields.length > 0) {
-          for (const fieldName of filters.fields) {
-            const val = registroData[fieldName];
-            if (val && val.toString().trim() !== '') {
-              if (queryTokens.length > 0) {
-                const valNorm = normalize(val.toString());
-                if (queryTokens.some(token => valNorm.includes(token))) return true;
-              } else {
-                return true;
-              }
-            }
-          }
-          return false;
-        }
-
-        let matchesCategory = false;
-        for (const cat of filters.categories!) {
-          const cleanCat = normalize(cat).replace(/^\d{2}-/, '').trim();
-          const isGeneral = cleanCat === 'general' || cleanCat.includes('cabecera');
-          
-          // Identify target visual categories in mapping
-          const targetVisualCats = Object.keys(mapping.visualCategories).filter(k => {
-            const kn = normalize(k);
-            if (isGeneral && (kn === 'cabecera' || kn === 'control')) return true;
-            return kn === cleanCat || kn.includes(cleanCat) || cleanCat.includes(kn);
-          });
-
-          for (const visualCatKey of targetVisualCats) {
-            const fieldsInCat = mapping.visualCategories[visualCatKey];
-            for (const field of fieldsInCat) {
-              const val = registroData[field];
-              if (val && val.toString().trim() !== '') {
-                if (queryTokens.length > 0) {
-                  const valNorm = normalize(val.toString());
-                  if (queryTokens.some(token => valNorm.includes(token))) {
-                    matchesCategory = true;
-                    break;
-                  }
-                } else {
-                  matchesCategory = true;
-                  break;
-                }
-              }
-            }
-            if (matchesCategory) break;
-          }
-          if (matchesCategory) break;
-        }
-        return matchesCategory;
-      });
-
-      if (validRegistros.length > 0) {
-        filteredResults.push({
-          ...res,
-          matchedRegistros: validRegistros,
-          matchingTomasCount: new Set(validRegistros.map(r => r.idToma)).size
-        });
-      }
-    }
-    
-    return filteredResults.sort((a, b) => b.totalScore - a.totalScore);
+    return results;
   };
 
   const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }) => {

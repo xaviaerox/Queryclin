@@ -190,5 +190,13 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A33. Refinamiento de Mappings**: Corrección de erratas técnicas y reestructuración de categorías visuales en `FORMS` (MIR, ALG, OBS).
 - [x] **Logro**: Queryclin alcanza una madurez visual y técnica superior, permitiendo auditorías de datos precisas y una navegación clínica libre de redundancias.
 
+## 🟢 FASE 28: Refactor Semántico y Búsqueda Estructural (V5.3.0 — ACTUAL 🚀)
+- [x] **A35. Implementación de SemanticProcessor**: Creación de la capa semántica centralizada y eliminación de `Tokenizer.ts`.
+- [x] **A36. Índice Estructural (Postings con Contexto 'c')**: Modificación del `IndexerService` para inyectar metadatos categóricos en el índice invertido.
+- [x] **A37. Post-Score Field Boosting**: Implementación de relevancia dinámica en `QueryEngine` sin distorsionar el TF de BM25.
+- [x] **A38. Eliminación de Hidratación Masiva**: Refactor de `App.tsx` para delegar el filtrado de categorías al motor de búsqueda nativo.
+- [x] **U37. Resaltado Determinista**: Sincronización de `HighlightedText` con la API de `SemanticProcessor`.
+- [x] **Logro**: Mejora exponencial en el rendimiento de filtrado y coherencia semántica absoluta entre búsqueda y visualización.
+
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

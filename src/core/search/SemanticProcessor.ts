@@ -1,0 +1,150 @@
+import { CLINICAL_SYNONYMS, STEM_WHITELIST } from './clinicalSynonyms';
+import { normalizeString } from '../../utils/stringNormalizer';
+
+// Invertir el diccionario de sinónimos para acceso rápido O(1)
+// Variante -> Token Canónico
+const VARIANT_TO_CANONICAL = new Map<string, string>();
+
+for (const [canonical, variants] of Object.entries(CLINICAL_SYNONYMS)) {
+  VARIANT_TO_CANONICAL.set(canonical, canonical); // El canónico se mapea a sí mismo
+  for (const variant of variants) {
+    const normalized = normalizeString(variant).replace(/[^a-z0-9]/g, '');
+    VARIANT_TO_CANONICAL.set(normalized, canonical);
+  }
+}
+
+// Stopwords lingüísticas y clínicas (solo para limpieza, no alteran semántica estructural)
+const STOPWORDS = new Set([
+  'de','el','la','y','en','del','los','las','un','una','con','por','para','su','al','lo',
+  'como','mas','pero','sus','este','esta','se','ha','si','o','entre','cuando','muy','sin',
+  'sobre','tambien','me','hasta','hay','donde','quien','desde','todo','nos','durante',
+  'todos','uno','les','ni','contra','otros','ese','eso','ante','ellos','e','esto','mi',
+  'antes','algunos','que','unos','yo','otro','otras','otra','el','tanto','esa','estos',
+  'mucho','quienes','nada','muchos','cual','poco','ella','estar','estas','algunas','algo',
+  'nosotros','mis','tu','te','ti','tus',
+  // Clínicas filler
+  'paciente','refiere','presenta','muestra','signos','cuadro','clinico','inicio','hace',
+  'horas','dias','meses','anos','ingreso','alta','relevantes'
+].map(normalizeString));
+
+export class SemanticProcessor {
+  
+  /**
+   * Normalización básica (NFD + minúsculas).
+   */
+  public static normalize(text: string): string {
+    return normalizeString(text);
+  }
+
+  /**
+   * Obtiene la raíz clínica estricta basada en whitelist.
+   */
+  public static getStem(token: string): string {
+    return STEM_WHITELIST[token] || token;
+  }
+
+  /**
+   * Obtiene el token canónico (sinónimo principal) de una variante.
+   */
+  public static getCanonical(token: string): string | undefined {
+    const cleanToken = token.replace(/[^a-z0-9]/g, '');
+    return VARIANT_TO_CANONICAL.get(cleanToken);
+  }
+
+  /**
+   * Expande un token a todas sus variantes semánticas conocidas.
+   * Útil para resaltado o match semántico (no necesario en QueryEngine si ya indexamos canónicos).
+   */
+  public static expand(token: string): string[] {
+    const canonical = this.getCanonical(token);
+    if (!canonical) return [token];
+
+    const variants = CLINICAL_SYNONYMS[canonical] || [];
+    return [canonical, ...variants];
+  }
+
+  /**
+   * Tokenizador Clínico Real.
+   * Conserva símbolos vitales y decimales. Expande sinónimos canónicos implícitamente.
+   */
+  public static tokenize(text: string): string[] {
+    if (!text) return [];
+    
+    const normalized = this.normalize(text);
+    
+    // Regex que captura letras, números, símbolos de unidades y decimales.
+    // Ignora separadores puros como espacios o comas aisladas.
+    const rawTokens = normalized.match(/[A-Za-z0-9µ°+\/._-]+/g) || [];
+    
+    const tokens: string[] = [];
+    
+    for (const raw of rawTokens) {
+      // Limpiar bordes de signos de puntuación, pero preservando signos interiores (1.5, Na+)
+      let clean = raw.replace(/^[.,_/\-]+|[.,_/\-]+$/g, '');
+      if (clean.length < 1) continue;
+
+      if (STOPWORDS.has(clean)) continue;
+      
+      // Aplicar stemming whitelist
+      clean = this.getStem(clean);
+      tokens.push(clean);
+
+      // Si tiene un canónico, lo agregamos también para máxima indexación/recuperabilidad
+      const canonical = this.getCanonical(clean);
+      if (canonical && canonical !== clean) {
+        tokens.push(canonical);
+      }
+    }
+
+    return [...new Set(tokens)];
+  }
+
+  /**
+   * Match estructural puro. 
+   * Comprueba si ALGÚN token de fieldTokens coincide EXACTAMENTE con el queryToken buscado (o sus expansiones).
+   * No interpreta lógica booleana AND. Sirve para validar si un campo específico contiene una palabra.
+   */
+  public static match(fieldValue: string, queryToken: string): boolean {
+    const fieldTokens = this.tokenize(fieldValue);
+    const queryVariants = this.expand(this.getStem(this.normalize(queryToken)));
+    
+    return queryVariants.some(variant => fieldTokens.includes(variant));
+  }
+
+  /**
+   * Construye una Expresión Regular para Highlight que cubre todas las variantes semánticas.
+   */
+  public static buildHighlightRegex(query: string): RegExp | null {
+    if (!query.trim()) return null;
+
+    const rawTerms = query.split(/\s+/).filter(t => t.length > 1 && !['AND', 'OR', 'NOT'].includes(t.toUpperCase()));
+    
+    const allVariants = new Set<string>();
+    
+    for (let term of rawTerms) {
+      if (term.startsWith('-')) term = term.substring(1);
+      
+      const normalized = this.normalize(term);
+      const stemmed = this.getStem(normalized);
+      
+      // Añadir la literal original (sin normalizar)
+      allVariants.add(term);
+      // Añadir la raíz
+      allVariants.add(stemmed);
+      
+      // Añadir variantes canónicas
+      const expansions = this.expand(stemmed);
+      expansions.forEach(exp => allVariants.add(exp));
+    }
+
+    if (allVariants.size === 0) return null;
+
+    // Escapar para regex y unir con OR
+    const escaped = Array.from(allVariants).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    // Ordenar por longitud descendente para que la regex capture la coincidencia más larga primero
+    escaped.sort((a, b) => b.length - a.length);
+
+    return new RegExp(`(${escaped.join('|')})`, 'gi');
+  }
+
+}

@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence Dashboard (V5.2.0) 🚀
+# Queryclin — HCE Intelligence Dashboard (V5.3.0) 🚀
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 
@@ -36,9 +36,9 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Capa de Aplicación e Ingesta (`src/ingestion/`):** Workers de procesamiento paralelo y streaming de datos tabulares.
 - **Capa de Infraestructura y Storage (`src/storage/`):** Persistencia en IndexedDB con fragmentación inteligente.
 - **Motor de Búsqueda Clínico (`src/engine/`):** 
-  - *`IndexerService.ts`*: Ingesta asíncrona con seguimiento de longitudes para BM25.
-  - *`QueryEngine.ts`*: Motor de recuperación de información basado en **Okapi BM25**.
-  - *`Tokenizer.ts`*: Procesamiento lingüístico con **Clinical Synonym Mapper** y expansión de consultas.
+  - *`IndexerService.ts`*: Ingesta asíncrona con seguimiento de longitudes para BM25 y categorización estructural de tokens (array `c`).
+  - *`QueryEngine.ts`*: Motor de recuperación basado en **Okapi BM25** con soporte para filtrado estructural y *Post-Score Field Boosting*.
+  - *`SemanticProcessor.ts`*: Única fuente de verdad para tokenización clínica, *stemming* de lista blanca y expansión semántica.
 - **Fachada de Integración (`src/lib/searchEngine.ts`):** Punto único de contacto para la UI que delega en los micro-servicios del motor, garantizando una transición transparente desde la arquitectura anterior.
 
 ---
@@ -133,11 +133,17 @@ Tras las últimas refactorizaciones para asegurar la escalabilidad masiva y esta
 - **Automatización de Build**: Integración de versionado dinámico y fecha de compilación automática.
 - **Gobernanza Visual**: Establecimiento de un Sistema de Diseño inmutable para proteger la identidad de marca.
 
-### Fase 23: Gobernanza de Seguridad y Privacidad Pública (V5.0.0 — ACTUAL 🚀)
+### Fase 23: Gobernanza de Seguridad y Privacidad Pública (V5.0.0 — V5.2.0 ✅)
 - **Estructura de Gobernanza (.ag)**: Políticas de repositorio público, privacidad y límites de seguridad para IA.
 - **Hardening de Seguridad (/security)**: Guías de contribución segura, respuesta a incidentes y política de datos PHI.
-- **Exportación de "Última Toma"**: Motor de consolidación determinista para informes clínicos actuales.
+- **Modo Debug Persistente**: Implementación de herramientas de auditoría técnica en UI.
 - **Sincronización Global**: Salto a V5.0.0 con blindaje total para exposición pública.
+
+### Fase 24: Refactor Semántico y Búsqueda Estructural (V5.3.0 — ACTUAL 🚀)
+- **Motor Semántico Centralizado**: Implementación de `SemanticProcessor` para unificar tokenización, stemming y sinonimia.
+- **Filtrado Estructural Nativo**: Los postings del índice ahora contienen el contexto de categoría (`c`), eliminando la necesidad de hidratación masiva en `applyFilters`.
+- **Post-Score Field Boosting**: Optimización de relevancia mediante multiplicadores dinámicos tras el cálculo de BM25.
+- **Rendimiento O(1)**: El filtrado por categorías y campos es ahora instantáneo al resolverse directamente en el motor de búsqueda.
 
 ---
 

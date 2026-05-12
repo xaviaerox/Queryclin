@@ -92,11 +92,18 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'orange'
     },
     {
-      date: '11 de Mayo, 2026 (Actual)',
+      date: '11 de Mayo, 2026',
       title: 'V5.2.0: Debug Mode y Refinamiento de Taxonomía',
       description: 'Implementación del Modo Debug persistente, motor de renderizado híbrido (Narrativo/Tabular) y corrección masiva de la taxonomía clínica para una precisión diagnóstica absoluta.',
       icon: <Microscope className="text-emerald-500" />,
       color: 'emerald'
+    },
+    {
+      date: '12 de Mayo, 2026 (Actual)',
+      title: 'V5.3.0: Motor Semántico y Búsqueda Estructural',
+      description: 'Implementación de la capa semántica centralizada (SemanticProcessor) y filtrado estructural nativo en el índice. Se elimina la hidratación masiva de datos, logrando búsquedas categorizadas instantáneas con un rendimiento O(1).',
+      icon: <Zap className="text-blue-500" />,
+      color: 'blue'
     }
   ];
 
@@ -162,7 +169,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
         <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-          Hoja de Ruta 2026 - Queryclin V5.2.0
+          Hoja de Ruta 2026 - Queryclin V5.3.0
         </div>
     </div>
   );

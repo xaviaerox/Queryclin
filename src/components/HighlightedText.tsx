@@ -1,4 +1,5 @@
 import React from 'react';
+import { SemanticProcessor } from '../core/search/SemanticProcessor';
 
 interface HighlightedTextProps {
   text: string;
@@ -8,20 +9,9 @@ interface HighlightedTextProps {
 export default function HighlightedText({ text, query }: HighlightedTextProps) {
   if (!query.trim()) return <>{text}</>;
 
-  // Tokenize query similar to searchEngine but for highlighting
-  const tokens = query.split(/\s+/)
-    .filter(t => t.length > 1 && !['AND', 'OR', 'NOT'].includes(t.toUpperCase()))
-    .map(t => t.startsWith('-') ? t.substring(1) : t)
-    .filter(t => t.length > 0);
-
-  if (tokens.length === 0) return <>{text}</>;
-
-  // Create regex pattern to match any of the tokens (case-insensitive, ignoring accents)
-  // To ignore accents in highlighting, we can normalize both text and tokens
-  // or use a simpler approach for now: match the actual tokens found in query.
+  const pattern = SemanticProcessor.buildHighlightRegex(query);
   
-  const escapedTokens = tokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const pattern = new RegExp(`(${escapedTokens.join('|')})`, 'gi');
+  if (!pattern) return <>{text}</>;
 
   const parts = text.split(pattern);
 
