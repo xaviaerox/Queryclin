@@ -1,4 +1,25 @@
 ## [2026-05-13]
+### Finalización: Queryclin Admin Studio & Governance (V6.0.0)
+- **Admin Studio (Core)**:
+    - **FormDesigner.tsx**: Reescritura integral del motor de diseño. Soporte para **Drag-and-Drop bidireccional** total (Lienzo ↔ Paleta ↔ Grupos) con feedback visual de borrado reactivo.
+    - **AdminDashboard.tsx**: Implementado sistema de gestión de formularios con capacidad de eliminación permanente y navegación fluida entre vistas.
+    - **Seguridad & Acceso**: Implementado `PasscodeGate` en `AdminRoot.tsx` protegido por PIN (`admin123`). Rediseño estético unificado con el *Clinical Design System* de Queryclin (Glassmorphism, variables `--accent-clinical`).
+- **Motor de Plantillas & Persistencia**:
+    - **TemplateGenerator.ts**: Sistema de clonación de formularios "intocables" (HCE-ALG, HCE-MIR, HCE-OBS) para permitir la creación de variantes personalizadas sin alterar el core.
+    - **Integración Nativa**: Inyección del `DynamicSectionRenderer` directamente en `HCEView.tsx`, permitiendo que los esquemas publicados se rendericen de forma transparente junto a los estáticos.
+- **Gobernanza & Trazabilidad (METAPROMPT Policy)**:
+    - **Repositorio de Prompts**: Creación de `governance/prompts/` con subcategorías `/generic/` y `/metaprompts/` para el registro histórico de instrucciones del usuario.
+    - **KI Policy**: Nueva Knowledge Item `metaprompt_documentation` que obliga a documentar cada directriz estratégica para control de cambios absoluto.
+- **Sincronización de Versión**: Salto a **V6.0.0 (Admin Era)**.
+
+## [2026-05-13]
+### Iniciada Fase 2: Queryclin Admin Studio (Arquitectura Declarativa HCE)
+
+### Refinamiento y Corrección: Modo "Última Toma" (V5.4.1)
+- **`QueryEngine.ts`**: Corregido bug crítico de compatibilidad hacia atrás en índices antiguos. Cambiado el valor fallback de `maxOrden` de `0` a `-1` para evitar la exclusión absoluta de documentos en BBDDs sin re-indexar. Refinada lógica para el pre-filtrado temporal estricto.
+- **`HCEView.tsx`**: Ajustada la renderización de la "Línea temporal" (TomaTimeline). En Modo Última Toma, ahora el sistema oculta completamente (visualmente) todas las tomas ajenas al snapshot temporal encontrado, dejando la vista estática como "1 Toma, 1 Versión".
+- **`HCEView.tsx` (Rediseño Estético Jerárquico)**: Modificado el estilo de cabeceras. Las secciones principales ahora usan fondo *Slate Dark*, cabeceras de tablas han vuelto a su estado de etiquetas *inline-block*, las subcategorías adoptan la estética clínica azul `w-full` y se omitió intencionadamente la renderización visual del título de "Antecedentes Personales" para reducir fricción cognitiva.
+
 ### Modo "Última Toma" / Snapshot-based Retrieval (V5.4.0)
 - **`selectLatestSnapshots.ts` (NUEVO)**:
   - Creada utilidad pura con complejidad O(n) que agrupa los registros clínicos por paciente (NHC).

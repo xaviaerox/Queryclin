@@ -10,6 +10,8 @@ import { db } from '../storage/indexedDB';
 import { Patient, Toma, getGender } from '../core/types';
 import { FORMS } from '../core/mappings';
 import { parseClinicalDate, extractFecha, extractHora } from '../utils/dateParser';
+import { DynamicSectionRenderer } from '../admin/renderer/DynamicSectionRenderer';
+import { ClinicalFormSchema } from '../admin/domain/types';
 
 interface HCEViewProps {
   results: SearchResult[];
@@ -23,6 +25,7 @@ interface HCEViewProps {
   activeVersionIndex: number;
   onTomaNavigate: (tIdx: number, vIdx: number) => void;
   debugMode: boolean;
+  dynamicSchema?: ClinicalFormSchema;
 }
 
 
@@ -956,7 +959,27 @@ export default function HCEView({
 
 
 
-              {renderedSections.map((section, sIdx) => {
+              {dynamicSchema ? (
+                <div className="flex flex-col gap-2">
+                  <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-bold flex items-center gap-2 shadow-sm">
+                    <Eye size={14} />
+                    Modo Visualización Dinámica: {dynamicSchema.name} v{dynamicSchema.version}
+                  </div>
+                  {dynamicSchema.sections
+                    .sort((a, b) => a.order - b.order)
+                    .map(section => (
+                      <div key={section.id} className="bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-6 mb-6 shadow-md">
+                        <DynamicSectionRenderer 
+                          section={section}
+                          data={activeVersion.data}
+                          searchQuery={query}
+                          debugMode={debugMode}
+                        />
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                renderedSections.map((section, sIdx) => {
                 const isAnamnesis = section.title.toUpperCase().includes('ANAMNESIS') || section.title.toUpperCase().includes('EXPLORACION');
                 const isAntecedentesSection = section.title.toUpperCase().includes('ANTECEDENTES');
                 
@@ -1002,7 +1025,7 @@ export default function HCEView({
 
                         return (
                           <div key={sub.title || subIdx} className="flex flex-col gap-4">
-                            {sub.title && (narrativeFields.length > 0 || !isGrid) && (
+                            {sub.title && sub.title.toUpperCase() !== 'ANTECEDENTES PERSONALES' && (narrativeFields.length > 0 || !isGrid) && (
                               <div className="mb-2">
                                 <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 w-full shadow-sm">
                                   {sub.title}:
@@ -1079,7 +1102,8 @@ export default function HCEView({
                     </div>
                   </div>
                 );
-              })}
+              })
+            )}
 
             </>
           ) : (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, X, ChevronRight, Home as HomeIcon, Sun, Moon, HelpCircle, Database, ArrowLeft, ChevronLeft, Bug, Eye } from 'lucide-react';
+import { Search, Filter, X, ChevronRight, Home as HomeIcon, Sun, Moon, HelpCircle, Database, ArrowLeft, ChevronLeft, Bug, Eye, Settings } from 'lucide-react';
 
 
 interface GlobalHeaderProps {
@@ -26,6 +26,7 @@ interface GlobalHeaderProps {
   onShowEvolution: () => void;
   debugMode: boolean;
   toggleDebug: () => void;
+  onToggleAdmin?: () => void;
 }
 
 
@@ -35,7 +36,7 @@ export default function GlobalHeader({
   activeDate, activeTime,
   theme, toggleTheme, patientCount, version, buildDate,
   onClearData, onShowAll, onShowHelp, onShowEvolution,
-  debugMode, toggleDebug
+  debugMode, toggleDebug, onToggleAdmin
 }: GlobalHeaderProps) {
 
   const [localQuery, setLocalQuery] = useState(query);
@@ -210,6 +211,16 @@ export default function GlobalHeader({
           >
             {debugMode ? <Bug size={20} /> : <Eye size={20} />}
           </button>
+
+          {onToggleAdmin && (
+            <button 
+              onClick={onToggleAdmin}
+              title="Admin Studio (Form Designer)"
+              className="p-2 rounded-full transition-all text-[var(--text-secondary)] hover:text-emerald-500 hover:bg-emerald-50"
+            >
+              <Settings size={20} />
+            </button>
+          )}
 
           <button 
             onClick={onShowHelp}

@@ -3,11 +3,14 @@
  */
 export const db = {
   dbName: 'QueryclinDB',
-  version: 6,
+  version: 7,
   stores: {
     patients: 'patients',
     metadata: 'metadata',
-    search_index: 'search_index' 
+    search_index: 'search_index',
+    clinical_schemas: 'clinical_schemas',
+    clinical_schema_versions: 'clinical_schema_versions',
+    clinical_layouts: 'clinical_layouts'
   },
 
   _db: null as IDBDatabase | null,

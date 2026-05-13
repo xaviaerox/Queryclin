@@ -199,4 +199,13 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **Logro**: Mejora exponencial en el rendimiento de filtrado y coherencia semántica absoluta entre búsqueda y visualización.
 
 ---
+## 🔵 MACRO-FASE 2: Queryclin Admin Studio & Governance (V6.0.0 ✅)
+- [x] **A32. Admin Studio Core**: Motor de diseño declarativo con Drag-and-Drop bidireccional y feedback reactivo.
+- [x] **A33. Motor de Plantillas**: Implementación de `TemplateGenerator` para clonación de estructuras canónicas (ALG, MIR, OBS).
+- [x] **S10. Passcode Gate**: Seguridad por PIN (`admin123`) y alineación estética premium con el *Clinical Design System*.
+- [x] **G1. Protocolo de Trazabilidad**: Repositorio jerárquico de prompts (`/generic` y `/metaprompts`) para control de instrucciones.
+- [x] **A34. Integración Dinámica**: Motor de inyección de esquemas dinámicos (`DynamicSectionRenderer`) en el core de visualización `HCEView.tsx`.
+- [x] **Logro**: Queryclin evoluciona de un visor estático a una plataforma de diseño clínico flexible, segura y totalmente trazable.
+
+---
 *Queryclin - Sistema de Análisis Clínico Local-First*

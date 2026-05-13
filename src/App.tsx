@@ -11,6 +11,10 @@ import HCEView from './components/HCEView';
 import Help from './components/Help';
 import Evolution from './components/Evolution';
 import GlobalHeader from './components/GlobalHeader';
+import { AdminRoot } from './admin/AdminRoot';
+import { schemaStore } from './admin/persistence/SchemaStore';
+import { DynamicHCEView } from './admin/renderer/DynamicHCEView';
+import { ClinicalFormSchema } from './admin/domain/types';
 import { FORMS } from './core/mappings';
 import pkg from '../package.json';
 
@@ -59,6 +63,8 @@ export default function App() {
   const [activeFormId, setActiveFormId] = useState<string>('');
   const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean } | undefined>();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [publishedSchema, setPublishedSchema] = useState<ClinicalFormSchema | null>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('queryclin_theme') as 'light' | 'dark') || 'light';
@@ -94,6 +100,14 @@ export default function App() {
     };
     initData();
   }, []);
+
+  useEffect(() => {
+    if (view === 'hce' && activeFormId) {
+      schemaStore.getPublishedSchemaByFormName(activeFormId.toUpperCase()).then(schema => {
+        setPublishedSchema(schema || null);
+      });
+    }
+  }, [activeFormId, view]);
 
   // Tarea A3: Advertencia en beforeunload si hay datos cargados
   useEffect(() => {
@@ -357,11 +371,12 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="h-screen flex flex-col bg-[var(--bg-clinical)] text-[var(--text-primary)] font-sans overflow-hidden">
+        {isAdminMode && <AdminRoot onExit={() => setIsAdminMode(false)} />}
         <GlobalHeader 
           query={query}
           activeFilters={activeFilters}
           onSearch={handleSearch}
-          onGoHome={() => { setQuery(''); setView('home'); }}
+          onGoHome={() => { setQuery(''); setView('home'); setIsAdminMode(false); }}
           getSuggestions={(q) => searchEngine.getSuggestions(q)}
           view={view}
           currentIndex={selectedIndex}
@@ -375,6 +390,7 @@ export default function App() {
             if (view === 'hce') setView('results');
             else if (view === 'results') setView('home');
             else setView('home');
+            setIsAdminMode(false);
           }}
           activeDate={activeDateInfo.date}
           activeTime={activeDateInfo.time}
@@ -384,11 +400,12 @@ export default function App() {
           version={VERSION}
           buildDate={BUILD_DATE}
           onClearData={handleClearData}
-          onShowAll={() => handleSearch('')}
+          onShowAll={() => { handleSearch(''); setIsAdminMode(false); }}
           onShowHelp={() => setView('help')}
           onShowEvolution={() => setView('evolution')}
           debugMode={debugMode}
           toggleDebug={toggleDebug}
+          onToggleAdmin={() => setIsAdminMode(true)}
         />
 
 
@@ -501,8 +518,8 @@ export default function App() {
               }}
               onBack={() => setView('results')}
               debugMode={debugMode}
+              dynamicSchema={publishedSchema || undefined}
             />
-
           )}
           {view === 'help' && (
             <Help onBack={() => setView('home')} />
