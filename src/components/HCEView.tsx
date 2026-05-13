@@ -123,7 +123,7 @@ function ClinicalField({ label, value, query, highlight, shouldHighlight = true 
   const isBoolean = !isMultivalue && ['SI','NO','SÍ','TRUE','FALSE','POSITIVO','NEGATIVO'].includes(displayValue.trim().toUpperCase());
 
   return (
-    <div className={`flex flex-col gap-1.5 border-b border-[var(--border-clinical)]/60 last:border-0 pb-4 last:pb-0 ${highlight ? 'bg-[var(--accent-clinical)]/5 rounded-xl p-3 -mx-3 ring-1 ring-[var(--accent-clinical)]/20' : ''}`}>
+    <div className={`flex flex-col gap-0.5 border-b border-[var(--border-clinical)]/60 last:border-0 pb-3 last:pb-0 ${highlight ? 'bg-[var(--accent-clinical)]/5 rounded-xl p-3 -mx-3 ring-1 ring-[var(--accent-clinical)]/20' : ''}`}>
       <span className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--accent-clinical)] leading-none mb-1">
         {label}:
       </span>
@@ -177,7 +177,7 @@ function ClinicalGrid({ title, fields, query, shouldHighlight = true, showEmpty 
   );
 
   return (
-    <div className="my-6 select-none w-full">
+    <div className="my-4 select-none w-full">
       {title && (
         <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 inline-block mb-[1px] shadow-sm">
           {title}:
@@ -244,7 +244,7 @@ function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { da
   const displayFormId = (formId || '').split('_')[1]?.toUpperCase() || '';
 
   return (
-    <div className="my-6 select-none w-full">
+    <div className="my-4 select-none w-full">
       <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 inline-block mb-[1px] shadow-sm">
         Constantes {displayFormId}:
       </div>
@@ -298,11 +298,11 @@ function ClinicalConstants({ data, query, formId, shouldHighlight = true }: { da
 // ─── Cabecera de Sección Clínica ───────────────────────────────────────────────
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-4 mb-6 px-1">
-      <span className="text-[12px] font-black uppercase tracking-[0.3em] text-emerald-700 dark:text-emerald-400 bg-emerald-500/5 px-4 py-1.5 rounded-lg border border-emerald-500/20">
-        {label}
-      </span>
-      <div className="h-[2px] flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
+    <div className="w-full mb-6">
+      <div className="bg-[#1e293b] text-white px-5 py-2 text-[13px] font-black uppercase tracking-[0.15em] border-l-4 border-emerald-500 shadow-md flex items-center justify-between">
+        <span>{label}</span>
+        <div className="h-px flex-1 bg-emerald-500/20 ml-6 opacity-30" />
+      </div>
     </div>
   );
 }
@@ -530,7 +530,19 @@ export default function HCEView({
 
   const sortedTomas = useMemo(() => {
     if (!patient || !patient.tomas) return [];
-    return Object.values(patient.tomas).sort((a, b) => {
+    
+    let tomasArray = Object.values(patient.tomas);
+    if (activeFilters?.onlyLatestSnapshot && currentResult?.bestMatchUrl?.idToma) {
+      tomasArray = tomasArray.filter(t => t.idToma === currentResult.bestMatchUrl.idToma);
+      if (currentResult.bestMatchUrl.ordenToma && currentResult.bestMatchUrl.ordenToma > 0) {
+        tomasArray = tomasArray.map(t => ({
+          ...t,
+          registros: t.registros.filter(r => r.ordenToma === currentResult.bestMatchUrl.ordenToma)
+        }));
+      }
+    }
+    
+    return tomasArray.sort((a, b) => {
       const getTime = (t: Toma) => {
         if (!t || !t.latest || !t.latest.data) return 0;
         const dStr = t.latest.data['EC_Fecha_Toma'] || t.latest.data['FECHA_TOMA'] || '';
@@ -556,8 +568,14 @@ export default function HCEView({
   const activeToma = sortedTomas[activeTomaIndex];
   const sortedVersions = useMemo(() => {
     if (!activeToma) return [];
-    return [...activeToma.registros].sort((a, b) => b.ordenToma - a.ordenToma);
-  }, [activeToma]);
+    let versions = [...activeToma.registros];
+    
+    if (activeFilters?.onlyLatestSnapshot && currentResult?.bestMatchUrl?.ordenToma && currentResult.bestMatchUrl.ordenToma > 0) {
+      versions = versions.filter(v => v.ordenToma === currentResult.bestMatchUrl.ordenToma);
+    }
+    
+    return versions.sort((a, b) => b.ordenToma - a.ordenToma);
+  }, [activeToma, activeFilters?.onlyLatestSnapshot, currentResult?.bestMatchUrl]);
   const activeVersion = sortedVersions[activeVersionIndex];
 
   const hasNext = currentIndex < results.length - 1;
@@ -807,7 +825,7 @@ export default function HCEView({
 
         <div className="flex-1 min-w-0 max-w-4xl">
           {(formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs') ? (
-            <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl mb-6 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-xl mb-4 shadow-sm overflow-hidden flex flex-col">
               <div className="flex flex-wrap items-center gap-4 px-6 py-2.5 border-b border-[var(--border-clinical)] bg-[#FFF9E5]">
                 <div className="flex items-center gap-2 min-w-[140px]">
                   <span className="text-[16px] font-black text-slate-800 uppercase">NHC:</span>
@@ -834,7 +852,7 @@ export default function HCEView({
             </div>
 
           ) : (
-            <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-3xl p-8 mb-8 shadow-xl relative overflow-hidden">
+            <div className="bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-3xl p-6 mb-6 shadow-xl relative overflow-hidden">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
                 <div className="flex items-center gap-8">
                   <PatientAvatar gender={getGender(demo)} />
@@ -862,7 +880,7 @@ export default function HCEView({
 
           {activeToma ? (
             <>
-              <div className={`flex items-center justify-between mb-6 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${(formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs') ? 'hidden' : ''}`}>
+              <div className={`flex items-center justify-between mb-4 bg-[var(--surface-clinical)] border border-[var(--accent-clinical)]/20 rounded-2xl px-6 py-4 shadow-sm ${(formId === 'hce_alg' || formId === 'hce_mir' || formId === 'hce_obs') ? 'hidden' : ''}`}>
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-60 mb-1">Toma</span>
@@ -960,10 +978,10 @@ export default function HCEView({
 
 
                 return (
-                  <div key={section.title} className={`bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-8 mb-8 shadow-md ${section.title === 'Campos no mapeados (debug)' ? 'bg-red-950/10 border-red-500/30' : ''}`}>
+                  <div key={section.title} className={`bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-6 mb-6 shadow-md ${section.title === 'Campos no mapeados (debug)' ? 'bg-red-950/10 border-red-500/30' : ''}`}>
                     <SectionHeader label={section.title} />
                     
-                    <div className="flex flex-col gap-10">
+                    <div className="flex flex-col gap-6">
                       {section.subcategories.map((sub: any, subIdx: number) => {
                         const isGrid = shouldBeGrid(sub) || (isAntecedentesSection && formId === 'hce_obs');
                         const isTechnicalGrid = isGrid && formId === 'hce_obs';
@@ -983,19 +1001,17 @@ export default function HCEView({
                         const tabularFields = fields.filter((f: any) => !narrativeFields.includes(f));
 
                         return (
-                          <div key={sub.title || subIdx} className="flex flex-col gap-6">
+                          <div key={sub.title || subIdx} className="flex flex-col gap-4">
                             {sub.title && (narrativeFields.length > 0 || !isGrid) && (
-                              <div className="flex items-center gap-3 ml-1 mb-[-4px]">
-                                <div className="h-[1px] w-4 bg-emerald-500/30" />
-                                <span className="text-[10px] font-black text-emerald-600/60 uppercase tracking-[0.25em]">
-                                  {sub.title}
-                                </span>
-                                <div className="h-[1px] flex-1 bg-gradient-to-r from-emerald-500/20 to-transparent" />
+                              <div className="mb-2">
+                                <div className="bg-[#0056b3] text-white px-4 py-1 text-[11px] font-black uppercase tracking-wider border border-slate-800 w-full shadow-sm">
+                                  {sub.title}:
+                                </div>
                               </div>
                             )}
 
                             {/* Campos narrativos (Texto) */}
-                            <div className="flex flex-col gap-6">
+                            <div className="flex flex-col gap-4">
                               {narrativeFields
                                 .filter((f: any) => debugMode || (f.value !== undefined && f.value !== null && String(f.value).trim() !== ''))
                                 .map((f: any) => (
@@ -1022,7 +1038,7 @@ export default function HCEView({
                               ) : (
 
 
-                                <div className="flex flex-col gap-6">
+                                <div className="flex flex-col gap-4">
                                   {tabularFields.map((f: any) => {
                                     const isAfterExploracion = !sub.title && (f.key.toUpperCase().includes('EXPLORACIÓN FÍSICA') || f.key.toUpperCase().includes('EXPLORACION FISICA'));
                                     return (

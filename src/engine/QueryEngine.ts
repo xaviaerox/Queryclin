@@ -1,6 +1,7 @@
 import { HCEData, RegistroToma } from '../core/types';
 import { db } from '../storage/indexedDB';
 import { SemanticProcessor } from '../core/search/SemanticProcessor';
+import { selectLatestSnapshots } from '../core/search/selectLatestSnapshots';
 
 // ============================================================
 // OKAPI BM25 — Parámetros de ajuste (V3.9.0)
@@ -88,7 +89,7 @@ export class QueryEngine {
       .slice(0, 8);
   }
 
-  public async search(query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }): Promise<SearchResult[]> {
+  public async search(query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }): Promise<SearchResult[]> {
     const rawTerms = query.split(/\s+/).filter(t => t.length > 0);
     const must: string[] = [];
     const mustNot: string[] = [];
@@ -159,10 +160,64 @@ export class QueryEngine {
       if (docs) docs.forEach((doc: any) => mustNotRecords.add(`${doc.nhc}_${doc.idToma}_${doc.ordenToma}`));
     }
 
+    const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
+    const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
+
+    const globalLatestSnapshot: Record<string, { idToma: string, maxOrden: number }> = {};
+    if (filters?.onlyLatestSnapshot) {
+      for (const nhc in this.patientSkeletons) {
+        const skeleton = this.patientSkeletons[nhc];
+        if (!skeleton.tomasMeta) continue;
+        let maxD = -Infinity;
+        let maxId = '';
+        let maxOrd = -1;
+        
+        for (const id in skeleton.tomasMeta) {
+          const meta = skeleton.tomasMeta[id];
+          if (!meta) continue;
+          if (filterStart && meta.date < filterStart) continue;
+          if (filterEnd && meta.date > filterEnd) continue;
+          
+          if (meta.date > maxD) {
+            maxD = meta.date;
+            maxId = id;
+            maxOrd = meta.maxOrden ?? -1;
+          } else if (meta.date === maxD && maxD !== -Infinity) {
+            if (id > maxId) {
+              maxId = id;
+              maxOrd = meta.maxOrden ?? -1;
+            }
+          }
+        }
+        if (maxId) globalLatestSnapshot[nhc] = { idToma: maxId, maxOrden: maxOrd };
+      }
+    }
+
     const processTerms = (terms: string[], isMust: boolean) => {
       for (const term of terms) {
-        const docs = indexResults[term];
+        let docs = indexResults[term];
         if (!docs) continue;
+
+        if (filters?.onlyLatestSnapshot) {
+           docs = docs.filter((d: any) => {
+             const snapshot = globalLatestSnapshot[d.nhc];
+             if (!snapshot) return false;
+             if (d.idToma !== snapshot.idToma) return false;
+             // Si tenemos maxOrden (índice nuevo), filtramos estrictamente. 
+             // Si no (índice viejo), aceptamos cualquier orden de esa idToma.
+             if (snapshot.maxOrden !== undefined && snapshot.maxOrden !== -1) {
+                return d.ordenToma === snapshot.maxOrden;
+             }
+             return true;
+           });
+           
+           // Si el índice es viejo, selectLatestSnapshots sigue siendo necesario para desempatar ordenToma
+           const nhcSkeleton = (nhc: string) => this.patientSkeletons[nhc];
+           docs = selectLatestSnapshots(docs.map((d: any) => {
+             const meta = nhcSkeleton(d.nhc)?.tomasMeta?.[d.idToma];
+             return { ...d, date: meta?.date || 0 };
+           }));
+        }
 
         // ── OKAPI BM25 SCORING (V3.9.0) ──────────────────────────────────
         // IDF con suavizado Robertson: log((N - df + 0.5) / (df + 0.5) + 1)
@@ -231,8 +286,6 @@ export class QueryEngine {
 
     let results: SearchResult[] = [];
     const filterService = filters?.service?.toLowerCase();
-    const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
-    const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
 
     for (const nhc in patientMatches) {
       const pm = patientMatches[nhc];
@@ -287,7 +340,7 @@ export class QueryEngine {
     return this.applyFiltersAndSort(results);
   }
 
-  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string }): Promise<SearchResult[]> {
+  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string, onlyLatestSnapshot?: boolean }): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     const nhcs = Object.keys(this.patientSkeletons);
     
@@ -295,6 +348,35 @@ export class QueryEngine {
     const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
     const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
     
+    // Calcular snapshots más recientes si se solicita
+    const globalLatestSnapshot: Record<string, { idToma: string, maxOrden: number }> = {};
+    if (filters?.onlyLatestSnapshot) {
+      for (const nhc in this.patientSkeletons) {
+        const skeleton = this.patientSkeletons[nhc];
+        if (!skeleton.tomasMeta) continue;
+        let maxD = -Infinity;
+        let maxId = '';
+        let maxOrd = -1;
+        for (const id in skeleton.tomasMeta) {
+          const meta = skeleton.tomasMeta[id];
+          if (!meta) continue;
+          if (filterStart && meta.date < filterStart) continue;
+          if (filterEnd && meta.date > filterEnd) continue;
+          if (meta.date > maxD) {
+            maxD = meta.date;
+            maxId = id;
+            maxOrd = meta.maxOrden ?? -1;
+          } else if (meta.date === maxD && maxD !== -Infinity) {
+            if (id > maxId) {
+              maxId = id;
+              maxOrd = meta.maxOrden ?? -1;
+            }
+          }
+        }
+        if (maxId) globalLatestSnapshot[nhc] = { idToma: maxId, maxOrden: maxOrd };
+      }
+    }
+
     for (const nhc of nhcs) {
       const skeleton = this.patientSkeletons[nhc];
       
@@ -330,14 +412,25 @@ export class QueryEngine {
       
       if (!isValidPatient) continue;
 
-      results.push({
-        nhc,
-        patient: skeleton,
-        totalScore: 1,
-        matchingTomasCount: validTomasCount,
-        bestMatchUrl: { idToma: 'N/A', ordenToma: 0 },
-        matchedRegistros: []
-      });
+      if (filters?.onlyLatestSnapshot && globalLatestSnapshot[nhc]) {
+        results.push({
+          nhc,
+          patient: skeleton,
+          totalScore: 1,
+          matchingTomasCount: 1,
+          bestMatchUrl: { idToma: globalLatestSnapshot[nhc].idToma, ordenToma: globalLatestSnapshot[nhc].maxOrden },
+          matchedRegistros: []
+        });
+      } else {
+        results.push({
+          nhc,
+          patient: skeleton,
+          totalScore: 1,
+          matchingTomasCount: validTomasCount,
+          bestMatchUrl: { idToma: 'N/A', ordenToma: 0 },
+          matchedRegistros: []
+        });
+      }
     }
     return this.applyFiltersAndSort(results);
   }

@@ -57,7 +57,7 @@ export default function App() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [patientCount, setPatientCount] = useState<number>(0);
   const [activeFormId, setActiveFormId] = useState<string>('');
-  const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[] } | undefined>();
+  const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean } | undefined>();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -261,7 +261,7 @@ export default function App() {
     return results;
   };
 
-  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }) => {
+  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }) => {
     setQuery(q);
     setActiveFilters(filters);
     let results = await searchEngine.search(q, filters);

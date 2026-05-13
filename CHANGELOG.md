@@ -1,3 +1,20 @@
+## [2026-05-13]
+### Modo "Última Toma" / Snapshot-based Retrieval (V5.4.0)
+- **`selectLatestSnapshots.ts` (NUEVO)**:
+  - Creada utilidad pura con complejidad O(n) que agrupa los registros clínicos por paciente (NHC).
+  - Implementada lógica determinista que selecciona el snapshot temporal más reciente `MAX(EC_Fecha_Toma)` y resuelve posibles empates mediante `MAX(Orden_Toma)`.
+- **`QueryEngine.ts`**:
+  - Implementado interceptor en el motor de búsqueda que calcula `globalLatestIdToma` para cada paciente antes de la fase BM25.
+  - El motor ahora descarta activamente todos los documentos del índice que no correspondan a la última toma clínica del paciente en el rango de fechas seleccionado, garantizando que tanto BM25 como el `applyFilters` posterior se ejecuten exclusivamente sobre ese snapshot.
+  - Soporte nativo para el Edge Case B: Si un paciente tuvo una patología en 2023, pero no en 2024, una búsqueda en 2024 (Modo Última Toma) no devolverá falsos positivos.
+- **`App.tsx` & `GlobalHeader.tsx`**:
+  - Extendida la interfaz de `FilterOptions` para soportar el booleano `onlyLatestSnapshot`.
+  - El badge de filtros activos del `GlobalHeader` ahora contabiliza este nuevo estado visual.
+- **`Home.tsx`**:
+  - Añadido el checkbox interactivo "Filtrar solo última toma" en el panel avanzado de filtros, con su correspondiente tool-tip explicativo clínico.
+  - Refactorizada la gestión de consultas recientes en `localStorage` para persistir también el estado de este nuevo modo de análisis.
+- **Sincronización de Versión**: Salto a **V5.4.0**.
+
 ## [2026-05-12]
 ### Refactor Semántico y Búsqueda Estructural (V5.3.0)
 - **Fundación Semántica Centralizada**:

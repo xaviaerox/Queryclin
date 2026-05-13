@@ -55,7 +55,8 @@ export default function GlobalHeader({
   const hasFilters = (activeFilters?.categories?.length || 0) + 
                     (activeFilters?.fields?.length || 0) + 
                     (activeFilters?.dateRange ? 1 : 0) + 
-                    (activeFilters?.service ? 1 : 0) > 0;
+                    (activeFilters?.service ? 1 : 0) +
+                    (activeFilters?.onlyLatestSnapshot ? 1 : 0) > 0;
 
   return (
     <header className="h-16 bg-[var(--surface-clinical)] border-b border-[var(--border-clinical)] flex items-center px-6 gap-6 shadow-sm backdrop-blur-md bg-opacity-95 shrink-0 z-50">

@@ -5,7 +5,7 @@ import { FORMS } from '../core/mappings';
 interface HomeProps {
   hasData: boolean;
   onUpload: (file: File, formId: string, config?: any) => void;
-  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[] }) => void;
+  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }) => void;
   getSuggestions: (query: string) => string[];
   compact?: boolean;
   activeFormId?: string;
@@ -17,7 +17,8 @@ type RecentSearch = {
     dateRange?: [string, string], 
     service?: string, 
     categories?: string[],
-    fields?: string[]
+    fields?: string[],
+    onlyLatestSnapshot?: boolean
   };
   timestamp: number;
   resultCount?: number;
@@ -55,6 +56,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [service, setService] = useState('');
+  const [onlyLatestSnapshot, setOnlyLatestSnapshot] = useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>(() => {
     try {
       const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
@@ -80,7 +82,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
       dateRange: dateStart || dateEnd ? [dateStart, dateEnd] : undefined,
       service: service || undefined,
       categories: (Array.isArray(categories) && categories.length > 0) ? categories : undefined,
-      fields: (Array.isArray(selectedFields) && selectedFields.length > 0) ? selectedFields : undefined
+      fields: (Array.isArray(selectedFields) && selectedFields.length > 0) ? selectedFields : undefined,
+      onlyLatestSnapshot: onlyLatestSnapshot || undefined
     });
   };
 
@@ -295,7 +298,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
               title="Filtros avanzados"
             >
               <Filter size={16} />
-              <span>Filtros {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0)) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{(Array.isArray(categories) ? categories.length : 0) + (dateStart || dateEnd ? 1 : 0)}</span>}</span>
+              <span>Filtros {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || onlyLatestSnapshot) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{(Array.isArray(categories) ? categories.length : 0) + (dateStart || dateEnd ? 1 : 0) + (onlyLatestSnapshot ? 1 : 0)}</span>}</span>
             </button>
             <button
               type="submit"
@@ -319,6 +322,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                     setCategories([]); 
                     setSelectedFields([]); 
                     setExpandedCategory(null); 
+                    setOnlyLatestSnapshot(false);
                   }}
                   className="text-[11px] font-bold text-[var(--accent-clinical)] hover:underline"
                 >
@@ -476,6 +480,26 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                   </div>
                 )}
               </div>
+
+              {/* Modo Última Toma */}
+              <div className="pt-4 border-t border-[var(--border-clinical)]">
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border-clinical)] bg-[var(--bg-clinical)] cursor-pointer hover:bg-[var(--accent-clinical)]/5 transition-colors group">
+                  <input
+                    type="checkbox"
+                    checked={onlyLatestSnapshot}
+                    onChange={(e) => setOnlyLatestSnapshot(e.target.checked)}
+                    className="w-4 h-4 rounded border-[var(--border-clinical)] text-[var(--accent-clinical)] focus:ring-[var(--accent-clinical)]"
+                  />
+                  <div>
+                    <div className={`text-[12px] font-black uppercase tracking-widest ${onlyLatestSnapshot ? 'text-[var(--accent-clinical)]' : 'text-[var(--text-primary)]'}`}>
+                      Filtrar solo última toma
+                    </div>
+                    <div className="text-[10px] font-bold text-[var(--text-secondary)] mt-0.5">
+                      Evalúa únicamente la última toma clínica del paciente dentro del rango temporal seleccionado
+                    </div>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         )}
@@ -501,7 +525,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                       setService(s.filters.service || '');
                       setCategories(s.filters.categories || []);
                       setSelectedFields(s.filters.fields || []);
-                      if (s.filters.dateRange || s.filters.service || s.filters.categories || s.filters.fields) {
+                      setOnlyLatestSnapshot(s.filters.onlyLatestSnapshot || false);
+                      if (s.filters.dateRange || s.filters.service || s.filters.categories || s.filters.fields || s.filters.onlyLatestSnapshot) {
                         setShowFilters(true);
                       }
                     } else {
@@ -510,6 +535,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                       setService('');
                       setCategories([]);
                       setSelectedFields([]);
+                      setOnlyLatestSnapshot(false);
                     }
                     onSearch(s.query, s.filters); 
                   }}

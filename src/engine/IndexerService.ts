@@ -70,7 +70,16 @@ export class IndexerService {
           skeleton.services.add(srv);
         }
 
-        skeleton.tomasMeta[idToma] = { date: time, service: srv };
+        const existingMeta = skeleton.tomasMeta[idToma];
+        const currentOrden = registro.ordenToma || 0;
+        
+        if (!existingMeta || currentOrden > (existingMeta.maxOrden || -1)) {
+          skeleton.tomasMeta[idToma] = { 
+            date: time || (existingMeta?.date), 
+            service: srv || (existingMeta?.service),
+            maxOrden: currentOrden
+          };
+        }
 
         let docTokens: string[] = [];
         const termCategories: Record<string, Set<string>> = Object.create(null);
