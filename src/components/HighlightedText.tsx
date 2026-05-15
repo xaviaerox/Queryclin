@@ -1,5 +1,5 @@
 import React from 'react';
-import { SemanticProcessor } from '../core/search/SemanticProcessor';
+import { SemanticProcessor } from '../engine/SemanticProcessor';
 
 interface HighlightedTextProps {
   text: string;

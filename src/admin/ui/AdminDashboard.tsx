@@ -3,10 +3,11 @@ import { ClinicalFormSchema } from '../domain/types';
 import { schemaStore } from '../persistence/SchemaStore';
 import { ImportWizard } from '../importer/ImportWizard';
 import { TemplateGenerator } from '../mapper/TemplateGenerator';
+import { CLINICAL_RESOURCES } from '../domain/resources';
 
 export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string) => void }) {
   const [schemas, setSchemas] = useState<ClinicalFormSchema[]>([]);
-  const [view, setView] = useState<'list' | 'import' | 'templates'>('list');
+  const [view, setView] = useState<'list' | 'import' | 'templates' | 'resources'>('list');
 
   useEffect(() => {
     loadSchemas();
@@ -30,6 +31,16 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
       await schemaStore.saveSchema(newSchema);
       onSelectSchema(newSchema.id);
     }
+  };
+
+  const handleCreateFromResource = async (resourceKey: keyof typeof CLINICAL_RESOURCES) => {
+    const name = prompt(`Nombre para el nuevo formulario ${resourceKey}:`, `Nuevo Formulario ${resourceKey}`);
+    if (!name) return;
+
+    const rawHeaders = CLINICAL_RESOURCES[resourceKey];
+    const newSchema = TemplateGenerator.generateFromRawHeaders(name, rawHeaders);
+    await schemaStore.saveSchema(newSchema);
+    onSelectSchema(newSchema.id);
   };
 
   const getStatusBadge = (status: string) => {
@@ -85,6 +96,37 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
     );
   }
 
+  if (view === 'resources') {
+    return (
+      <div className="max-w-4xl mx-auto p-8 font-sans">
+        <button 
+          onClick={() => setView('list')}
+          className="mb-8 text-slate-500 hover:text-slate-800 font-bold text-sm uppercase tracking-wider flex items-center gap-2"
+        >
+          &larr; Volver al Dashboard
+        </button>
+        <h2 className="text-2xl font-black text-slate-800 mb-2 uppercase tracking-tight">Biblioteca de Recursos</h2>
+        <p className="text-slate-500 mb-8 font-medium">Crea un formulario nuevo usando las cabeceras canónicas (sin diseño previo).</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {(Object.keys(CLINICAL_RESOURCES) as Array<keyof typeof CLINICAL_RESOURCES>).map(resKey => (
+            <button 
+              key={resKey}
+              onClick={() => handleCreateFromResource(resKey)}
+              className="bg-white border-2 border-emerald-100 hover:border-emerald-500 rounded-2xl p-8 text-left transition-all hover:shadow-xl group"
+            >
+              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              </div>
+              <h3 className="font-black text-slate-800 text-lg uppercase tracking-tight">Base {resKey}</h3>
+              <p className="text-xs text-slate-400 mt-2 font-bold uppercase tracking-widest">Todos los campos disponibles</p>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-8 font-sans animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
@@ -96,6 +138,13 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
           </div>
         </div>
         <div className="flex gap-3">
+          <button 
+            onClick={() => setView('resources')}
+            className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-emerald-500 text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"
+          >
+            <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+            Biblioteca
+          </button>
           <button 
             onClick={() => setView('templates')}
             className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"

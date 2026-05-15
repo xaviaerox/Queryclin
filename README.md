@@ -1,4 +1,4 @@
-# Queryclin — HCE Intelligence & Admin Studio (V6.2.2) 🚀
+# Queryclin — HCE Intelligence & Admin Studio (V6.5.0) 🚀
 
 Queryclin es una plataforma de exploración y análisis de **Historias Clínicas Electrónicas (HCE)** diseñada bajo principios de **privacidad absoluta y rendimiento local**. Permite al personal clínico navegar, buscar y segmentar grandes volúmenes de datos directamente en el navegador sin dependencias de red.
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SearchResult } from '../lib/searchEngine';
+import { SearchResult } from '../engine';
 import { ArrowLeft, FileText, Activity, User, ChevronRight, FileSpreadsheet, X, Info } from 'lucide-react';
 import { db } from '../storage/indexedDB';
 import { Patient, getGender } from '../core/types';

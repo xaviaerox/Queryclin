@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { SearchResult } from '../lib/searchEngine';
+import { SearchResult } from '../engine';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, User, AlertTriangle, 
   Calendar, Clock, Hash, ChevronDown, Bug, Eye, EyeOff 
@@ -26,7 +26,7 @@ interface HCEViewProps {
   activeVersionIndex: number;
   onTomaNavigate: (tIdx: number, vIdx: number) => void;
   debugMode: boolean;
-  dynamicSchema?: ClinicalFormSchema;
+  clinicalSchema?: ClinicalFormSchema;
 }
 
 
@@ -493,7 +493,7 @@ function TomaTimeline({
 // ─── Componente Principal HCEView ──────────────────────────────────────────────
 export default function HCEView({ 
   results, currentIndex, query, onBack, onNavigate, formId, activeFilters,
-  activeTomaIndex, activeVersionIndex, onTomaNavigate, debugMode, dynamicSchema
+  activeTomaIndex, activeVersionIndex, onTomaNavigate, debugMode, clinicalSchema
 }: HCEViewProps) {
   const currentResult = results[currentIndex];
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -963,13 +963,13 @@ export default function HCEView({
 
 
 
-              {dynamicSchema ? (
+              {clinicalSchema ? (
                 <div className="flex flex-col gap-2">
                   <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl font-bold flex items-center gap-2 shadow-sm">
                     <Eye size={14} />
-                    Modo Visualización Dinámica: {dynamicSchema.name} v{dynamicSchema.version}
+                    Modo Visualización Dinámica: {clinicalSchema.name} v{clinicalSchema.version}
                   </div>
-                  {dynamicSchema.sections
+                  {clinicalSchema.sections
                     .sort((a, b) => a.order - b.order)
                     .map(section => (
                       <div key={section.id} className="bg-[var(--surface-clinical)] border-2 border-[var(--border-clinical)] rounded-3xl p-6 mb-6 shadow-md">

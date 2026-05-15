@@ -190,7 +190,14 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A33. Refinamiento de Mappings**: Corrección de erratas técnicas y reestructuración de categorías visuales en `FORMS` (MIR, ALG, OBS).
 - [x] **Logro**: Queryclin alcanza una madurez visual y técnica superior, permitiendo auditorías de datos precisas y una navegación clínica libre de redundancias.
 
-## 🟢 FASE 28: Refactor Semántico y Búsqueda Estructural (V5.3.0 — ACTUAL 🚀)
+## 🟢 FASE 28: Refactor Semántico y Búsqueda Estructural (V5.3.0 — FINALIZADA ✅)
+
+## 🚀 FASE 29: Unificación Arquitectónica y Estabilización (V6.4.0 — ACTUAL 🚀)
+- [x] Consolidación del Motor de Búsqueda en `src/engine/`.
+- [x] Eliminación de código muerto y archivos redundantes (`src/lib`, `src/core/search`).
+- [x] Resolución de conflictos de importación y estabilización de la suite de tests.
+- [x] Unificación del sistema de visualización dinámica (`clinicalSchema`).
+- [x] Sincronización global de versionado documental.
 - [x] **A35. Implementación de SemanticProcessor**: Creación de la capa semántica centralizada y eliminación de `Tokenizer.ts`.
 - [x] **A36. Índice Estructural (Postings con Contexto 'c')**: Modificación del `IndexerService` para inyectar metadatos categóricos en el índice invertido.
 - [x] **A37. Post-Score Field Boosting**: Implementación de relevancia dinámica en `QueryEngine` sin distorsionar el TF de BM25.
@@ -227,6 +234,15 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **A43. Unificación de Código**: Eliminada redundancia funcional mediante `normalizeString` global.
 - [x] **T3. Batería de Pruebas**: Generación de test cases exhaustivos para validación continua.
 - [x] **Logro**: Sistema certificado como estable, rápido y libre de redundancias críticas tras auditoría completa.
+
+## 🚀 FASE 30: Admin Studio Precision & Resource Integration (V6.5.0 — ACTUAL 🚀)
+- [x] **A44. Biblioteca de Recursos Canónicos**: Integración de cabeceras oficiales OBS, MIR y ALG como bases inmutables.
+- [x] **A45. Motor de Generación con "Orphans"**: Refactor de `TemplateGenerator` para evitar la pérdida de campos no categorizados.
+- [x] **U38. CRUD Estructural de Formulario**: Implementada capacidad de añadir/eliminar secciones y grupos en tiempo real.
+- [x] **U39. Feedback Háptico-Visual**: Reingeniería del Drag-and-Drop con estados de colisión y overlays de alta fidelidad.
+- [x] **A46. Sincronización de Protocolos**: Actualización de la capa de seguridad y metadatos a la V6.5.0.
+- [ ] **A47. Validación de Persistencia Atómica**: Pruebas de integridad en IndexedDB tras cambios estructurales masivos.
+- [Logro]: El Admin Studio alcanza la madurez operativa, permitiendo la creación de formularios desde cero o plantillas con precisión del 100%.
 
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

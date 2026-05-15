@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope } from 'lucide-react';
+import { searchEngine } from '../engine';
 import { FORMS } from '../core/mappings';
 import { normalizeString } from '../utils/stringNormalizer';
 

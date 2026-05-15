@@ -114,7 +114,7 @@ function PasscodeGate({ onCorrect }: { onCorrect: () => void }) {
           </button>
         </form>
       </div>
-      <p className="mt-16 text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-[0.4em] opacity-30">Queryclin Security Protocol v5.3.0</p>
+      <p className="mt-16 text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-[0.4em] opacity-30">Queryclin Security Protocol v6.5.0</p>
     </div>
   );
 }

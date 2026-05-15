@@ -29,10 +29,13 @@ Este documento contiene las directrices fundamentales e inviolables para el desa
 - **Regla:** Se prohíbe renombrar, traducir o normalizar destructivamente los campos originales del CSV. El sistema debe ser un reflejo exacto de la fuente de datos.
 - **Lenguaje:** La comunicación debe ser siempre sobria, profesional y técnica.
 
-## 9. Inmutabilidad Estética (UI Preservation)
+## 7. Inmutabilidad Estética (UI Preservation)
 - **Regla:** Queda terminantemente prohibido modificar el diseño, colores, tipografías o disposición de los elementos "Core" definidos en `DESIGN_SYSTEM.md`.
 - **Procedimiento:** Antes de añadir o mover componentes en el Header, Sidebar o Visor HCE, se debe asegurar la integridad de la marca (Logo, Colores NachuS, etc).
-- **Excepción:** Solo se permiten cambios estéticos si el usuario lo solicita explícitamente y de forma detallada.
+
+## 8. Soberanía del Versionado Único
+- **Regla:** El versionado del sistema debe ser **único, igualitario y síncrono** en todos sus componentes. No se permite disparidad de versiones entre el código, los archivos de gobernanza (`AGENT.MD`, `CHANGELOG.md`, `TASKS.md`, `README.md`) y el `package.json`.
+- **Fuente de Verdad:** La versión oficial siempre será la definida en `package.json`.
 
 ---
-*Gobernanza Queryclin - V4.2.9*
+*Gobernanza Queryclin - V6.4.0*

@@ -1,5 +1,5 @@
 import { CLINICAL_SYNONYMS, STEM_WHITELIST } from './clinicalSynonyms';
-import { normalizeString } from '../../utils/stringNormalizer';
+import { normalizeString } from '../utils/stringNormalizer';
 
 // Invertir el diccionario de sinónimos para acceso rápido O(1)
 // Variante -> Token Canónico

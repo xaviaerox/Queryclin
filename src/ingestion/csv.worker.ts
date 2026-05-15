@@ -1,6 +1,6 @@
 import { streamCSV } from './csvStreamer';
 import { db } from '../storage/indexedDB';
-import { searchEngine } from '../lib/searchEngine';
+import { searchEngine } from '../engine';
 import { PatientData } from '../core/types';
 
 import { FormMapping } from '../core/mappings';

@@ -1,7 +1,7 @@
 import { HCEData, Patient } from '../core/types';
 import { db } from '../storage/indexedDB';
 import { parseClinicalDate } from '../utils/dateParser';
-import { SemanticProcessor } from '../core/search/SemanticProcessor';
+import { SemanticProcessor } from './SemanticProcessor';
 
 export class IndexerService {
   private static readonly NEG_VALUE_WORDS = new Set(['no', '0', '-', 'negativo', 'negativa', 'ausente', 'no presenta', 'negativo.']);

@@ -1,7 +1,8 @@
 import { HCEData, RegistroToma } from '../core/types';
+import { CLINICAL_SYNONYMS, STEM_WHITELIST } from './clinicalSynonyms';
 import { db } from '../storage/indexedDB';
-import { SemanticProcessor } from '../core/search/SemanticProcessor';
-import { selectLatestSnapshots } from '../core/search/selectLatestSnapshots';
+import { SemanticProcessor } from './SemanticProcessor';
+import { selectLatestSnapshots } from './selectLatestSnapshots';
 
 // ============================================================
 // OKAPI BM25 — Parámetros de ajuste (V3.9.0)
@@ -203,15 +204,12 @@ export class QueryEngine {
              const snapshot = globalLatestSnapshot[d.nhc];
              if (!snapshot) return false;
              if (d.idToma !== snapshot.idToma) return false;
-             // Si tenemos maxOrden (índice nuevo), filtramos estrictamente. 
-             // Si no (índice viejo), aceptamos cualquier orden de esa idToma.
              if (snapshot.maxOrden !== undefined && snapshot.maxOrden !== -1) {
                 return d.ordenToma === snapshot.maxOrden;
              }
              return true;
            });
            
-           // Si el índice es viejo, selectLatestSnapshots sigue siendo necesario para desempatar ordenToma
            const nhcSkeleton = (nhc: string) => this.patientSkeletons[nhc];
            docs = selectLatestSnapshots(docs.map((d: any) => {
              const meta = nhcSkeleton(d.nhc)?.tomasMeta?.[d.idToma];
@@ -219,9 +217,6 @@ export class QueryEngine {
            }));
         }
 
-        // ── OKAPI BM25 SCORING (V3.9.0) ──────────────────────────────────
-        // IDF con suavizado Robertson: log((N - df + 0.5) / (df + 0.5) + 1)
-        // Evita IDF negativo cuando df > N/2 y es numéricamente más estable.
         const N = this.documentCount;
         const df = docs.length || 1;
         const idf = Math.log((N - df + 0.5) / (df + 0.5) + 1);
@@ -231,16 +226,13 @@ export class QueryEngine {
           
           if (mustNotRecords.has(`${doc.nhc}_${doc.idToma}_${doc.ordenToma}`)) continue;
 
-          // TF saturado con BM25
           const tf = doc.count;
           const docLen = doc.docLen || this.avgDocLength;
           const tfBm25 = (tf * (BM25_K1 + 1)) / (tf + BM25_K1 * (1 - BM25_B + BM25_B * (docLen / this.avgDocLength)));
           
-          // Field Boost Post-Score
           let fieldBoost = 1.0;
           let docCategories: string[] = doc.c || [];
           
-          // Structural Filter Check
           let hasStructuralMatch = true;
           if (filters?.categories && filters.categories.length > 0) {
              const requestedCats = filters.categories.map(c => c.toUpperCase().replace(/^\d{2}-/, '').trim());
@@ -263,24 +255,26 @@ export class QueryEngine {
           else if (docCategories.includes('OBSERVACIONES')) fieldBoost = 0.9;
           
           const score = tfBm25 * idf * fieldBoost;
-          // ────────────────────────────────────────────────────────────────
 
           if (!patientMatches[doc.nhc]) {
             patientMatches[doc.nhc] = {
               nhc: doc.nhc,
               totalScore: 0,
               registros: {},
-              matchedMustTokens: new Set<string>()
+              matchedMustTokens: new Set<string>(),
+              matchedTokens: new Set<string>() // NUEVO: Track de todos los tokens
             };
           }
           const pm = patientMatches[doc.nhc];
           pm.totalScore += score;
+          pm.matchedTokens.add(term); // Registrar siempre
+
           if (isMust) pm.matchedMustTokens.add(term);
           if (!pm.registros[regId]) {
-            pm.registros[regId] = { idToma: doc.idToma, ordenToma: doc.ordenToma, score: 0, mustTerms: new Set<string>() };
+            pm.registros[regId] = { idToma: doc.idToma, ordenToma: doc.ordenToma, score: 0, matchedTokens: new Set<string>() };
           }
           pm.registros[regId].score += score;
-          if (isMust) pm.registros[regId].mustTerms.add(term);
+          pm.registros[regId].matchedTokens.add(term);
         }
       }
     };
@@ -305,15 +299,11 @@ export class QueryEngine {
         
         if (filterService || filterStart || filterEnd) {
            if (!meta) return false;
-           
-           if (filterService && meta.service) {
-             if (!meta.service.toLowerCase().includes(filterService)) return false;
-           }
-           
+           if (filterService && meta.service && !meta.service.toLowerCase().includes(filterService)) return false;
            if (filterStart || filterEnd) {
-             if (!meta.date) return false;
-             if (filterStart && meta.date < filterStart) return false;
-             if (filterEnd && meta.date > filterEnd) return false;
+              if (!meta.date) return false;
+              if (filterStart && meta.date < filterStart) return false;
+              if (filterEnd && meta.date > filterEnd) return false;
            }
         }
         return true;
@@ -323,22 +313,21 @@ export class QueryEngine {
 
       if (uniqueMust.length > 0) {
         const hasColocated = validRegistros.some(
-          (reg: any) => reg.mustTerms instanceof Set && uniqueMust.every(term => reg.mustTerms.has(term))
+          (reg: any) => reg.matchedTokens instanceof Set && uniqueMust.every(term => reg.matchedTokens.has(term))
         );
         if (!hasColocated) continue;
       }
 
       const uniqueTomasCount = new Set(validRegistros.map((r: any) => r.idToma)).size;
       
-      // MEJORA V6.2.5: Si hay términos SHOULD (derivados de OR), el paciente DEBE tener al menos uno
+      // MEJORA V6.2.5 (Fixed): Si hay términos SHOULD (OR), validar presencia
       if (should.length > 0) {
         const hasAnyShould = validRegistros.some(
-          (reg: any) => reg.mustTerms instanceof Set && should.some(term => reg.mustTerms.has(term))
+          (reg: any) => reg.matchedTokens instanceof Set && should.some(term => reg.matchedTokens.has(term))
         );
         if (!hasAnyShould) continue;
       }
 
-      // ELIMINACIÓN DE PENALIZACIÓN: Priorizar densidad de evidencia clínica
       const finalScore = pm.totalScore; 
 
       results.push({
@@ -361,10 +350,8 @@ export class QueryEngine {
     const filterService = filters?.service?.toLowerCase();
     const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
     const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
-    
     const requestedCats = filters?.categories?.map(c => c.toUpperCase().replace(/^\d{2}-/, '').trim()) || [];
 
-    // Calcular snapshots más recientes si se solicita
     const globalLatestSnapshot: Record<string, { idToma: string, maxOrden: number }> = {};
     if (filters?.onlyLatestSnapshot) {
       for (const nhc in this.patientSkeletons) {
@@ -395,7 +382,6 @@ export class QueryEngine {
 
     for (const nhc of nhcs) {
       const skeleton = this.patientSkeletons[nhc];
-      
       let isValidPatient = true;
       let validTomasCount = 0;
       let matchingTomas: string[] = [];
@@ -406,7 +392,6 @@ export class QueryEngine {
              for (const tomaId in skeleton.tomasMeta) {
                  const meta = skeleton.tomasMeta[tomaId];
                  let isValidToma = true;
-                 
                  if (!meta) isValidToma = false;
                  else {
                      if (filterService && meta.service && !meta.service.toLowerCase().includes(filterService)) isValidToma = false;
@@ -415,14 +400,12 @@ export class QueryEngine {
                          if (filterStart && meta.date < filterStart) isValidToma = false;
                          if (filterEnd && meta.date > filterEnd) isValidToma = false;
                      }
-                     // MEJORA V6.2.3: Filtrado estructural por categorías en búsqueda vacía
                      if (isValidToma && requestedCats.length > 0) {
                         const tomaCats = meta.categories || [];
                         const hasCatMatch = requestedCats.some(req => tomaCats.some(tc => tc.toUpperCase().includes(req)));
                         if (!hasCatMatch) isValidToma = false;
                      }
                  }
-                 
                  if (isValidToma) {
                     isValidPatient = true;
                     validTomasCount++;

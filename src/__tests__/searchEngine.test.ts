@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { searchEngine } from '../lib/searchEngine';
+import { searchEngine } from '../engine';
 import { HCEData } from '../core/types';
 
 // Mock de la base de datos

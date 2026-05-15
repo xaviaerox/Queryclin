@@ -2,7 +2,7 @@
 import { Sun, Moon, Database, Users, HelpCircle, ShieldCheck, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { HCEData } from './core/types';
-import { searchEngine, SearchResult } from './lib/searchEngine';
+import { searchEngine, SearchResult } from './engine';
 import { db } from './storage/indexedDB';
 import { parseClinicalDate, extractFecha, extractHora } from './utils/dateParser';
 import Home from './components/Home';
@@ -64,7 +64,7 @@ export default function App() {
   const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean } | undefined>();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
-  const [publishedSchema, setPublishedSchema] = useState<ClinicalFormSchema | null>(null);
+  const [clinicalSchema, setClinicalSchema] = useState<ClinicalFormSchema | null>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('queryclin_theme') as 'light' | 'dark') || 'light';
@@ -106,7 +106,7 @@ export default function App() {
   useEffect(() => {
     if (view === 'hce' && activeFormId) {
       schemaStore.getPublishedSchemaByFormName(activeFormId.toUpperCase()).then(schema => {
-        setPublishedSchema(schema || null);
+        setClinicalSchema(schema || null);
       });
     }
   }, [activeFormId, view]);
@@ -537,7 +537,7 @@ export default function App() {
               }}
               onBack={() => setView('results')}
               debugMode={debugMode}
-              dynamicSchema={publishedSchema || undefined}
+              clinicalSchema={clinicalSchema || undefined}
             />
           )}
           {view === 'help' && (

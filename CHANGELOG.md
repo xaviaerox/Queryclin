@@ -1,3 +1,40 @@
+## [6.5.0] - 2026-05-15
+### Añadido
+- **Biblioteca de Recursos Clínicos**: Integración de cabeceras canónicas para OBS, MIR y ALG en el Admin Studio.
+- **Gestión Estructural**: Capacidad de crear y eliminar Secciones y Grupos directamente desde el diseñador visual.
+- **Modo "Desde Cero"**: Nuevo flujo de creación basado en listas de cabeceras puras (|) sin pérdida de datos.
+
+### Mejoras
+- **Reingeniería de FormDesigner**: Mejorado el sistema de Drag & Drop con feedback visual reactivo y zonas de borrado inteligentes.
+- **TemplateGenerator Inteligente**: Detección automática de campos narrativos, numéricos y multivariables ($) durante la creación de esquemas.
+- **Panel de Propiedades**: Rediseño premium del editor de campos con previsualización de grid y controles de indexación.
+
+### Corregido
+- **Pérdida de Campos**: Se soluciona el bug que omitía campos de la paleta si no estaban pre-categorizados en `mappings.ts`.
+- **Inconsistencia de Versión**: Sincronización global del protocolo de seguridad a la V6.4.0+.
+- **Latencia de Interfaz**: Optimización del estado interno para eliminar micro-bloqueos durante el diseño masivo.
+
+## [6.4.0] - 2026-05-15
+### Estabilización, Unificación y Alto Rendimiento (Certificación Fallo Cero)
+
+#### 🚀 Unificación Arquitectónica (Operación Clean Slate)
+- **Consolidación del Motor**: Se ha unificado toda la lógica clínica en `src/engine/`. Se eliminó `src/lib/searchEngine.ts` y `src/core/search/` para crear un "Single Source of Truth".
+- **Limpieza de Residuos**: Erradicación del directorio `src/agentic/` (código muerto) y simplificación de la estructura de tareas (`TASKS.md` unificado).
+- **Normalización de Imports**: Actualización masiva de referencias en todo el proyecto para garantizar coherencia estructural.
+
+#### ⚡ Alto Rendimiento y Escalabilidad
+- **Ingesta de Datos**: Optimización de `csv.worker.ts` pasando de complejidad O(N*M) a O(1) mediante mapeo de cabeceras pre-calculado. Ingesta de 100k registros certificada.
+- **Visualización**: Refactorizado `HCEView.tsx` para eliminar micro-latencias en scroll mediante memorización de normalización y optimización de búsquedas demográficas.
+
+#### 🧠 Inteligencia Semántica (Motor V6.2.7+)
+- **Soporte de Frases**: El procesador semántico ahora reconoce términos compuestos (ej: "Insuficiencia Cardíaca") antes de la tokenización.
+- **Negation Shield**: Blindaje estricto en el indexador para evitar que términos negados (ej: "Sin diabetes") generen aciertos positivos.
+- **Lógica Booleana**: Refuerzo de comparadores `AND`/`OR` para búsquedas cruzadas complejas.
+
+#### 📜 Gobernanza
+- **Lanzamiento Público**: Creado `CONTRIBUTING.md` con la filosofía y guía técnica del proyecto.
+- **Certificación**: Auditoría completa de "Fallo Cero" superada. Sistema estable y resiliente.
+
 ## [2026-05-15]
 ### Auditoría Integral y Estabilización (V6.2.2)
 - **`IndexerService.ts`**: Optimización de alto rendimiento para ingesta masiva.
@@ -715,6 +752,8 @@
 
 ## [2026-04-16]
 ### Añadido (Escalabilidad 100k)
+---
+*Queryclin - Sistema de Análisis Clínico Local-First*
 - **Implementación de Arquitectura Local-First de Alto Rendimiento:**
   - **Archivos Modificados:** `src/lib/db.ts` (nuevo), `src/lib/parser.worker.ts` (nuevo), `src/lib/searchEngine.ts`, `src/App.tsx`, `src/components/Results.tsx`.
   - **Motivo:** Para cumplir con el requerimiento de manejar datasets masivos (100.000+ pacientes) sin incurrir en errores de memoria (Out of Memory), se ha migrado la persistencia a IndexedDB. El índice de búsqueda ahora se fragmenta por términos para permitir consultas asíncronas bajo demanda. El procesamiento se ha delegado a un Web Worker para mantener la fluidez de la interfaz.

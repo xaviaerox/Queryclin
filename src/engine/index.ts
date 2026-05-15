@@ -1,6 +1,6 @@
 import { HCEData, Patient } from '../core/types';
-import { indexerService } from '../engine/IndexerService';
-import { queryEngine, SearchResult } from '../engine/QueryEngine';
+import { indexerService } from './IndexerService';
+import { queryEngine, SearchResult } from './QueryEngine';
 
 export type { SearchResult };
 
@@ -40,7 +40,7 @@ class SearchEngineFacade {
   }
 
   // --- Search & Queries ---
-  async loadIndex(data: HCEData) {
+  async loadIndex(data?: HCEData) {
     await queryEngine.loadIndex();
   }
 
@@ -56,7 +56,7 @@ class SearchEngineFacade {
     return queryEngine.getSuggestions(input);
   }
 
-  async search(query: string, filters?: { dateRange?: [string, string], service?: string }): Promise<SearchResult[]> {
+  async search(query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }): Promise<SearchResult[]> {
     return await queryEngine.search(query, filters);
   }
 }
