@@ -105,6 +105,17 @@ const NARRATIVE_FIELDS = new Set([
 ].map(k => k.toUpperCase()));
 
 
+// UTILIDADES DE NORMALIZACIÓN (Fuera del componente para evitar re-creación)
+const cleanLabel = (s: string) => s.replace(/:$/, '').trim().toUpperCase();
+const cleanTitle = (s: string) => (s || "").replace(/^\d{2,}-\s*/, '').replace(/^\d{2,}\.\d{2,}-\s*/, '').replace(/^\d{2,}\s*-\s*/, '').trim();
+const cleanKeyStr = (s: string) => String(s)
+  .replace(/[\u00A0\u200B-\u200D\uFEFF'":;]/g, ' ')
+  .replace(/[_-]/g, ' ')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .toUpperCase();
+
+
 
 
 
@@ -618,7 +629,6 @@ export default function HCEView({
 
 
   if (activeVersion) {
-    const cleanTitle = (s: string) => (s || "").replace(/^\d{2,}-\s*/, '').replace(/^\d{2,}\.\d{2,}-\s*/, '').replace(/^\d{2,}\s*-\s*/, '').trim();
 
     // Agrupar subcategorías bajo categorías principales (ej: "01-ANTECEDENTES > PERS")
     const categoriesMap: Record<string, { title: string, subcategories: { title: string | null, fields: any[] }[] }> = {};
@@ -716,7 +726,6 @@ export default function HCEView({
 
     // Post-procesamiento: Deduplicar campos entre la raíz (null) y las subcategorías con nombre
     // Y deduplicar por label (ej: "Grupo y RH" vs "Grupo y RH:")
-    const cleanLabel = (s: string) => s.replace(/:$/, '').trim().toUpperCase();
 
     categoriesOrder.forEach(catKey => {
       const cat = categoriesMap[catKey];
@@ -767,12 +776,6 @@ export default function HCEView({
       } as any);
     });
 
-    const cleanKeyStr = (s: string) => String(s)
-      .replace(/[\u00A0\u200B-\u200D\uFEFF'":;]/g, ' ')
-      .replace(/[_-]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toUpperCase();
 
     const excludedKeys = new Set([
       ...Object.keys(formMapping.keys).map(cleanKeyStr),

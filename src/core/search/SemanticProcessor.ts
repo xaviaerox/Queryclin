@@ -8,7 +8,8 @@ const VARIANT_TO_CANONICAL = new Map<string, string>();
 for (const [canonical, variants] of Object.entries(CLINICAL_SYNONYMS)) {
   VARIANT_TO_CANONICAL.set(canonical, canonical); // El canónico se mapea a sí mismo
   for (const variant of variants) {
-    const normalized = normalizeString(variant).replace(/[^a-z0-9]/g, '');
+    // PRESERVAR ESPACIOS para detección de frases multi-palabra
+    const normalized = normalizeString(variant);
     VARIANT_TO_CANONICAL.set(normalized, canonical);
   }
 }
@@ -33,7 +34,26 @@ export class SemanticProcessor {
    * Normalización básica (NFD + minúsculas).
    */
   public static normalize(text: string): string {
-    return normalizeString(text);
+    let normalized = normalizeString(text);
+    
+    // MEJORA V6.2.7: Pre-reemplazo de frases multi-palabra conocidas
+    // Ordenamos por longitud descendente para emparejar la frase más larga primero
+    const phrases = Array.from(VARIANT_TO_CANONICAL.keys())
+      .filter(k => k.includes(' '))
+      .sort((a, b) => b.length - a.length);
+
+    for (const phrase of phrases) {
+      if (normalized.includes(phrase)) {
+        const canonical = VARIANT_TO_CANONICAL.get(phrase);
+        if (canonical) {
+          // Reemplazamos con un espacio alrededor para evitar pegarse a otras palabras
+          const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+          normalized = normalized.replace(regex, ` ${canonical} `);
+        }
+      }
+    }
+    
+    return normalized;
   }
 
   /**

@@ -23,17 +23,17 @@ self.onmessage = async (e: MessageEvent) => {
     let totalProcessed = 0;
     const uniqueNhcs = new Set<string>();
     
-    // Calcular total estimado de líneas antes del streaming
-    // para que la barra de progreso sea determinista (antes era siempre totalProcessed + 5000).
-    const estimatedTotal = Math.max((csvText.match(/\n/g) || []).length, 1);
-    
     searchEngine.startIndexing();
 
     const stream = streamCSV(csvText, delimiter);
+    let estimatedTotal = 0; // Se calculará de forma fluida o se usará como relativo
 
     for (const record of stream) {
-      // Normalización determinista del registro (necesaria para validación y procesamiento)
-      const normalizedRecord = normalizeRecord(record, mapping);
+      if (totalProcessed === 0) {
+        headerMap = buildHeaderMap(record, mapping);
+      }
+      
+      const normalizedRecord = normalizeRecord(record);
 
       if (totalProcessed === 0) {
         // Validar que las claves estructurales existan (considerando aliases)
@@ -146,8 +146,8 @@ self.onmessage = async (e: MessageEvent) => {
 async function processBatch(records: any[], currentTotal: number, mapping: FormMapping) {
   if (records.length === 0) return;
 
-  // Normalización previa de cabeceras basada en aliases
-  const normalizedRecords = records.map(record => normalizeRecord(record, mapping));
+  // Normalización previa de cabeceras basada en mapa pre-calculado
+  const normalizedRecords = records.map(record => normalizeRecord(record));
 
   const batchNhcs = Array.from(new Set(
     normalizedRecords.map(r => r[mapping.keys.nhc]).filter(Boolean).map(String)
@@ -232,32 +232,51 @@ async function processBatch(records: any[], currentTotal: number, mapping: FormM
   for (const key in batchPatients) delete batchPatients[key];
 }
 
-/**
- * Normaliza un registro CSV mapeando aliases a nombres canónicos
- */
-function normalizeRecord(record: any, mapping: FormMapping): any {
-  const normalized: any = {};
-  if (mapping.headerAliases || mapping.visualCategories) {
-    const allCanonical = new Set([
-      ...Object.keys(mapping.headerAliases || {}),
-      ...Object.values(mapping.visualCategories || {}).flat()
-    ]);
+let headerMap: Record<string, string> = {};
 
-    for (const canonical of allCanonical) {
-      const aliases = (mapping.headerAliases && mapping.headerAliases[canonical]) || [];
-      const foundKey = Object.keys(record).find(k => {
-        const cleanK = k.toLowerCase().trim().replace(/:$/, '');
-        // Match canonical name itself
-        if (canonical.toLowerCase().trim().replace(/:$/, '') === cleanK) return true;
-        // Match aliases
-        return aliases.some(a => a.toLowerCase().trim() === cleanK);
-      });
-      if (foundKey) normalized[canonical] = record[foundKey];
+/**
+ * Pre-calcula el mapa de cabeceras basándose en el primer registro y los aliases del mapping
+ */
+function buildHeaderMap(firstRecord: any, mapping: FormMapping) {
+  const map: Record<string, string> = {};
+  const recordKeys = Object.keys(firstRecord);
+  
+  const allCanonical = [
+    ...Object.keys(mapping.headerAliases || {}),
+    ...Object.values(mapping.visualCategories || {}).flat(),
+    mapping.keys.nhc,
+    mapping.keys.idToma,
+    mapping.keys.ordenToma,
+    mapping.keys.fechaToma
+  ];
+
+  for (const canonical of allCanonical) {
+    if (!canonical) continue;
+    const aliases = (mapping.headerAliases && mapping.headerAliases[canonical]) || [];
+    const cleanCanonical = canonical.toLowerCase().trim().replace(/:$/, '');
+    
+    const foundKey = recordKeys.find(k => {
+      const cleanK = k.toLowerCase().trim().replace(/:$/, '');
+      return cleanK === cleanCanonical || aliases.some(a => a.toLowerCase().trim() === cleanK);
+    });
+    
+    if (foundKey) {
+      map[foundKey] = canonical;
     }
   }
-  
+  return map;
+}
+
+/**
+ * Normaliza un registro CSV utilizando el mapa pre-calculado (O(1))
+ */
+function normalizeRecord(record: any): any {
+  const normalized: any = {};
   for (const key of Object.keys(record)) {
-    if (!(key in normalized)) {
+    const canonical = headerMap[key];
+    if (canonical) {
+      normalized[canonical] = record[key];
+    } else {
       normalized[key] = record[key];
     }
   }

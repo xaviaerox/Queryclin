@@ -248,7 +248,11 @@ export class QueryEngine {
              if (!hasMatch) hasStructuralMatch = false;
           }
           if (filters?.fields && filters.fields.length > 0) {
-             const hasMatch = filters.fields.some(f => docCategories.includes(f));
+             const requestedFields = filters.fields.map(f => f.toUpperCase().replace(/^EC_/, '').replace(/_/g, ' ').trim());
+             const hasMatch = requestedFields.some(req => docCategories.some(dc => {
+               const cleanDC = dc.toUpperCase().replace(/^EC_/, '').replace(/_/g, ' ').trim();
+               return cleanDC === req || dc === req;
+             }));
              if (!hasMatch) hasStructuralMatch = false;
           }
           if (!hasStructuralMatch) continue;
@@ -325,12 +329,22 @@ export class QueryEngine {
       }
 
       const uniqueTomasCount = new Set(validRegistros.map((r: any) => r.idToma)).size;
-      const normalizedScore = pm.totalScore / Math.log(validRegistros.length + 2);
+      
+      // MEJORA V6.2.5: Si hay términos SHOULD (derivados de OR), el paciente DEBE tener al menos uno
+      if (should.length > 0) {
+        const hasAnyShould = validRegistros.some(
+          (reg: any) => reg.mustTerms instanceof Set && should.some(term => reg.mustTerms.has(term))
+        );
+        if (!hasAnyShould) continue;
+      }
+
+      // ELIMINACIÓN DE PENALIZACIÓN: Priorizar densidad de evidencia clínica
+      const finalScore = pm.totalScore; 
 
       results.push({
         nhc: pm.nhc,
         patient: skeleton || { nhc: pm.nhc, demographics: {}, tomas: {}, services: [], dates: { start: Infinity, end: -Infinity } },
-        totalScore: normalizedScore,
+        totalScore: finalScore,
         matchingTomasCount: uniqueTomasCount,
         bestMatchUrl: { idToma: (validRegistros[0] as any).idToma, ordenToma: (validRegistros[0] as any).ordenToma },
         matchedRegistros: validRegistros as any
@@ -340,7 +354,7 @@ export class QueryEngine {
     return this.applyFiltersAndSort(results);
   }
 
-  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string, onlyLatestSnapshot?: boolean }): Promise<SearchResult[]> {
+  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     const nhcs = Object.keys(this.patientSkeletons);
     
@@ -348,6 +362,8 @@ export class QueryEngine {
     const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
     const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
     
+    const requestedCats = filters?.categories?.map(c => c.toUpperCase().replace(/^\d{2}-/, '').trim()) || [];
+
     // Calcular snapshots más recientes si se solicita
     const globalLatestSnapshot: Record<string, { idToma: string, maxOrden: number }> = {};
     if (filters?.onlyLatestSnapshot) {
@@ -382,8 +398,9 @@ export class QueryEngine {
       
       let isValidPatient = true;
       let validTomasCount = 0;
+      let matchingTomas: string[] = [];
       
-      if (filterService || filterStart || filterEnd) {
+      if (filterService || filterStart || filterEnd || requestedCats.length > 0) {
          isValidPatient = false;
          if (skeleton.tomasMeta) {
              for (const tomaId in skeleton.tomasMeta) {
@@ -398,11 +415,18 @@ export class QueryEngine {
                          if (filterStart && meta.date < filterStart) isValidToma = false;
                          if (filterEnd && meta.date > filterEnd) isValidToma = false;
                      }
+                     // MEJORA V6.2.3: Filtrado estructural por categorías en búsqueda vacía
+                     if (isValidToma && requestedCats.length > 0) {
+                        const tomaCats = meta.categories || [];
+                        const hasCatMatch = requestedCats.some(req => tomaCats.some(tc => tc.toUpperCase().includes(req)));
+                        if (!hasCatMatch) isValidToma = false;
+                     }
                  }
                  
                  if (isValidToma) {
                     isValidPatient = true;
                     validTomasCount++;
+                    matchingTomas.push(tomaId);
                  }
              }
          }
@@ -427,7 +451,7 @@ export class QueryEngine {
           patient: skeleton,
           totalScore: 1,
           matchingTomasCount: validTomasCount,
-          bestMatchUrl: { idToma: 'N/A', ordenToma: 0 },
+          bestMatchUrl: { idToma: matchingTomas[0] || 'N/A', ordenToma: 0 },
           matchedRegistros: []
         });
       }

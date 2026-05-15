@@ -113,27 +113,29 @@ export class IndexerService {
               textToTokenize += ` ${parent} ${child} ${parent}_${child}`;
            }
 
-           const tokens = SemanticProcessor.tokenize(textToTokenize);
-           
-           // Si el valor es una negación clínica, inyectamos un token de exclusión específico
-           if (isNegative) {
-              if (!this.negTokenCache[key]) {
-                 this.negTokenCache[key] = 'no_' + key.toLowerCase().replace(/[^a-z0-9]/g, '');
-              }
-              docTokens.push(this.negTokenCache[key]);
-           }
+            // MEJORA V6.2.4: Blindaje Real del Negation Shield
+            // Si el valor es una negación clínica, indexamos el token de negación y SALTAMOS los positivos
+            if (isNegative) {
+               if (!this.negTokenCache[key]) {
+                  this.negTokenCache[key] = 'no_' + key.toLowerCase().replace(/[^a-z0-9]/g, '');
+               }
+               docTokens.push(this.negTokenCache[key]);
+               // No indexamos los tokens de la palabra clave si está negada en este campo
+               continue; 
+            }
 
-           docLen += tokens.length;
-           
-           for (const t of tokens) {
-              if (!termCategories[t]) termCategories[t] = new Set();
-              termCategories[t].add(categoryStr);
-              // Solo vinculamos el nombre del campo (key) si el valor NO es negativo
-              if (!isNegative) {
-                termCategories[t].add(key);
-              }
-           }
-           docTokens.push(...tokens);
+            const tokens = SemanticProcessor.tokenize(textToTokenize);
+            docLen += tokens.length;
+            
+            for (const t of tokens) {
+               if (!termCategories[t]) termCategories[t] = new Set();
+               termCategories[t].add(categoryStr);
+               termCategories[t].add(key);
+               // MEJORA V6.2.3: Añadir versión normalizada del campo
+               const cleanKey = key.toUpperCase().replace(/^EC_/, '').replace(/_/g, ' ').trim();
+               termCategories[t].add(cleanKey);
+            }
+            docTokens.push(...tokens);
         }
 
         this.totalTokens += docLen;

@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useMemo } from 'react';
+ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Sun, Moon, Database, Users, HelpCircle, ShieldCheck, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { HCEData } from './core/types';
@@ -73,6 +73,8 @@ export default function App() {
   const [debugMode, setDebugMode] = useState<boolean>(() => {
     return localStorage.getItem('queryclin_debug') === 'true';
   });
+
+  const searchIdRef = useRef(0);
 
 
   useEffect(() => {
@@ -276,36 +278,53 @@ export default function App() {
   };
 
   const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }) => {
+    const currentId = ++searchIdRef.current;
     setQuery(q);
     setActiveFilters(filters);
-    let results = await searchEngine.search(q, filters);
     
-    if ((filters?.categories && filters.categories.length > 0) || (filters?.fields && filters.fields.length > 0)) {
-      results = await applyFilters(results, filters, q);
-    }
-    
-    if (q.trim()) {
-      try {
-        const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
-        const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, filters: undefined, timestamp: Date.now(), resultCount: undefined } : s);
-        
-        // Nueva lógica: Solo sobreescribir si coincide QUERY Y FILTROS
-        const currentSearch = { query: q, filters, timestamp: Date.now(), resultCount: results.length };
-        const filtered = parsed.filter((s: any) => {
-          const sameQuery = s.query === q;
-          const sameFilters = JSON.stringify(s.filters) === JSON.stringify(filters);
-          return !(sameQuery && sameFilters);
-        });
-
-        const newRecent = [currentSearch, ...filtered].slice(0, 6);
-        localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
-      } catch (e) {
-        console.error("Failed to update recent searches:", e);
+    try {
+      // Auditoría de Rango: Asegurar que dateStart no sea posterior a dateEnd
+      let finalDateRange = filters?.dateRange;
+      if (finalDateRange && finalDateRange[0] && finalDateRange[1]) {
+        if (new Date(finalDateRange[0]) > new Date(finalDateRange[1])) {
+          finalDateRange = [finalDateRange[1], finalDateRange[0]];
+        }
       }
+
+      let results = await searchEngine.search(q, { ...filters, dateRange: finalDateRange });
+      
+      // Guardia de Concurrencia: Si esta ya no es la búsqueda actual, abortamos
+      if (currentId !== searchIdRef.current) return;
+
+      if ((filters?.categories && filters.categories.length > 0) || (filters?.fields && filters.fields.length > 0)) {
+        results = await applyFilters(results, filters, q);
+      }
+      
+      if (q.trim()) {
+        try {
+          const stored = JSON.parse(localStorage.getItem('queryclin_recent_searches') || '[]');
+          const parsed = stored.map((s: any) => typeof s === 'string' ? { query: s, filters: undefined, timestamp: Date.now(), resultCount: undefined } : s);
+          
+          const currentSearch = { query: q, filters, timestamp: Date.now(), resultCount: results.length };
+          const filtered = parsed.filter((s: any) => {
+            const sameQuery = s.query === q;
+            const sameFilters = JSON.stringify(s.filters) === JSON.stringify(filters);
+            return !(sameQuery && sameFilters);
+          });
+
+          const newRecent = [currentSearch, ...filtered].slice(0, 6);
+          localStorage.setItem('queryclin_recent_searches', JSON.stringify(newRecent));
+        } catch (e) {
+          console.error("Failed to update recent searches:", e);
+        }
+      }
+      
+      setSearchResults(results);
+      setView('results');
+    } catch (err) {
+      console.error("[App] Fallo crítico en el motor de búsqueda:", err);
+      // Opcional: Notificar al usuario o mantener estado previo
     }
-    
-    setSearchResults(results);
-    setView('results');
   };
 
   const handleClearData = async () => {
