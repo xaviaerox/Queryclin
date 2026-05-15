@@ -206,6 +206,27 @@ Este archivo mantiene el registro acumulativo de la evolución del sistema. Las 
 - [x] **G1. Protocolo de Trazabilidad**: Repositorio jerárquico de prompts (`/generic` y `/metaprompts`) para control de instrucciones.
 - [x] **A34. Integración Dinámica**: Motor de inyección de esquemas dinámicos (`DynamicSectionRenderer`) en el core de visualización `HCEView.tsx`.
 - [x] **Logro**: Queryclin evoluciona de un visor estático a una plataforma de diseño clínico flexible, segura y totalmente trazable.
++
++## 🔵 FASE 22: Blindaje de Ingesta y Certificación de Búsqueda (V6.0.x — ACTUAL 🚀)
++- [x] **A35. Hardening de Tipos (Web Worker)**: Implementación de type-guards defensivos en `stringNormalizer` y `SemanticProcessor` para evitar crashes por datos malformados.
++- [x] **A36. Protección de Diccionarios**: Migración a objetos con prototipo nulo (`Object.create(null)`) para prevenir contaminación por términos clínicos.
++- [x] **T1. Restauración de Test-Suite**: Reconstrucción de la batería de pruebas semánticas y datasets sintéticos post-rollback.
++- [x] **T2. Validación de Negaciones**: Implementado "Negation Shield" en el indexador para eliminar falsos positivos (HTA: NO).
++- [x] **Logro**: Sistema estabilizado y blindado contra errores de tiempo de ejecución en la ingesta masiva de datos.
+
+## Fase 23: Gobernanza Agéntica Institucional (V6.2.0)
+- [x] **A37. Migración de Inteligencia**: Integración de especificaciones y metaprompts en `governance/agentic`.
+- [x] **A38. Núcleo Agéntico**: Creación de `src/agentic` con los esqueletos de orquestación y validación.
+- [x] **A39. Estandarización de Esquemas**: Implementación de esquemas JSON para la definición de tareas y parches.
+- [x] **Logro**: Queryclin ahora posee un marco de gobernanza autogestionado para el desarrollo asistido por IA, garantizando la preservación de invariantes clínicos.
+
+## Fase 24: Auditoría Integral y Estabilización Masiva (V6.2.2)
+- [x] **A40. Optimización de Memoria**: Resolución definitiva de OOM en ingesta masiva mediante constantes estáticas en Indexer.
+- [x] **A41. Hardening de UI**: Implementación de guardas de navegación y corrección de ReferenceError en `HCEView`.
+- [x] **A42. Integridad de Mapeos**: Mapeado universal de "Pruebas solicitadas" y robustez de alias clínicos.
+- [x] **A43. Unificación de Código**: Eliminada redundancia funcional mediante `normalizeString` global.
+- [x] **T3. Batería de Pruebas**: Generación de test cases exhaustivos para validación continua.
+- [x] **Logro**: Sistema certificado como estable, rápido y libre de redundancias críticas tras auditoría completa.
 
 ---
 *Queryclin - Sistema de Análisis Clínico Local-First*

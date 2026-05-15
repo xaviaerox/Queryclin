@@ -104,6 +104,7 @@ export const FORMS: FormMapping[] = [
       'Motivo de Consulta': ['Motivo de Consulta', 'Motivo de la consulta'],
       'Otras Pruebas Realizadas': ['Otras Pruebas Realizadas', 'Otras pruebas realizadas'],
       'Próxima revisión': ['Próxima revisión', 'Proxima revisión', 'Proxima revision'],
+      'Pruebas solicitadas': ['Pruebas solicitadas', 'Pruebas solicitadas:', 'PRUEBAS SOLICITADAS'],
       'Id_Toma': ['Id_Toma', 'Identificador Toma', 'ID_TOMA'],
       'Orden_Toma': ['Orden_Toma', 'Version Registro', 'ORDEN_TOMA'],
       'Cipa': ['Cipa', 'cipa', 'CIPA'],
@@ -156,7 +157,7 @@ export const FORMS: FormMapping[] = [
         'Diagnóstico', 'Evolución (CEX)', 'Próxima revisión', 'Recomendaciones', 'Tratamiento'
       ],
       '04-RESULTADOS PRUEBAS': [
-        'Otras Pruebas Realizadas', 'Recetas Prescritas', 'Resultado Analítica', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
+        'Otras Pruebas Realizadas', 'Pruebas solicitadas', 'Recetas Prescritas', 'Resultado Analítica', 'Resultado Anatomía Patológica', 'Resultado Radiodiagnóstico'
       ],
       '05-PROCESO HOSP/CEX': [
         'Juicio Diagnóstico Activo', 'Juicio Diagnóstico Secundario', 'Motivo de Alta', 'Motivo de Consulta', 

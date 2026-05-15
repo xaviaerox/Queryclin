@@ -16,7 +16,7 @@ self.onmessage = async (e: MessageEvent) => {
   }
 
   try {
-    console.log('[Worker] Iniciando Ingesta Determinista (V4.0)...');
+    console.log('[Worker] Iniciando Ingesta Determinista (V6.2.2)...');
     
     const BATCH_SIZE = 2500;
     let recordsBatch: any[] = [];

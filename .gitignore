@@ -69,3 +69,9 @@ indexeddb/
 STRESS_TEST_DATA.csv
 HC_Pruebas.txt
 test-results/
+
+# Agentic Governance & Internal Documentation
+governance/
+artifacts/
+queryclin-agentic/
+.ag/

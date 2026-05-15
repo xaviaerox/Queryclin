@@ -498,7 +498,7 @@ export default function App() {
               />
             </div>
           )}
-          {view === 'hce' && (
+          {view === 'hce' && selectedIndex >= 0 && selectedIndex < searchResults.length && (
             <HCEView
               results={searchResults}
               currentIndex={selectedIndex}

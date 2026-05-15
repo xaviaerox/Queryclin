@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope } from 'lucide-react';
 import { FORMS } from '../core/mappings';
+import { normalizeString } from '../utils/stringNormalizer';
 
 interface HomeProps {
   hasData: boolean;
@@ -428,10 +429,10 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                         try {
                           const mapping = (activeFormId && Array.isArray(FORMS)) ? FORMS.find(f => f.id === activeFormId) : null;
                           if (!mapping || !mapping.visualCategories) return null;
-                          const normalize = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                          const cleanCat = normalize(expandedCategory || "");
+
+                          const cleanCat = normalizeString(expandedCategory || "");
                           const targetVisualCats = Object.keys(mapping.visualCategories).filter(k => {
-                            const kn = normalize(k);
+                            const kn = normalizeString(k);
                             return kn === cleanCat || kn.includes(cleanCat) || cleanCat.includes(kn);
                           });
                           const fields: string[] = [];

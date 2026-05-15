@@ -39,15 +39,17 @@ export class SemanticProcessor {
   /**
    * Obtiene la raíz clínica estricta basada en whitelist.
    */
-  public static getStem(token: string): string {
+  public static getStem(token: any): string {
+    if (typeof token !== 'string') return '';
     return STEM_WHITELIST[token] || token;
   }
 
   /**
    * Obtiene el token canónico (sinónimo principal) de una variante.
    */
-  public static getCanonical(token: string): string | undefined {
-    const cleanToken = token.replace(/[^a-z0-9]/g, '');
+  public static getCanonical(token: any): string | undefined {
+    if (typeof token !== 'string') return undefined;
+    const cleanToken = normalizeString(token).replace(/[^a-z0-9]/g, '');
     return VARIANT_TO_CANONICAL.get(cleanToken);
   }
 
@@ -67,8 +69,8 @@ export class SemanticProcessor {
    * Tokenizador Clínico Real.
    * Conserva símbolos vitales y decimales. Expande sinónimos canónicos implícitamente.
    */
-  public static tokenize(text: string): string[] {
-    if (!text) return [];
+  public static tokenize(text: any): string[] {
+    if (typeof text !== 'string' || !text) return [];
     
     const normalized = this.normalize(text);
     

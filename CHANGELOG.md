@@ -1,3 +1,32 @@
+## [2026-05-15]
+### Auditoría Integral y Estabilización (V6.2.2)
+- **`IndexerService.ts`**: Optimización de alto rendimiento para ingesta masiva.
+    - Implementación de constantes estáticas (`NEG_VALUE_WORDS`) y caché de sesión (`negTokenCache`) para eliminar el overhead de memoria.
+    - Resolución definitiva de bloqueos por Out-Of-Memory (OOM) en archivos de gran escala.
+- **`HCEView.tsx` & `Home.tsx`**: Unificación de la normalización de strings.
+    - Eliminadas funciones locales redundantes a favor de la utilidad global `normalizeString`.
+    - Corregido `ReferenceError` por desestructuración incompleta de props (`dynamicSchema`).
+- **`App.tsx`**: Implementación de guardas defensivas en la navegación para evitar excepciones de interfaz durante cambios de contexto.
+- **`mappings.ts`**: Integración universal del campo "Pruebas solicitadas" en todos los modelos clínicos (HCE-MIR, HCE-ALG, HCE-OBS) y expansión de alias de robustez.
+- **Gobernanza**: Generada batería de pruebas exhaustiva para certificación de calidad del sistema.
+
+## [2026-05-15]
+### Evolución Controlada: Blindaje de Negaciones Clínicas (V6.1.4)
+- **`IndexerService.ts`**: Implementada lógica de detección de negaciones atómicas (`NO`, `0`, `Negativo`, etc.) durante la fase de indexación.
+    - Se ha restringido la asociación de la clave del campo (`key`) con los tokens si el valor es negativo, eliminando falsos positivos masivos en búsquedas como `HTA` o `fumadora`.
+    - Mejora la precisión del motor de búsqueda al garantizar que solo se recuperen pacientes con hallazgos positivos confirmados.
+
+## [2026-05-15]
+### Hotfix: Blindaje de Tipos y Estabilización Post-Rollback (V6.0.x)
+- **`SemanticProcessor.ts`**:
+    - Añadido chequeo defensivo `typeof token !== 'string'` en `getStem` y `getCanonical` para prevenir crashes `TypeError: s.replace is not a function`.
+    - Corregido bug de sensibilidad a mayúsculas en `getCanonical` (ahora usa `normalizeString` internamente).
+- **`stringNormalizer.ts`**: Añadido guardián de tipos para evitar que entradas `null`/`undefined` propaguen errores de cadena en el Worker.
+- **`clinicalSynonyms.ts`**: Encapsulado de diccionarios con `Object.create(null)` para prevenir colisiones entre términos clínicos y propiedades del prototipo de Object.
+- **Infraestructura de Pruebas**:
+    - Restaurado `tests/mocks/hce_obs_synthetic.txt` (V3) con escenarios de HTA, Diabetes y Alergias.
+    - Restaurado `tests/SEARCH_TEST_BATTERY.md` (V6.0.4) como checklist de certificación de búsqueda.
+
 ## [2026-05-13]
 ### Finalización: Queryclin Admin Studio & Governance (V6.0.0)
 - **Admin Studio (Core)**:

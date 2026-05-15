@@ -12,6 +12,7 @@ import { FORMS } from '../core/mappings';
 import { parseClinicalDate, extractFecha, extractHora } from '../utils/dateParser';
 import { DynamicSectionRenderer } from '../admin/renderer/DynamicSectionRenderer';
 import { ClinicalFormSchema } from '../admin/domain/types';
+import { normalizeString } from '../utils/stringNormalizer';
 
 interface HCEViewProps {
   results: SearchResult[];
@@ -481,7 +482,7 @@ function TomaTimeline({
 // ─── Componente Principal HCEView ──────────────────────────────────────────────
 export default function HCEView({ 
   results, currentIndex, query, onBack, onNavigate, formId, activeFilters,
-  activeTomaIndex, activeVersionIndex, onTomaNavigate, debugMode
+  activeTomaIndex, activeVersionIndex, onTomaNavigate, debugMode, dynamicSchema
 }: HCEViewProps) {
   const currentResult = results[currentIndex];
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -614,7 +615,7 @@ export default function HCEView({
   const renderedSections: any[] = [];
   
   // Taxonomía estricta basada en el orden del formulario definido en mappings.ts
-  const normalize = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 
   if (activeVersion) {
     const cleanTitle = (s: string) => (s || "").replace(/^\d{2,}-\s*/, '').replace(/^\d{2,}\.\d{2,}-\s*/, '').replace(/^\d{2,}\s*-\s*/, '').trim();
@@ -750,8 +751,8 @@ export default function HCEView({
     categoriesOrder.forEach(mainKey => {
       const cat = categoriesMap[mainKey];
       const isCatSelected = !activeFilters?.categories || activeFilters.categories.length === 0 || activeFilters.categories.some(filterCat => {
-        const cleanFilter = normalize(filterCat).replace(/^\d{2}-/, '').trim();
-        const cleanCat = normalize(cat.title).replace(/^\d{2}-/, '').trim();
+        const cleanFilter = normalizeString(filterCat).replace(/^\d{2}-/, '').trim();
+        const cleanCat = normalizeString(cat.title).replace(/^\d{2}-/, '').trim();
         return cleanCat === cleanFilter || cleanCat.includes(cleanFilter) || filterCat.includes(cleanCat);
       });
 

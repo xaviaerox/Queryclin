@@ -99,9 +99,30 @@ export default function Evolution({ onBack }: EvolutionProps) {
       color: 'emerald'
     },
     {
-      date: '12 de Mayo, 2026 (Actual)',
+      date: '12 de Mayo, 2026',
       title: 'V5.3.0: Motor Semántico y Búsqueda Estructural',
-      description: 'Implementación de la capa semántica centralizada (SemanticProcessor) y filtrado estructural nativo en el índice. Se elimina la hidratación masiva de datos, logrando búsquedas categorizadas instantáneas con un rendimiento O(1).',
+      description: 'Implementación de la capa semántica centralizada (SemanticProcessor) y filtrado estructural nativo en el índice. Se logra un rendimiento O(1) en búsquedas categorizadas.',
+      icon: <Zap className="text-blue-500" />,
+      color: 'blue'
+    },
+    {
+      date: '13 de Mayo, 2026',
+      title: 'V6.0.0: Era Admin & Governance',
+      description: 'Implementación integral del Queryclin Admin Studio con motor Drag-and-Drop y sistema de gobernanza agéntica. Nace la capacidad de diseñar formularios clínicos dinámicos con persistencia en IndexedDB.',
+      icon: <Shield className="text-indigo-500" />,
+      color: 'indigo'
+    },
+    {
+      date: '15 de Mayo, 2026 (Mañana)',
+      title: 'V6.1.4: Negation Shielding',
+      description: 'Implementación del escudo de negaciones clínicas para eliminar falsos positivos en búsquedas críticas (HTA: NO). Refactorización del motor de indexación para alta precisión semántica.',
+      icon: <Microscope className="text-emerald-500" />,
+      color: 'emerald'
+    },
+    {
+      date: '15 de Mayo, 2026 (Actual)',
+      title: 'V6.2.2: Auditoría Integral & Estabilidad',
+      description: 'Certificación total del sistema tras auditoría masiva. Optimización extrema de memoria (OOM Fix), hardening de la interfaz y unificación de la arquitectura de normalización bajo estándares industriales.',
       icon: <Zap className="text-blue-500" />,
       color: 'blue'
     }
@@ -169,7 +190,7 @@ export default function Evolution({ onBack }: EvolutionProps) {
       </div>
 
         <div className="text-center mt-12 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-          Hoja de Ruta 2026 - Queryclin V5.3.0
+          Hoja de Ruta 2026 - Queryclin V6.2.2
         </div>
     </div>
   );

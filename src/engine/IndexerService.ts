@@ -4,6 +4,9 @@ import { parseClinicalDate } from '../utils/dateParser';
 import { SemanticProcessor } from '../core/search/SemanticProcessor';
 
 export class IndexerService {
+  private static readonly NEG_VALUE_WORDS = new Set(['no', '0', '-', 'negativo', 'negativa', 'ausente', 'no presenta', 'negativo.']);
+  private negTokenCache: Record<string, string> = Object.create(null);
+
   private documentCount = 0;
   /** Acumulador para BM25: suma de todos los tokens indexados para calcular la longitud media. */
   private totalTokens = 0;
@@ -27,6 +30,7 @@ export class IndexerService {
   }
 
   public async indexPatient(nhc: string, patient: Patient, isSampling: boolean) {
+    this.negTokenCache = Object.create(null); // Reset cache per patient for efficiency
     const skeleton: any = { 
       nhc: patient.nhc, 
       demographics: patient.demographics, 
@@ -98,6 +102,8 @@ export class IndexerService {
            else if (upperKey.includes('INGRESO') || upperKey.includes('ALTA') || upperKey.includes('EVOLUCI') || upperKey.includes('HOSPITAL')) categoryStr = 'PROCESO HOSP/CEX';
 
            let textToTokenize = String(value);
+           const valStr = textToTokenize.toLowerCase().trim();
+           const isNegative = IndexerService.NEG_VALUE_WORDS.has(valStr);
 
            // Procesar explícitamente campos multivalor $
            if (key.includes('$')) {
@@ -108,12 +114,24 @@ export class IndexerService {
            }
 
            const tokens = SemanticProcessor.tokenize(textToTokenize);
+           
+           // Si el valor es una negación clínica, inyectamos un token de exclusión específico
+           if (isNegative) {
+              if (!this.negTokenCache[key]) {
+                 this.negTokenCache[key] = 'no_' + key.toLowerCase().replace(/[^a-z0-9]/g, '');
+              }
+              docTokens.push(this.negTokenCache[key]);
+           }
+
            docLen += tokens.length;
            
            for (const t of tokens) {
               if (!termCategories[t]) termCategories[t] = new Set();
               termCategories[t].add(categoryStr);
-              termCategories[t].add(key); // Para soporte de filtrado estructural por campos
+              // Solo vinculamos el nombre del campo (key) si el valor NO es negativo
+              if (!isNegative) {
+                termCategories[t].add(key);
+              }
            }
            docTokens.push(...tokens);
         }

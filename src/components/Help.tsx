@@ -129,7 +129,7 @@ export default function Help({ onBack }: HelpProps) {
       </div>
 
       <div className="text-center mt-16 text-[var(--text-secondary)] text-[10px] font-medium tracking-widest uppercase opacity-50">
-        Queryclin V4.2.1 &copy; 2026 - Auditoría y Calidad Clínica Asegurada
+        Queryclin V6.2.2 &copy; 2026 - Auditoría y Calidad Clínica Asegurada
       </div>
     </div>
   );

@@ -6,7 +6,8 @@
  * Convierte un string a minúsculas y elimina tildes/diacríticos.
  * Ideal para indexación y comparación de términos.
  */
-export const normalizeString = (str: string): string => {
+export const normalizeString = (str: any): string => {
+  if (typeof str !== 'string') return '';
   if (!str) return '';
   return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };

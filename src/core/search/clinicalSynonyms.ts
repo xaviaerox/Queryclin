@@ -7,7 +7,7 @@
  * Un mapeo estricto y seguro de variaciones de género y número a su raíz canónica.
  * Solo se deben incluir variantes que sean semánticamente idénticas en contexto clínico.
  */
-export const STEM_WHITELIST: Record<string, string> = {
+export const STEM_WHITELIST: Record<string, string> = Object.assign(Object.create(null), {
   // Género y Número
   'fumadora': 'fumador',
   'fumadores': 'fumador',
@@ -35,13 +35,13 @@ export const STEM_WHITELIST: Record<string, string> = {
   'crisis': 'crisis', // invariante
   'fracturas': 'fractura',
   'lesiones': 'lesion'
-};
+});
 
 /**
  * Diccionario Canónico de Sinónimos Clínicos.
  * Mapea un token canónico a todas sus variantes coloquiales, siglas y abreviaturas.
  */
-export const CLINICAL_SYNONYMS: Record<string, string[]> = {
+export const CLINICAL_SYNONYMS: Record<string, string[]> = Object.assign(Object.create(null), {
   'hta': ['hipertension', 'hipertension arterial', 'presion alta', 'tension alta', 'pa alta'],
   'dm': ['dm2', 'dm1', 'diabetes', 'diabetes mellitus', 'dbt'],
   'ic': ['icc', 'insuficiencia cardiaca', 'fallo cardiaco', 'insuf cardiaca', 'insuficiencia cardiaca congestiva'],
@@ -65,4 +65,4 @@ export const CLINICAL_SYNONYMS: Record<string, string[]> = {
   'depresion': ['sindrome depresivo', 'episodio depresivo mayor', 'tdm', 'trastorno depresivo'],
   'ansiedad': ['trastorno ansiedad', 'crisis ansiedad', 'crisis panico', 'trastorno panico'],
   'covid': ['covid19', 'covid-19', 'sars-cov-2', 'coronavirus']
-};
+});
