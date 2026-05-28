@@ -1,4 +1,8 @@
-# Queryclin — HCE Intelligence & Admin Studio 🚀
+# Queryclin — HCE Intelligence & Admin Studio
+
+<div align="center">
+  <img src="./assets/queryclin-hero.jpg" alt="Queryclin - Clinical Intelligence & Local-First Data Exploration" width="100%">
+</div>
 
 > Plataforma avanzada para exploración, auditoría y análisis estructural de Historias Clínicas Electrónicas (HCE) bajo arquitectura **Local-First**.
 >
