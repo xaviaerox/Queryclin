@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
-import { Sun, Moon, Database, Users, HelpCircle, ShieldCheck, Search } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { HCEData } from './core/types';
 import { searchEngine, SearchResult } from './engine';
