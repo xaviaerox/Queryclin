@@ -187,7 +187,6 @@ export class IndexerService {
 
         for (const term in termCounts) {
           if (term.length <= 2 && /^\d+$/.test(term)) continue;
-          if (term.length === 1) continue;
 
           if (!this.tempIndex[term]) this.tempIndex[term] = [];
           

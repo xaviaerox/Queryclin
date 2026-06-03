@@ -59,7 +59,7 @@ const MULTI_WORD_PHRASES_REGEXES = Array.from(VARIANT_TO_CANONICAL.keys())
 
 // Stopwords lingüísticas y filler clínico (se eliminaron 'ingreso', 'alta', 'cuadro', 'inicio' por fidelidad contextual)
 const STOPWORDS = new Set([
-  'de','el','la','y','en','del','los','las','un','una','con','por','para','su','al','lo',
+  'a','de','el','la','y','en','del','los','las','un','una','con','por','para','su','al','lo',
   'como','mas','pero','sus','este','esta','se','ha','si','o','entre','cuando','muy', // 'sin' quitado para Negation
   'sobre','tambien','me','hasta','hay','donde','quien','desde','todo','nos','durante',
   'todos','uno','les','ni','contra','otros','ese','eso','ante','ellos','e','esto','mi',
