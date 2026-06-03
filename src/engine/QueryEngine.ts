@@ -4,6 +4,7 @@ import { SemanticProcessor } from './SemanticProcessor';
 import { selectLatestSnapshots } from './selectLatestSnapshots';
 import { normalizeString } from '../utils/stringNormalizer';
 import { Patient } from '../core/types';
+import { parseClinicalDate } from '../utils/dateParser';
 
 interface ParsedNode {
   text: string;
@@ -305,7 +306,7 @@ export class QueryEngine {
 
   public async search(
     query: string, 
-    filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean },
+    filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean, ageRange?: [number, number] },
     signal?: AbortSignal
   ): Promise<SearchResult[]> {
     const startTime = performance.now();
@@ -316,7 +317,7 @@ export class QueryEngine {
 
     let filtersKey = '';
     if (filters) {
-      filtersKey = `${filters.dateRange?.[0]||''}_${filters.dateRange?.[1]||''}_${filters.service||''}_${filters.categories?.join(',')||''}_${filters.fields?.join(',')||''}_${filters.onlyLatestSnapshot?1:0}`;
+      filtersKey = `${filters.dateRange?.[0]||''}_${filters.dateRange?.[1]||''}_${filters.service||''}_${filters.categories?.join(',')||''}_${filters.fields?.join(',')||''}_${filters.onlyLatestSnapshot?1:0}_${filters.ageRange?.[0]||''}_${filters.ageRange?.[1]||''}`;
     }
     const cacheKey = `${query.trim().toLowerCase()}|${filtersKey}`;
     const cached = this.getQueryCache(cacheKey);
@@ -539,6 +540,7 @@ export class QueryEngine {
 
     const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
     const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
+    const filterAgeRange = filters?.ageRange;
     const requestedCats = filters?.categories?.map(c => normalizeString(c).replace(/^\d{2}-/, '').trim()) || [];
     const requestedFields = filters?.fields?.map(f => normalizeString(f).replace(/^ec_/, '').replace(/_/g, ' ').trim()) || [];
     
@@ -710,13 +712,29 @@ export class QueryEngine {
       const validRegistros = flatRegistros.filter((reg: any) => {
         const meta = skeleton?.tomasMeta?.[reg.idToma];
         
-        if (filterService || filterStart || filterEnd) {
+        if (filterService || filterStart || filterEnd || filterAgeRange) {
            if (!meta) return false;
            if (filterService && meta.service && !meta.service.toLowerCase().includes(filterService)) return false;
            if (filterStart || filterEnd) {
               if (!meta.date) return false;
               if (filterStart && meta.date < filterStart) return false;
               if (filterEnd && meta.date > filterEnd) return false;
+           }
+           if (filterAgeRange) {
+              let isValidAge = false;
+              const nacStr = skeleton?.demographics?.['Fecha de Nacimiento'] || skeleton?.demographics?.fechaNacimiento;
+              const nacTs = nacStr ? parseClinicalDate(nacStr) : null;
+              if (nacTs !== null && meta.date) {
+                  const calcAge = Math.floor((meta.date - nacTs) / (1000 * 60 * 60 * 24 * 365.25));
+                  if (calcAge >= filterAgeRange[0] && calcAge <= filterAgeRange[1]) isValidAge = true;
+              } else {
+                  const ageRaw = skeleton?.demographics?.['Edad'] || skeleton?.demographics?.['Edad_Toma'] || skeleton?.demographics?.edad;
+                  if (ageRaw) {
+                      const a = parseInt(ageRaw);
+                      if (!isNaN(a) && a >= filterAgeRange[0] && a <= filterAgeRange[1]) isValidAge = true;
+                  }
+              }
+              if (!isValidAge) return false;
            }
         }
 
@@ -810,13 +828,14 @@ export class QueryEngine {
     return sortedResults;
   }
 
-  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }, signal?: AbortSignal): Promise<SearchResult[]> {
+  private async getAllRecords(filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean, ageRange?: [number, number] }, signal?: AbortSignal): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     const nhcs = Object.keys(this.patientSkeletons);
     
     const filterService = filters?.service?.toLowerCase();
     const filterStart = filters?.dateRange?.[0] ? new Date(`${filters.dateRange[0]}T00:00:00`).getTime() : null;
     const filterEnd = filters?.dateRange?.[1] ? new Date(`${filters.dateRange[1]}T23:59:59`).getTime() : null;
+    const filterAgeRange = filters?.ageRange;
     const requestedCats = filters?.categories?.map(c => normalizeString(c).replace(/^\d{2}-/, '').trim()) || [];
     const requestedFields = filters?.fields?.map(f => normalizeString(f).replace(/^ec_/, '').replace(/_/g, ' ').trim()) || [];
 
@@ -833,7 +852,7 @@ export class QueryEngine {
       let latestId = '';
       let latestOrd = -1;
       
-      const hasAnyFilter = filterService || filterStart || filterEnd || requestedCats.length > 0 || requestedFields.length > 0;
+      const hasAnyFilter = filterService || filterStart || filterEnd || requestedCats.length > 0 || requestedFields.length > 0 || filterAgeRange;
       
       if (hasAnyFilter || filters?.onlyLatestSnapshot) {
          isValidPatient = false;
@@ -848,6 +867,22 @@ export class QueryEngine {
                          if (!meta.date) isValidToma = false;
                          if (filterStart && meta.date < filterStart) isValidToma = false;
                          if (filterEnd && meta.date > filterEnd) isValidToma = false;
+                     }
+                     if (isValidToma && filterAgeRange) {
+                        let isValidAge = false;
+                        const nacStr = skeleton?.demographics?.['Fecha de Nacimiento'] || skeleton?.demographics?.fechaNacimiento;
+                        const nacTs = nacStr ? parseClinicalDate(nacStr) : null;
+                        if (nacTs !== null && meta.date) {
+                            const calcAge = Math.floor((meta.date - nacTs) / (1000 * 60 * 60 * 24 * 365.25));
+                            if (calcAge >= filterAgeRange[0] && calcAge <= filterAgeRange[1]) isValidAge = true;
+                        } else {
+                            const ageRaw = skeleton?.demographics?.['Edad'] || skeleton?.demographics?.['Edad_Toma'] || skeleton?.demographics?.edad;
+                            if (ageRaw) {
+                                const a = parseInt(ageRaw);
+                                if (!isNaN(a) && a >= filterAgeRange[0] && a <= filterAgeRange[1]) isValidAge = true;
+                            }
+                        }
+                        if (!isValidAge) isValidToma = false;
                      }
                      if (isValidToma && requestedCats.length > 0) {
                         const tomaCats = meta.categories || [];

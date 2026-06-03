@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope } from 'lucide-react';
+import { Search, Upload, ShieldCheck, Database, Zap, Filter, Calendar, Stethoscope, User } from 'lucide-react';
 import { searchEngine } from '../engine';
 import { FORMS } from '../core/mappings';
 import { schemaRuntimeSync } from '../admin-studio/store/schemaRuntimeSync';
@@ -9,7 +9,7 @@ interface HomeProps {
   key?: string | number;
   hasData: boolean;
   onUpload: (file: File, formId: string, config?: any) => void;
-  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }) => void;
+  onSearch: (query: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean, ageRange?: [number, number] }) => void;
   getSuggestions: (query: string) => string[];
   compact?: boolean;
   activeFormId?: string;
@@ -22,7 +22,8 @@ type RecentSearch = {
     service?: string, 
     categories?: string[],
     fields?: string[],
-    onlyLatestSnapshot?: boolean
+    onlyLatestSnapshot?: boolean,
+    ageRange?: [number, number]
   };
   timestamp: number;
   resultCount?: number;
@@ -56,6 +57,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
   const [showFilters, setShowFilters] = useState(false);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
+  const [ageMin, setAgeMin] = useState<string>('');
+  const [ageMax, setAgeMax] = useState<string>('');
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -108,7 +111,8 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
       service: service || undefined,
       categories: (Array.isArray(categories) && categories.length > 0) ? categories : undefined,
       fields: (Array.isArray(selectedFields) && selectedFields.length > 0) ? selectedFields : undefined,
-      onlyLatestSnapshot: onlyLatestSnapshot || undefined
+      onlyLatestSnapshot: onlyLatestSnapshot || undefined,
+      ageRange: (ageMin || ageMax) ? [ageMin ? parseInt(ageMin) : 0, ageMax ? parseInt(ageMax) : 999] : undefined
     });
   };
 
@@ -324,7 +328,7 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
               title="Filtros avanzados"
             >
               <Filter size={16} />
-              <span>Filtros {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || onlyLatestSnapshot) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{(Array.isArray(categories) ? categories.length : 0) + (dateStart || dateEnd ? 1 : 0) + (onlyLatestSnapshot ? 1 : 0)}</span>}</span>
+              <span>Filtros {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || onlyLatestSnapshot || ageMin || ageMax) && <span className="ml-1 px-1.5 py-0.5 rounded-md bg-[var(--accent-clinical)] text-white text-[10px]">{(Array.isArray(categories) ? categories.length : 0) + (dateStart || dateEnd ? 1 : 0) + (onlyLatestSnapshot ? 1 : 0) + (ageMin || ageMax ? 1 : 0)}</span>}</span>
             </button>
             <button
               type="submit"
@@ -339,12 +343,14 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
           <div className="mt-4 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] rounded-2xl p-6 shadow-md animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-[12px] font-black uppercase tracking-widest text-[var(--text-primary)]">Filtros Activos</h4>
-              {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || (Array.isArray(selectedFields) && selectedFields.length > 0)) && (
+              {(dateStart || dateEnd || (Array.isArray(categories) && categories.length > 0) || (Array.isArray(selectedFields) && selectedFields.length > 0) || ageMin || ageMax) && (
                 <button
                   type="button"
                   onClick={() => { 
                     setDateStart(''); 
                     setDateEnd(''); 
+                    setAgeMin('');
+                    setAgeMax('');
                     setCategories([]); 
                     setSelectedFields([]); 
                     setExpandedCategory(null); 
@@ -378,6 +384,38 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                       type="date"
                       value={dateEnd}
                       onChange={(e) => setDateEnd(e.target.value)}
+                      className="w-full px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Rango de Edad */}
+              <div className="pt-4 border-t border-[var(--border-clinical)]">
+                <label className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-3">
+                  <User size={14} /> Rango de Edad en la Toma
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      min="0"
+                      max="150"
+                      value={ageMin}
+                      onChange={(e) => setAgeMin(e.target.value)}
+                      className="w-full px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
+                    />
+                  </div>
+                  <span className="text-[var(--text-secondary)] font-bold">-</span>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      min="0"
+                      max="150"
+                      value={ageMax}
+                      onChange={(e) => setAgeMax(e.target.value)}
                       className="w-full px-4 py-2 bg-[var(--bg-clinical)] border border-[var(--border-clinical)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent-clinical)] text-sm text-[var(--text-primary)]"
                     />
                   </div>
@@ -548,16 +586,20 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
                     if (s.filters) {
                       setDateStart(s.filters.dateRange?.[0] || '');
                       setDateEnd(s.filters.dateRange?.[1] || '');
+                      setAgeMin(s.filters.ageRange?.[0]?.toString() || '');
+                      setAgeMax(s.filters.ageRange?.[1]?.toString() || '');
                       setService(s.filters.service || '');
                       setCategories(s.filters.categories || []);
                       setSelectedFields(s.filters.fields || []);
                       setOnlyLatestSnapshot(s.filters.onlyLatestSnapshot || false);
-                      if (s.filters.dateRange || s.filters.service || s.filters.categories || s.filters.fields || s.filters.onlyLatestSnapshot) {
+                      if (s.filters.dateRange || s.filters.service || s.filters.categories || s.filters.fields || s.filters.onlyLatestSnapshot || s.filters.ageRange) {
                         setShowFilters(true);
                       }
                     } else {
                       setDateStart('');
                       setDateEnd('');
+                      setAgeMin('');
+                      setAgeMax('');
                       setService('');
                       setCategories([]);
                       setSelectedFields([]);

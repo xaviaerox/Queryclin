@@ -116,7 +116,7 @@ export default function App() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [patientCount, setPatientCount] = useState<number>(0);
   const [activeFormId, setActiveFormId] = useState<string>('');
-  const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean } | undefined>();
+  const [activeFilters, setActiveFilters] = useState<{ dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean, ageRange?: [number, number] } | undefined>();
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [clinicalSchema, setClinicalSchema] = useState<ClinicalFormSchema | null>(null);
@@ -466,7 +466,7 @@ export default function App() {
     return results;
   };
 
-  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean }) => {
+  const handleSearch = async (q: string, filters?: { dateRange?: [string, string], service?: string, categories?: string[], fields?: string[], onlyLatestSnapshot?: boolean, ageRange?: [number, number] }) => {
     const currentId = ++searchIdRef.current;
     setQuery(q);
     setActiveFilters(filters);
