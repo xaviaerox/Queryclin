@@ -514,12 +514,9 @@ export default function HCEView({
         const p = await db.getFromStore(db.stores.patients, currentResult.nhc);
         
         // SSOT: Cargar mapping compilado en runtime desde IndexedDB
-        let mapping = FORMS.find(f => f.id === formId);
-        const runtimeMapping = await schemaRuntimeSync.getRuntimeMapping(formId);
-        if (runtimeMapping) {
-          mapping = runtimeMapping;
-          console.log(`[HCEView] Usando mapping runtime para ${formId}`);
-        }
+        const { loadRuntimeForms } = await import('../admin-studio/runtime/runtimeFormsLoader');
+        const allForms = await loadRuntimeForms();
+        let mapping = allForms.find(f => f.id === formId);
         setFormMapping(mapping || FORMS[0]);
 
         if (active && p) {

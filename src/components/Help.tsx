@@ -88,8 +88,9 @@ export default function Help({ onBack }: HelpProps) {
           </p>
           <ul className="space-y-2 text-[var(--text-secondary)] text-sm">
             <li>✓ Interfaz visual Drag-and-Drop para diseñar formularios y taxonomías.</li>
-            <li>✓ Plantillas preconstruidas basadas en modelos oficiales (OBS, MIR, ALG).</li>
-            <li>✓ Sincronización y versionado dinámico del esquema clínico en IndexedDB.</li>
+            <li>✓ Diseños desde cero o clonación de plantillas oficiales (OBS, MIR, ALG).</li>
+            <li>✓ Persistencia local aislada (QueryclinRegistryDB) inmune al borrado de datos médicos.</li>
+            <li>✓ Exportación e importación de esquemas en archivos estructurados JSON.</li>
           </ul>
         </section>
 

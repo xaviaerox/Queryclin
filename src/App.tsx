@@ -446,11 +446,9 @@ export default function App() {
       return;
     }
 
-    let mapping = FORMS.find(f => f.id === formId);
-    const runtimeMapping = await schemaRuntimeSync.getRuntimeMapping(formId);
-    if (runtimeMapping) {
-      mapping = runtimeMapping;
-    }
+    const { loadRuntimeForms } = await import('./admin-studio/runtime/runtimeFormsLoader');
+    const allForms = await loadRuntimeForms();
+    let mapping = allForms.find(f => f.id === formId);
 
     if (!mapping) {
       alert("Error crítico: Formulario no válido.");

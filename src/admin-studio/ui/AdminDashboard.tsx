@@ -8,20 +8,203 @@ import { CLINICAL_RESOURCES } from '../domain/resources';
 export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string) => void }) {
   const [schemas, setSchemas] = useState<ClinicalFormSchema[]>([]);
   const [view, setView] = useState<'list' | 'import' | 'templates' | 'resources'>('list');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      
+      const { validateFormJSON } = await import('../persistence/formImporter');
+      const validation = validateFormJSON(parsed);
+      
+      if (!validation.valid || !validation.data) {
+        alert(`Error al importar JSON:\n${validation.error}`);
+        return;
+      }
+      
+      const serialized = validation.data;
+      const { formRegistryStore } = await import('../persistence/FormRegistryStore');
+      await formRegistryStore.saveForm(serialized.form, serialized.version);
+      
+      // Reconstruir y guardar el esquema completo para permitir su edición
+      const { mappingToSchema } = await import('../persistence/formSerializer');
+      const schema = mappingToSchema(serialized.form, String(serialized.version));
+      await schemaStore.saveSchema(schema);
+
+      // Establecer la versión activa en IndexedDB
+      const activeKey = `ACTIVE_VERSION_${serialized.form.id}`;
+      const { db } = await import('../../storage/indexedDB');
+      await db.saveBatch(db.stores.clinical_schemas, { [activeKey]: String(serialized.version) });
+      
+      // Sincronizar en el runtime del sistema
+      const { schemaRuntimeSync } = await import('../store/schemaRuntimeSync');
+      await schemaRuntimeSync.syncRuntimeMapping(serialized.form.id, String(serialized.version));
+      
+      // Auto-guardar en el repositorio (solo en desarrollo)
+      if (import.meta.env.DEV) {
+        try {
+          await fetch(`${import.meta.env.BASE_URL}api/save-custom-form`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serialized)
+          });
+          console.log('[DevServer] Formulario importado guardado automáticamente en src/custom-forms/');
+        } catch (e) {
+          console.warn('[DevServer] No se pudo guardar el formulario importado automáticamente en el repositorio:', e);
+        }
+      }
+      
+      alert(`¡Formulario "${serialized.form.name}" importado con éxito!`);
+      loadSchemas();
+    } catch (err: any) {
+      console.error('[AdminDashboard] Error al importar formulario JSON:', err);
+      alert(`Error al procesar el archivo JSON: ${err.message}`);
+    } finally {
+      if (e.target) e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     loadSchemas();
   }, [view]);
 
   const loadSchemas = async () => {
-    const allSchemas = await schemaStore.getAllSchemas();
+    let allSchemas = await schemaStore.getAllSchemas();
+    
+    // Auto-recuperación y sincronización de formularios desde FormRegistryStore y RUNTIME_FORMS
+    try {
+      const { formRegistryStore } = await import('../persistence/FormRegistryStore');
+      const { RUNTIME_FORMS } = await import('../../core/mappings');
+      
+      // 1. Obtener formularios registrados y tombstones de eliminación
+      const registeredForms = await formRegistryStore.getAllForms();
+      const deletedIds = await formRegistryStore.getDeletedFormIds();
+      
+      const schemaIds = new Set(allSchemas.map(s => s.id));
+      const registeredIds = new Set(registeredForms.map(f => f.id));
+      let hasNewSchemas = false;
+      
+      // A. Auto-recuperación desde FormRegistryStore a SchemaStore
+      for (const rf of registeredForms) {
+        if (!schemaIds.has(rf.id)) {
+          const { mappingToSchema } = await import('../persistence/formSerializer');
+          const reconstructed = mappingToSchema(rf.payload, String(rf.version));
+          await schemaStore.saveSchema(reconstructed);
+          
+          const activeKey = `ACTIVE_VERSION_${rf.id}`;
+          const { db } = await import('../../storage/indexedDB');
+          await db.saveBatch(db.stores.clinical_schemas, { [activeKey]: String(rf.version) });
+          
+          const { schemaRuntimeSync } = await import('../store/schemaRuntimeSync');
+          await schemaRuntimeSync.syncRuntimeMapping(rf.id, String(rf.version));
+          
+          hasNewSchemas = true;
+        }
+      }
+      
+      // B. Auto-recuperación desde RUNTIME_FORMS (de mappings.runtime.ts en disco) si no están marcados como eliminados ni registrados
+      if (Array.isArray(RUNTIME_FORMS)) {
+        for (const rf of RUNTIME_FORMS) {
+          if (rf && rf.id && !deletedIds.has(rf.id) && !registeredIds.has(rf.id)) {
+            // Guardar en el registro de formularios dinámicos
+            const formVersion = 1.0;
+            await formRegistryStore.saveForm(rf, formVersion);
+            
+            // Reconstruir esquema para SchemaStore
+            const { mappingToSchema } = await import('../persistence/formSerializer');
+            const reconstructed = mappingToSchema(rf, String(formVersion));
+            await schemaStore.saveSchema(reconstructed);
+            
+            // Activar versión
+            const activeKey = `ACTIVE_VERSION_${rf.id}`;
+            const { db } = await import('../../storage/indexedDB');
+            await db.saveBatch(db.stores.clinical_schemas, { [activeKey]: String(formVersion) });
+            
+            const { schemaRuntimeSync } = await import('../store/schemaRuntimeSync');
+            await schemaRuntimeSync.syncRuntimeMapping(rf.id, String(formVersion));
+            
+            hasNewSchemas = true;
+          }
+        }
+      }
+
+      // C. Auto-recuperación desde src/custom-forms/*.json (Vite Glob) si no están registrados ni eliminados
+      try {
+        const modules = import.meta.glob('../../custom-forms/*.json', { eager: true });
+        for (const path in modules) {
+          const module: any = modules[path];
+          if (module) {
+            const rf = module.form && module.form.id ? module.form : (module.id ? module : null);
+            const formVersion = module.version !== undefined ? Number(module.version) : 1.0;
+            
+            if (rf && rf.id && !deletedIds.has(rf.id) && !registeredIds.has(rf.id)) {
+              // Guardar en el registro de formularios dinámicos
+              await formRegistryStore.saveForm(rf, formVersion);
+              
+              // Reconstruir esquema para SchemaStore
+              const { mappingToSchema } = await import('../persistence/formSerializer');
+              const reconstructed = mappingToSchema(rf, String(formVersion));
+              await schemaStore.saveSchema(reconstructed);
+              
+              // Activar versión
+              const activeKey = `ACTIVE_VERSION_${rf.id}`;
+              const { db } = await import('../../storage/indexedDB');
+              await db.saveBatch(db.stores.clinical_schemas, { [activeKey]: String(formVersion) });
+              
+              const { schemaRuntimeSync } = await import('../store/schemaRuntimeSync');
+              await schemaRuntimeSync.syncRuntimeMapping(rf.id, String(formVersion));
+              
+              hasNewSchemas = true;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[AdminDashboard] Error en auto-recuperación de custom-forms globs:', err);
+      }
+      
+      if (hasNewSchemas) {
+        allSchemas = await schemaStore.getAllSchemas();
+      }
+    } catch (err) {
+      console.error('[AdminDashboard] Error en auto-recuperación de esquemas:', err);
+    }
+
     setSchemas(allSchemas.sort((a, b) => b.updatedAt - a.updatedAt));
   };
 
   const handleDeleteSchema = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (!window.confirm("¿Estás seguro de que deseas eliminar permanentemente este formulario? Esta acción no se puede deshacer.")) return;
+    
+    // 1. Eliminar del almacén de diseño (SchemaStore)
     await schemaStore.deleteSchema(id);
+    
+    // 2. Eliminar de la capa de persistencia unificada (FormRegistryStore)
+    try {
+      const { formRegistryStore } = await import('../persistence/FormRegistryStore');
+      await formRegistryStore.deleteForm(id);
+    } catch (err) {
+      console.error('[AdminDashboard] Error al borrar de FormRegistryStore:', err);
+    }
+
+    // Auto-eliminar del repositorio (solo en desarrollo)
+    if (import.meta.env.DEV) {
+      try {
+        await fetch(`${import.meta.env.BASE_URL}api/delete-custom-form`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        console.log('[DevServer] Formulario eliminado automáticamente de src/custom-forms/');
+      } catch (e) {
+        console.warn('[DevServer] No se pudo eliminar automáticamente del repositorio:', e);
+      }
+    }
+    
     loadSchemas();
   };
 
@@ -105,8 +288,8 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
         >
           &larr; Volver al Dashboard
         </button>
-        <h2 className="text-2xl font-black text-[var(--text-primary)] mb-2 uppercase tracking-tight">Biblioteca de Recursos</h2>
-        <p className="text-[var(--text-secondary)] mb-8 font-medium">Crea un formulario nuevo usando las cabeceras canónicas (sin diseño previo).</p>
+        <h2 className="text-2xl font-black text-[var(--text-primary)] mb-2 uppercase tracking-tight">Diseñar desde Cero (Campos Base)</h2>
+        <p className="text-[var(--text-secondary)] mb-8 font-medium">Crea un formulario nuevo importando solo los campos oficiales. El lienzo comenzará completamente en blanco para que puedas estructurarlo a tu gusto.</p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {(Object.keys(CLINICAL_RESOURCES) as Array<keyof typeof CLINICAL_RESOURCES>).map(resKey => (
@@ -140,10 +323,10 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
         <div className="flex gap-3">
           <button 
             onClick={() => setView('resources')}
-            className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-emerald-500 text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"
+            className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"
           >
-            <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-            Biblioteca
+            <svg className="w-4 h-4 text-[var(--accent-clinical)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+            Diseñar desde Cero
           </button>
           <button 
             onClick={() => setView('templates')}
@@ -154,11 +337,25 @@ export function AdminDashboard({ onSelectSchema }: { onSelectSchema: (id: string
           </button>
           <button 
             onClick={() => setView('import')}
-            className="flex items-center gap-2 bg-[var(--accent-clinical)] hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-blue-500/20 transition-all text-xs uppercase tracking-widest active:scale-95"
+            className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <svg className="w-4 h-4 text-[var(--accent-clinical)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Importar Datos
           </button>
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 bg-[var(--surface-clinical)] border border-[var(--border-clinical)] hover:border-[var(--accent-clinical)] text-[var(--text-primary)] font-bold py-3 px-6 rounded-2xl shadow-sm transition-all text-xs uppercase tracking-widest active:scale-95"
+          >
+            <svg className="w-4 h-4 text-[var(--accent-clinical)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            Importar JSON
+          </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImportJSON} 
+            accept=".json" 
+            className="hidden" 
+          />
         </div>
       </div>
 

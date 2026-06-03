@@ -1,4 +1,5 @@
 import { RUNTIME_FORMS } from '../generated/mappings.runtime';
+export { RUNTIME_FORMS };
 
 export interface FormMapping {
   id: string;
@@ -14,7 +15,7 @@ export interface FormMapping {
   headerAliases?: Record<string, string[]>; // Canonical Header -> [Source Aliases]
 }
 
-const STATIC_FORMS: FormMapping[] = [
+export const STATIC_FORMS: FormMapping[] = [
   {
     id: 'hce_alg',
     name: 'HCE-ALG',

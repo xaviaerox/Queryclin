@@ -110,13 +110,13 @@ export function AdminRoot({ onExit, onGoHome, version, buildDate }: AdminRootPro
             
             <div className="p-6 overflow-auto space-y-6">
               <div>
-                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--accent-clinical)] mb-2">Diferencia entre Plantilla y Biblioteca</h3>
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--accent-clinical)] mb-2">Diferencia entre Plantilla y Diseñar desde Cero</h3>
                 <div className="space-y-4 text-[13px] text-[var(--text-primary)] leading-relaxed">
                   <p>
-                    <strong>📄 Plantillas (Templates):</strong> Son formularios completos y pre-diseñados (ej: Alergias, Observaciones). Úsalos para clonar un modelo existente y modificarlo.
+                    <strong>📄 Usar Plantilla:</strong> Clona un formulario completo y pre-diseñado (ej: Alergias, Observaciones). Te permite comenzar con una estructura visual ya organizada y modificarla.
                   </p>
                   <p>
-                    <strong>🧱 Biblioteca de Recursos:</strong> Son listas de campos canónicos (los que vienen en los Excel originales). Úsalos para construir un formulario desde cero, arrastrando los bloques a tu gusto.
+                    <strong>🧱 Diseñar desde Cero:</strong> Importa únicamente la lista de campos oficiales sin ningún diseño previo. El lienzo comienza completamente en blanco para que organices las secciones a tu gusto.
                   </p>
                 </div>
               </div>
@@ -128,6 +128,20 @@ export function AdminRoot({ onExit, onGoHome, version, buildDate }: AdminRootPro
                   <li><strong>Publicado:</strong> Se congela la versión. Puedes crear nuevas versiones para seguir editando.</li>
                   <li><strong>Activo:</strong> Es la versión que el sistema utilizará para procesar los archivos Excel e importar datos en la pantalla principal.</li>
                 </ul>
+              </div>
+
+              <div className="border-t border-[var(--border-clinical)] pt-4">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--accent-clinical)] mb-2">Persistencia y Almacenamiento</h3>
+                <div className="space-y-3 text-[12px] text-[var(--text-secondary)] leading-relaxed">
+                  <p>
+                    Los formularios diseñados e importados se guardan de forma segura bajo una arquitectura <strong>Local-First</strong> en dos niveles:
+                  </p>
+                  <ul className="space-y-2 list-disc pl-4">
+                    <li><strong>QueryclinRegistryDB (IndexedDB local):</strong> Base de datos aislada en tu navegador donde residen tus diseños, versiones y marcas de borrado. Es inmune al vaciado de sesión de datos de pacientes (que limpia la base de datos principal).</li>
+                    <li><strong>Intercambio JSON:</strong> Al publicar un formulario, se descarga un archivo JSON. Puedes guardarlo, enviarlo a otros clínicos o subirlo a GitHub. La importación de este JSON reconstruye el formulario completo en la base de datos.</li>
+                    <li><strong>Código de Aplicación (mappings.runtime.ts):</strong> Los formularios sincronizados y añadidos al código fuente se auto-recuperan en tu biblioteca local al abrir el Admin Studio, a menos que uses la papelera para borrarlos (lo cual genera un <em>tombstone</em> de desactivación en tu base de datos local).</li>
+                  </ul>
+                </div>
               </div>
 
               <div className="bg-[var(--accent-clinical)]/5 border border-[var(--accent-clinical)]/20 rounded-xl p-4">

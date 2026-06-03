@@ -88,18 +88,17 @@ export default function Home({ hasData, onUpload, onSearch, getSuggestions, comp
 
   const loadDynamicForms = async () => {
     console.log('[Home] Cargando formularios dinámicos...');
-    const dynamicForms = await schemaRuntimeSync.getAllRuntimeMappings();
-    console.log('[Home] Formularios dinámicos encontrados:', dynamicForms);
-    if (dynamicForms.length > 0) {
-      const dynamicIds = new Set(dynamicForms.map(f => f.id));
-      const filteredStatic = FORMS.filter(f => !dynamicIds.has(f.id));
-      const merged = [...filteredStatic, ...dynamicForms];
-      console.log('[Home] Lista final de formularios:', merged);
-      setAvailableForms(merged);
-    } else {
-      console.log('[Home] No se encontraron formularios dinámicos, usando estáticos.');
+    try {
+      const { loadRuntimeForms } = await import('../admin-studio/runtime/runtimeFormsLoader');
+      const mergedForms = await loadRuntimeForms();
+      console.log('[Home] Lista final de formularios:', mergedForms);
+      setAvailableForms(mergedForms);
+    } catch (err) {
+      console.error('[Home] Error al cargar los formularios en runtime:', err);
+      setAvailableForms(FORMS);
     }
   };
+
 
 
   const fileInputRef = useRef<HTMLInputElement>(null);

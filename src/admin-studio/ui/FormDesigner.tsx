@@ -293,8 +293,48 @@ export function FormDesigner({ schemaId, onBack }: FormDesignerProps) {
     const newSchema = { ...schema, status: 'published' as const, updatedAt: Date.now() };
     setSchema(newSchema);
     await schemaStore.saveSchema(newSchema);
-    alert("¡Esquema publicado con éxito!");
+
+    try {
+      // 1. Compilar el esquema a FormMapping
+      const { FormCompiler } = await import('../compiler/FormCompiler');
+      const formMapping = FormCompiler.compile(newSchema);
+
+      // 2. Guardar en FormRegistryStore
+      const { formRegistryStore } = await import('../persistence/FormRegistryStore');
+      const versionNum = parseFloat(newSchema.version) || 1.0;
+      await formRegistryStore.saveForm(formMapping, versionNum);
+
+      // 3. Exportación y descarga automática de JSON
+      const { exportFormToJSON } = await import('../persistence/formExporter');
+      exportFormToJSON(formMapping, versionNum);
+
+      // Auto-guardado en el repositorio (solo en desarrollo)
+      if (import.meta.env.DEV) {
+        try {
+          const { serializeForm } = await import('../persistence/formSerializer');
+          const serialized = serializeForm(formMapping, versionNum);
+          await fetch(`${import.meta.env.BASE_URL}api/save-custom-form`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(serialized)
+          });
+          console.log('[DevServer] Formulario guardado automáticamente en src/custom-forms/');
+        } catch (e) {
+          console.warn('[DevServer] No se pudo guardar automáticamente en el repositorio:', e);
+        }
+      }
+
+      // 4. Sincronizar en el runtime del sistema
+      const { schemaRuntimeSync } = await import('../store/schemaRuntimeSync');
+      await schemaRuntimeSync.syncRuntimeMapping(newSchema.id, newSchema.version);
+
+      alert("¡Esquema publicado con éxito, guardado en el registro y descargado como JSON!");
+    } catch (err: any) {
+      console.error('[FormDesigner] Error durante la publicación / exportación:', err);
+      alert(`Esquema guardado, pero ocurrió un error al compilar/exportar:\n${err.message}`);
+    }
   };
+
 
   const updateElementProperty = async (property: string, value: any) => {
     if (!schema || !selectedElement) return;

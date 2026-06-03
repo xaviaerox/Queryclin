@@ -1,3 +1,19 @@
+## [7.2.4] - V7.2.4-STABLE - 2026-06-03
+### Añadido
+- **Persistencia Autónoma y Sincronización Automática con Repositorio**: Integración de endpoints locales del servidor de desarrollo de Vite (`POST /api/save-custom-form` y `POST /api/delete-custom-form`) para guardar y eliminar archivos JSON de forma automática y bidireccional en la carpeta física `src/custom-forms/` al realizar acciones en el Admin Studio (publicar, importar manualmente o eliminar un formulario). Esto elimina por completo la necesidad de copiar archivos manualmente o realizar modificaciones de código por parte de un desarrollador.
+
+### Corregido
+- **Soporte ESM de Rutas en Servidor**: Manejo correcto de la resolución de directorios y nombres de archivos de forma síncrona en el middleware de desarrollo local.
+
+## [7.2.3] - V7.2.3-STABLE - 2026-06-03
+### Añadido
+- **Directorio de Carga Autónoma (`src/custom-forms/`)**: Creación de una ubicación física en el repositorio donde colocar directamente los archivos JSON exportados desde el Admin Studio. La aplicación lee e integra estos esquemas de forma 100% autónoma en tiempo de compilación/desarrollo (usando Vite `import.meta.glob`), eliminando cualquier dependencia de código manual o intervención de un desarrollador.
+
+### Corregido
+- **Sincronización y Borrado de Formularios en Admin Studio**: Implementación de un mecanismo de marcas de borrado (tombstones) en `FormRegistryStore` para gestionar correctamente el estado de eliminación de los formularios dinámicos cargados desde `mappings.runtime.ts` y de la carpeta de carga autónoma.
+- **Auto-recuperación desde Mappings y JSONs**: Modificación del ciclo de inicialización en `AdminDashboard.tsx` para importar automáticamente los formularios definidos tanto en `mappings.runtime.ts` como en la nueva carpeta `src/custom-forms/` hacia IndexedDB (`schemaStore` y `FormRegistryStore`), haciéndolos editables o eliminables en la biblioteca.
+- **Prioridad de Sobrescritura**: Corregida la precedencia en `runtimeFormsLoader.ts` para que los esquemas dinámicos de IndexedDB (ediciones locales en curso del usuario) tengan prioridad sobre las versiones compiladas físicas.
+
 ## [7.2.2] - V7.2.2-STABLE - 2026-05-25
 ### Añadido
 - **Favicon e Identidad Visual PWA**: Incorporación de favicon oficial minimalista (`favicon.ico`, `apple-touch-icon.png`, y assets PNG) y registro en `manifest.json` y metadatos de `index.html`.
